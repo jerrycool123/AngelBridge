@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "outDir": "./build"
+  },
+  "extends": "../../tsconfig.json",
+  "include": ["**/*.ts", "**/*.d.ts"]
+}
