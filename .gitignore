@@ -12,3 +12,7 @@
 
 node_modules/
 build/
+.env
+.env.*.local
+tessdata/
+cache/
