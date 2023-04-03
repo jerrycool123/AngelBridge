@@ -34,6 +34,7 @@
     "googleapis": "^114.0.0",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.3",
+    "queue": "^6.0.2",
     "tesseract.js": "^4.0.3"
   }
 }

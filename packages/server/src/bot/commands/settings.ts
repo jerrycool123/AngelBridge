@@ -50,6 +50,10 @@ const settings = new CustomBotCommand({
               inline: true,
             },
             {
+              name: 'Log channel',
+              value: guildConfig.logChannel ? `<#${guildConfig.logChannel}>` : 'None',
+            },
+            {
               name: 'Allow OAuth 2.0 Verification',
               value: guildConfig.allowedMembershipVerificationMethods.oauth ? 'Yes' : 'No',
             },

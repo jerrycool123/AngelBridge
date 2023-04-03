@@ -9,6 +9,7 @@ export interface UserAttrs {
 export interface UserDoc extends UserAttrs, Document<string> {
   _id: string;
   memberships: Types.ObjectId[];
+  language: SupportedOCRLanguage['language'];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +39,11 @@ const userSchema = new Schema<UserDoc>(
       ],
       required: true,
       default: [],
+    },
+    language: {
+      type: String,
+      required: true,
+      default: 'English',
     },
   },
   {

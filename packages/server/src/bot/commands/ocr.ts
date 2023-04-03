@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 
 import CustomBotCommand from '.';
-import { genericOption } from '../../libs/discord-util';
+import { genericOption, ocrAndPushToLogChannel } from '../../libs/discord-util';
 import ocrWorker from '../../libs/ocr';
 
 const ocr = new CustomBotCommand({
@@ -11,7 +11,15 @@ const ocr = new CustomBotCommand({
     .setDMPermission(true)
     .addAttachmentOption(genericOption('picture', 'Picture to OCR', true)),
   async execute(interaction) {
-    const { options } = interaction;
+    const { guild, options } = interaction;
+    if (!guild) {
+      await interaction.reply({
+        content:
+          'This command can only be used in a guild.\nHowever, we are developing a DM version of this command. Stay tuned!',
+        ephemeral: true,
+      });
+      return;
+    }
 
     await interaction.deferReply({ ephemeral: true });
 
@@ -23,9 +31,9 @@ const ocr = new CustomBotCommand({
       return;
     }
 
-    const text = await ocrWorker.recognize(picture.url);
+    ocrWorker.addJob(ocrAndPushToLogChannel(guild.id, 'jpn', picture.url));
     await interaction.editReply({
-      content: text,
+      content: 'Your OCR job has been created.',
     });
   },
 });

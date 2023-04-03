@@ -114,7 +114,6 @@ const add_role = new CustomBotCommand({
       });
     } catch (error) {
       // Timeout
-      return;
     }
     if (!buttonInteraction) {
       await interaction.followUp({
@@ -126,7 +125,7 @@ const add_role = new CustomBotCommand({
         content: 'Cancelled.',
         ephemeral: true,
       });
-    } else {
+    } else if (buttonInteraction.customId === 'confirm') {
       await buttonInteraction.deferReply({ ephemeral: true });
       const newMembershipRole = await MembershipRole.build({
         _id: role.id,
@@ -140,6 +139,12 @@ const add_role = new CustomBotCommand({
       await buttonInteraction.editReply({
         content: `Successfully added the membership role <@&${populatedNewMembershipRole._id}> for the YouTube channel \`${populatedNewMembershipRole.youTubeChannel.title}\`.`,
       });
+    } else {
+      await buttonInteraction.reply({
+        content: 'An error occurred. Please try again.',
+        ephemeral: true,
+      });
+      return;
     }
   },
 });

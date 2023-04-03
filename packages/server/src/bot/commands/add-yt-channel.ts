@@ -11,7 +11,7 @@ import {
 import { youtube_v3 } from 'googleapis';
 
 import CustomBotCommand from '.';
-import { generateRandomColorNumber, genericOption, replyGuildOnly } from '../../libs/discord-util';
+import { generateRandomColorNumber, genericOption } from '../../libs/discord-util';
 import { youtubeApi } from '../../libs/google';
 import YouTubeChannel from '../../models/youtube-channel';
 import DiscordBotConfig from '../config';
@@ -23,11 +23,7 @@ const add_yt_channel = new CustomBotCommand({
     .setDefaultMemberPermissions(DiscordBotConfig.adminPermissions)
     .addStringOption(genericOption('id', 'YouTube channel ID or video ID', true)),
   async execute(interaction) {
-    const { guild, user, options } = interaction;
-    if (!guild) {
-      await replyGuildOnly(interaction);
-      return;
-    }
+    const { user, options } = interaction;
 
     await interaction.deferReply({ ephemeral: true });
 
@@ -126,7 +122,6 @@ const add_yt_channel = new CustomBotCommand({
       });
     } catch (error) {
       // Timeout
-      return;
     }
     if (!buttonInteraction) {
       await interaction.followUp({
@@ -138,7 +133,7 @@ const add_yt_channel = new CustomBotCommand({
         content: 'Cancelled.',
         ephemeral: true,
       });
-    } else {
+    } else if (buttonInteraction.customId === 'confirm') {
       await buttonInteraction.deferReply({ ephemeral: true });
       const youTubeChannel = await YouTubeChannel.findByIdAndUpdate(
         channel.id,
@@ -158,6 +153,12 @@ const add_yt_channel = new CustomBotCommand({
       await buttonInteraction.editReply({
         content: `Successfully added the YouTube channel \`${youTubeChannel.title}\` to the bot's supported list.`,
       });
+    } else {
+      await buttonInteraction.reply({
+        content: 'An error occurred. Please try again.',
+        ephemeral: true,
+      });
+      return;
     }
   },
 });
