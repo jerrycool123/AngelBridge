@@ -66,7 +66,13 @@ const verify = new CustomBotCommand({
         },
       ),
     ]);
-    if (!dbGuild.logChannel) {
+    if (!dbGuild.allowedMembershipVerificationMethods.ocr) {
+      await interaction.editReply({
+        content:
+          'This guild does not allow OCR verification.\nPlease contact the guild moderator to change this setting.',
+      });
+      return;
+    } else if (!dbGuild.logChannel) {
       await interaction.editReply({
         content:
           'There is no log channel set up in this guild.\nPlease contact the guild moderator to set one up with `/set-log-channel` first.',

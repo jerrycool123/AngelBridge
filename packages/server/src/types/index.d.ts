@@ -32,6 +32,10 @@ type SupportedOCRLanguage =
       code: 'kor';
     }
   | {
+      language: 'Malay';
+      code: 'msa';
+    }
+  | {
       language: 'Thai';
       code: 'tha';
     }

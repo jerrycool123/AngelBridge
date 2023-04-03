@@ -10,7 +10,7 @@ export interface GuildAttrs {
   };
 }
 
-export interface GuildDoc extends GuildAttrs, Document<string> {
+interface GuildDoc extends GuildAttrs, Document<string> {
   _id: string;
   logChannel: string | null; // Discord Text Channel ID
   createdAt: Date;

@@ -37,6 +37,10 @@ export const supportedOCRLanguages: SupportedOCRLanguage[] = [
     code: 'kor',
   },
   {
+    language: 'Malay',
+    code: 'msa',
+  },
+  {
     language: 'Thai',
     code: 'tha',
   },
@@ -72,7 +76,7 @@ class OCRWorker {
 
     if (this.languageCode !== languageCode) {
       this.languageCode = languageCode;
-      // ! This is a workaround since japanese date isn't correctly e
+      // ! This is a workaround since japanese date isn't correctly recognized
       const actualLanguageCode = languageCode === 'jpn' ? supportedOCRLanguageString : languageCode;
       await this.worker.initialize(actualLanguageCode);
     }
