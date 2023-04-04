@@ -54,7 +54,13 @@ const supportedOCRLanguageString = supportedOCRLanguages.map((lang) => lang.code
 class OCRWorker {
   private worker: Worker | null = null;
   private languageCode: SupportedOCRLanguage['code'] = 'eng';
-  private jobQueue: Queue = new Queue({ autostart: true });
+  private jobQueue: Queue = new Queue({ concurrency: 1, autostart: true });
+
+  constructor() {
+    this.jobQueue.on('timeout', (e) => {
+      console.log(e);
+    });
+  }
 
   async init() {
     // TODO: multiple languages
@@ -66,7 +72,7 @@ class OCRWorker {
       // logger: (m) => console.log(m),
     });
     await this.worker.loadLanguage(supportedOCRLanguageString);
-    await this.worker.loadLanguage(this.languageCode);
+    await this.worker.initialize(this.languageCode);
   }
 
   async recognize(languageCode: SupportedOCRLanguage['code'], imageUrl: string) {

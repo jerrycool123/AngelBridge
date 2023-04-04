@@ -201,7 +201,19 @@ const verify = new CustomBotCommand({
     dbUser.language = selectedLanguage.language;
     await dbUser.save();
 
-    ocrWorker.addJob(ocrAndPushToLogChannel(guild.id, selectedLanguage.code, picture.url));
+    ocrWorker.addJob(
+      ocrAndPushToLogChannel(
+        guild.id,
+        selectedLanguage.code,
+        {
+          id: user.id,
+          username: `${user.username}#${user.discriminator}`,
+          avatar: user.displayAvatarURL(),
+        },
+        picture.url,
+        role._id,
+      ),
+    );
     await buttonInteraction.followUp({
       content:
         'After I finished parsing your picture,\n' +

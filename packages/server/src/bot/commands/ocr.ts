@@ -11,7 +11,7 @@ const ocr = new CustomBotCommand({
     .setDMPermission(true)
     .addAttachmentOption(genericOption('picture', 'Picture to OCR', true)),
   async execute(interaction) {
-    const { guild, options } = interaction;
+    const { guild, user, options } = interaction;
     if (!guild) {
       await interaction.reply({
         content:
@@ -31,7 +31,19 @@ const ocr = new CustomBotCommand({
       return;
     }
 
-    ocrWorker.addJob(ocrAndPushToLogChannel(guild.id, 'jpn', picture.url));
+    ocrWorker.addJob(
+      ocrAndPushToLogChannel(
+        guild.id,
+        'jpn',
+        {
+          id: user.id,
+          username: `${user.username}#${user.discriminator}`,
+          avatar: user.displayAvatarURL(),
+        },
+        picture.url,
+        '0',
+      ),
+    );
     await interaction.editReply({
       content: 'Your OCR job has been created.',
     });
