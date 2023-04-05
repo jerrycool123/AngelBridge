@@ -1,5 +1,5 @@
-import CustomBotEventHandler from '.';
-import DiscordBotConfig from '../config';
+import DiscordBotConfig from '../config.js';
+import CustomBotEventHandler from './index.js';
 
 const interactionCreate = new CustomBotEventHandler<'interactionCreate'>({
   name: 'interactionCreate',

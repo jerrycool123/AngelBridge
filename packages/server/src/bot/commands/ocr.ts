@@ -1,8 +1,9 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import CustomBotCommand from '.';
-import { genericOption, ocrAndPushToLogChannel } from '../../libs/discord-util';
-import ocrWorker from '../../libs/ocr';
+import { genericOption } from '../../libs/discord-util.js';
+import { recognizeMembership } from '../../libs/membership.js';
+import ocrWorker from '../../libs/ocr.js';
+import CustomBotCommand from './index.js';
 
 const ocr = new CustomBotCommand({
   data: new SlashCommandBuilder()
@@ -32,7 +33,7 @@ const ocr = new CustomBotCommand({
     }
 
     ocrWorker.addJob(
-      ocrAndPushToLogChannel(
+      recognizeMembership(
         guild.id,
         'jpn',
         {

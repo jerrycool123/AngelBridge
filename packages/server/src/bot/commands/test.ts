@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import CustomBotCommand from '.';
+import CustomBotCommand from './index.js';
 
 const test = new CustomBotCommand({
   data: new SlashCommandBuilder().setName('ping').setDescription('Replies with Pong!'),

@@ -1,5 +1,5 @@
-import CustomBotEventHandler from '.';
-import { upsertGuildConfig } from '../../libs/discord-util';
+import { upsertGuildConfig } from '../../libs/discord-util.js';
+import CustomBotEventHandler from './index.js';
 
 const guildUpdate = new CustomBotEventHandler<'guildUpdate'>({
   name: 'guildUpdate',

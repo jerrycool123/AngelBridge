@@ -1,17 +1,17 @@
 import { Client } from 'discord.js';
 
-import add_role from './commands/add-role';
-import add_yt_channel from './commands/add-yt-channel';
-import ocr from './commands/ocr';
-import set_log_channel from './commands/set-log-channel';
-import settings from './commands/settings';
-import test from './commands/test';
-import verify from './commands/verify';
-import DiscordBotConfig from './config';
-import guildCreate from './handlers/guild-create';
-import guildUpdate from './handlers/guild-update';
-import interactionCreate from './handlers/interaction-create';
-import ready from './handlers/ready';
+import add_role from './commands/add-role.js';
+import add_yt_channel from './commands/add-yt-channel.js';
+import ocr from './commands/ocr.js';
+import set_log_channel from './commands/set-log-channel.js';
+import settings from './commands/settings.js';
+import test from './commands/test.js';
+import verify from './commands/verify.js';
+import DiscordBotConfig from './config.js';
+import guildCreate from './handlers/guild-create.js';
+import guildUpdate from './handlers/guild-update.js';
+import interactionCreate from './handlers/interaction-create.js';
+import ready from './handlers/ready.js';
 
 // Bot config
 DiscordBotConfig.addGlobalCommands([ocr]);

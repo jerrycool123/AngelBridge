@@ -36,5 +36,6 @@
     "mongoose": "^7.0.3",
     "queue": "^6.0.2",
     "tesseract.js": "^4.0.3"
-  }
+  },
+  "type": "module"
 }

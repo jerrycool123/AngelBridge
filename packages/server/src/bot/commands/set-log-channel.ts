@@ -1,8 +1,8 @@
 import { PermissionFlagsBits, SlashCommandBuilder, TextChannel } from 'discord.js';
 
-import CustomBotCommand from '.';
-import { genericOption, replyGuildOnly, upsertGuildConfig } from '../../libs/discord-util';
-import DiscordBotConfig from '../config';
+import { genericOption, replyGuildOnly, upsertGuildConfig } from '../../libs/discord-util.js';
+import DiscordBotConfig from '../config.js';
+import CustomBotCommand from './index.js';
 
 const set_log_channel = new CustomBotCommand({
   data: new SlashCommandBuilder()

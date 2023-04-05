@@ -1,14 +1,14 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
-import CustomBotCommand from '.';
 import {
   generateRandomColorNumber,
   replyGuildOnly,
   upsertGuildConfig,
-} from '../../libs/discord-util';
-import MembershipRole from '../../models/membership-role';
-import { YouTubeChannelDoc } from '../../models/youtube-channel';
-import DiscordBotConfig from '../config';
+} from '../../libs/discord-util.js';
+import MembershipRole from '../../models/membership-role.js';
+import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import DiscordBotConfig from '../config.js';
+import CustomBotCommand from './index.js';
 
 const settings = new CustomBotCommand({
   data: new SlashCommandBuilder()

@@ -1,8 +1,8 @@
 import { Client, GatewayIntentBits, PermissionFlagsBits, REST, Routes } from 'discord.js';
 
-import Env from '../libs/env';
-import CustomBotCommand from './commands';
-import type { UnionCustomBotEventHandler } from './handlers';
+import Env from '../libs/env.js';
+import CustomBotCommand from './commands/index.js';
+import type { UnionCustomBotEventHandler } from './handlers/index.js';
 
 class DiscordBotConfig {
   private static rest = new REST({ version: '10' }).setToken(Env.DISCORD_BOT_TOKEN);

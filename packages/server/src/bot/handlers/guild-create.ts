@@ -1,6 +1,6 @@
-import CustomBotEventHandler from '.';
-import { upsertGuildConfig } from '../../libs/discord-util';
-import DiscordBotConfig from '../config';
+import { upsertGuildConfig } from '../../libs/discord-util.js';
+import DiscordBotConfig from '../config.js';
+import CustomBotEventHandler from './index.js';
 
 const guildCreate = new CustomBotEventHandler<'guildCreate'>({
   name: 'guildCreate',

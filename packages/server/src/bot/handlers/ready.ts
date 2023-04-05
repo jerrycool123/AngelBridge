@@ -1,5 +1,5 @@
-import CustomBotEventHandler from '.';
-import DiscordBotConfig from '../config';
+import DiscordBotConfig from '../config.js';
+import CustomBotEventHandler from './index.js';
 
 // When the client is ready, run this code (only once)
 const ready = new CustomBotEventHandler<'ready'>({

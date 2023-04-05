@@ -9,12 +9,13 @@ import {
   StringSelectMenuBuilder,
 } from 'discord.js';
 
-import CustomBotCommand from '.';
-import { genericOption, ocrAndPushToLogChannel, upsertGuildConfig } from '../../libs/discord-util';
-import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr';
-import MembershipRole from '../../models/membership-role';
-import User from '../../models/user';
-import { YouTubeChannelDoc } from '../../models/youtube-channel';
+import { genericOption, upsertGuildConfig } from '../../libs/discord-util.js';
+import { recognizeMembership } from '../../libs/membership.js';
+import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
+import MembershipRole from '../../models/membership-role.js';
+import User from '../../models/user.js';
+import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import CustomBotCommand from './index.js';
 
 const verify = new CustomBotCommand({
   data: new SlashCommandBuilder()
@@ -202,7 +203,7 @@ const verify = new CustomBotCommand({
     await dbUser.save();
 
     ocrWorker.addJob(
-      ocrAndPushToLogChannel(
+      recognizeMembership(
         guild.id,
         selectedLanguage.code,
         {

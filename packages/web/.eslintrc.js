@@ -1,7 +1,6 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const config = require('../../.eslintrc.json');
+import config from '../../.eslintrc.json';
 
-module.exports = {
+const newConfig = {
   ...config,
   env: {},
   extends: [
@@ -10,3 +9,5 @@ module.exports = {
     'plugin:prettier/recommended',
   ],
 };
+
+export default newConfig;

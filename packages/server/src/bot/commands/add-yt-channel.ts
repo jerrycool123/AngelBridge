@@ -10,11 +10,11 @@ import {
 } from 'discord.js';
 import { youtube_v3 } from 'googleapis';
 
-import CustomBotCommand from '.';
-import { generateRandomColorNumber, genericOption } from '../../libs/discord-util';
-import { youtubeApi } from '../../libs/google';
-import YouTubeChannel from '../../models/youtube-channel';
-import DiscordBotConfig from '../config';
+import { generateRandomColorNumber, genericOption } from '../../libs/discord-util.js';
+import { youtubeApi } from '../../libs/google.js';
+import YouTubeChannel from '../../models/youtube-channel.js';
+import DiscordBotConfig from '../config.js';
+import CustomBotCommand from './index.js';
 
 const add_yt_channel = new CustomBotCommand({
   data: new SlashCommandBuilder()

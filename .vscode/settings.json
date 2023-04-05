@@ -1,5 +1,6 @@
 {
   "typescript.preferences.quoteStyle": "single",
   "javascript.preferences.quoteStyle": "single",
-  "cSpell.words": ["TESSDATA", "tesseract"]
+  "cSpell.words": ["TESSDATA", "tesseract"],
+  "typescript.preferences.importModuleSpecifierEnding": "js"
 }

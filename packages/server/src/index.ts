@@ -1,12 +1,14 @@
 import mongoose from 'mongoose';
 
-import client from './bot';
-import Env from './libs/env';
-import ocrWorker from './libs/ocr';
-import app from './server';
+import client from './bot/index.js';
+import Env from './libs/env.js';
+import ocrWorker from './libs/ocr.js';
+import app from './server/index.js';
 
 const main = async () => {
   // Initialize OCR worker
+  // throw new Error('TODO: emoji action of moderators to verify membership');
+
   ocrWorker.init().then(() => {
     console.log('OCR worker initialized');
   });
