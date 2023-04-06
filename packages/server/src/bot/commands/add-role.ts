@@ -48,7 +48,7 @@ const add_role = new CustomBotCommand({
       return;
     } else if (botMember.roles.highest.comparePositionTo(role.id) <= 0) {
       await interaction.editReply({
-        content: `Due to the role hierarchy, the bot cannot assign the role <@&${role.id}> to users.\nPlease try again with a role that is lower than the bot's highest role <@&${botMember.roles.highest.id}>.`,
+        content: `Due to the role hierarchy, the bot cannot assign the role <@&${role.id}> to users.\nI can only assign a role whose order is lower than that of my highest role highest role <@&${botMember.roles.highest.id}>.`,
       });
       return;
     }
@@ -116,9 +116,9 @@ const add_role = new CustomBotCommand({
       // Timeout
     }
     if (!buttonInteraction) {
-      await interaction.followUp({
+      await interaction.editReply({
         content: 'Timed out. Please try again.',
-        ephemeral: true,
+        components: [],
       });
     } else if (buttonInteraction.customId === 'cancel') {
       await buttonInteraction.reply({

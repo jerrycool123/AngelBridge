@@ -1,8 +1,20 @@
-import { EmbedBuilder, PermissionFlagsBits, TextChannel } from 'discord.js';
+import dayjs from 'dayjs';
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonInteraction,
+  Embed,
+  EmbedBuilder,
+  PermissionFlagsBits,
+  TextChannel,
+} from 'discord.js';
 
+import membershipAcceptButton from '../bot/buttons/membership-accept.js';
+import membershipRejectButton from '../bot/buttons/membership-reject.js';
 import client from '../bot/index.js';
 import Guild from '../models/guild.js';
-import { generateRandomColorNumber } from './discord-util.js';
+import { createInvalidActionRow, generateRandomColorNumber } from './discord-util.js';
+import { extractDate } from './i18n.js';
 import ocrWorker, { supportedOCRLanguages } from './ocr.js';
 
 export const recognizeMembership =
@@ -60,200 +72,15 @@ export const recognizeMembership =
       // replace enclosed alphanumeric characters with their corresponding numbers
       text = text.replace(/[\u2460-\u2468]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x245f));
       text = text.replace(/[\u2469-\u2473]/g, (c) => (c.charCodeAt(0) - 0x245f).toString());
-      // replace spaces with empty string
-      const lines = text.split('\n').map((line) => line.replace(/\s/g, ''));
-      text = lines.join('\n');
-      // TODO: extract date
-      let year: number | null = null;
-      let month: number | null = null;
-      let day: number | null = null;
-      if (languageCode === 'eng') {
-        const regex =
-          /Nextbillingdate:(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\d{1,2}),(\d{4})/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            const abbreviatedMonth = match[1];
-            const monthMap: Record<string, number> = {
-              Jan: 1,
-              Feb: 2,
-              Mar: 3,
-              Apr: 4,
-              May: 5,
-              Jun: 6,
-              Jul: 7,
-              Aug: 8,
-              Sep: 9,
-              Oct: 10,
-              Nov: 11,
-              Dec: 12,
-            };
-            month = monthMap[abbreviatedMonth];
-            [day, year] = match.slice(2, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      } else if (languageCode === 'chi_tra') {
-        const regex = /帳單日期:(\d{4})年(\d{1,2})月(\d{1,2})日/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            [year, month, day] = match.slice(1, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      } else if (languageCode === 'chi_sim') {
-        const regex = /结算日期:(\d{4})年(\d{1,2})月(\d{1,2})日/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            [year, month, day] = match.slice(1, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      } else if (languageCode === 'deu') {
-        const regex = /NächstesAbrechnungsdatum:(\d{1,2})\.(\d{1,2})\.(\d{4})/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            [day, month, year] = match.slice(1, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      } else if (languageCode === 'fil') {
-        const regex =
-          /Susunodnapetsangpagsingil:(Ene|Peb|Mar|Abr|Mayo|Hun|Hul|Ago|Set|Okt|Nob|Dis)(\d{1,2}),(\d{4})/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            const abbreviatedMonth = match[1];
-            const monthMap: Record<string, number> = {
-              Ene: 1,
-              Peb: 2,
-              Mar: 3,
-              Abr: 4,
-              Mayo: 5,
-              Hun: 6,
-              Hul: 7,
-              Ago: 8,
-              Set: 9,
-              Okt: 10,
-              Nob: 11,
-              Dis: 12,
-            };
-            month = monthMap[abbreviatedMonth];
-            [day, year] = match.slice(2, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      } else if (languageCode === 'ind') {
-        const regex =
-          /Tanggalpenagihanberikutnya:(\d{1,2})(Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)(\d{4})/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            const abbreviatedMonth = match[2];
-            const monthMap: Record<string, number> = {
-              Jan: 1,
-              Feb: 2,
-              Mar: 3,
-              Apr: 4,
-              Mei: 5,
-              Jun: 6,
-              Jul: 7,
-              Agu: 8,
-              Sep: 9,
-              Okt: 10,
-              Nov: 11,
-              Des: 12,
-            };
-            month = monthMap[abbreviatedMonth];
-            [day, , year] = match.slice(1, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      } else if (languageCode === 'jpn') {
-        const regex = /次回請求日:(\d{4})\/(\d{2})\/(\d{2})/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            [year, month, day] = match.slice(1, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      } else if (languageCode === 'kor') {
-        const regex = /다음결제일:(\d{4})\.(\d{1,2})\.(\d{1,2})\./;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            [year, month, day] = match.slice(1, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      } else if (languageCode === 'msa') {
-        const regex =
-          /Tarikhpengebilanseterusnya:(\d{1,2})(Jan|Feb|Mac|Apr|Mei|Jun|Jul|Ogos|Sep|Okt|Nov|Dis)(\d{4})/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            const abbreviatedMonth = match[2];
-            const monthMap: Record<string, number> = {
-              Jan: 1,
-              Feb: 2,
-              Mac: 3,
-              Apr: 4,
-              Mei: 5,
-              Jun: 6,
-              Jul: 7,
-              Ogos: 8,
-              Sep: 9,
-              Okt: 10,
-              Nov: 11,
-              Dis: 12,
-            };
-            month = monthMap[abbreviatedMonth];
-            [day, , year] = match.slice(1, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      } else if (languageCode === 'tha') {
-        const regex =
-          /เรียกเก็บเงินครั้งถัดไปในวันที่(\d{1,2})(ม.ค.|ก.พ.|มี.ค.|เม.ย.|พ.ค.|มิ.ย.|ก.ค.|ส.ค.|ก.ย.|ต.ค.|พ.ย.|ธ.ค.)(\d{4})/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            const abbreviatedMonth = match[2];
-            const monthMap: Record<string, number> = {
-              'ม.ค.': 1,
-              'ก.พ.': 2,
-              'มี.ค.': 3,
-              'เม.ย.': 4,
-              'พ.ค.': 5,
-              'มิ.ย.': 6,
-              'ก.ค.': 7,
-              'ส.ค.': 8,
-              'ก.ย.': 9,
-              'ต.ค.': 10,
-              'พ.ย.': 11,
-              'ธ.ค.': 12,
-            };
-            month = monthMap[abbreviatedMonth];
-            [day, , year] = match.slice(1, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      } else if (languageCode === 'vie') {
-        const regex = /Ngàythanhtoántiếptheo:(\d{1,2})thg(\d{1,2}),(\d{4})/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) {
-            [day, month, year] = match.slice(1, 4).map((s) => parseInt(s, 10));
-            break;
-          }
-        }
-      }
-      console.log(text);
-      const message = await logChannel.send({
+
+      const { year, month, day } = extractDate(text, languageCode);
+
+      const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        membershipAcceptButton.data,
+        membershipRejectButton.data,
+      );
+      await logChannel.send({
+        components: [actionRow],
         embeds: [
           new EmbedBuilder()
             .setAuthor({
@@ -266,13 +93,16 @@ export const recognizeMembership =
                 name: 'Recognized Date',
                 value:
                   year !== null && month !== null && day !== null
-                    ? `${year}/${month}/${day}`
+                    ? `${year}/${month.toString().padStart(2, '0')}/${day
+                        .toString()
+                        .padStart(2, '0')}`
                     : '**Not Recognized**',
                 inline: true,
               },
               {
                 name: 'Membership Role',
                 value: `<@&${roleId}>`,
+                inline: true,
               },
               {
                 name: 'Language',
@@ -288,10 +118,50 @@ export const recognizeMembership =
             .setFooter({ text: `User ID: ${user.id}` }),
         ],
       });
-      await message.react('✅');
-      await message.react('📅');
-      await message.react('❌');
     } catch (error) {
       console.log(error);
     }
   };
+
+export const replyInvalidRequest = async (
+  interaction: ButtonInteraction,
+  content = 'Failed to retrieve membership verification request embed.',
+) => {
+  const actionRow = createInvalidActionRow();
+  await interaction.message.edit({
+    components: [actionRow],
+  });
+  await interaction.reply({ content });
+  return;
+};
+
+export const parseMembershipVerificationRequestEmbed = (
+  infoEmbed: Embed | null,
+): {
+  userId: string;
+  createdAt: dayjs.Dayjs;
+  expireAt: dayjs.Dayjs;
+  roleId: string;
+} | null => {
+  if (!infoEmbed) return null;
+
+  const userId = infoEmbed.footer?.text.split('User ID: ')[1] ?? null;
+  if (!userId) return null;
+
+  const createdAtString = infoEmbed.timestamp ?? null;
+  const createdAt = createdAtString ? dayjs(createdAtString) : null;
+  if (!createdAt) return null;
+
+  const expireAtString =
+    infoEmbed.fields.find(({ name }) => name === 'Recognized Date')?.value ?? null;
+  const expireAt = expireAtString ? dayjs(expireAtString, 'YYYY/MM/DD') : null;
+  if (!expireAt?.isValid()) return null;
+
+  const roleRegex = /<@&(\d+)>/;
+  const roleId =
+    infoEmbed.fields.find(({ name }) => name === 'Membership Role')?.value?.match(roleRegex)?.[1] ??
+    null;
+  if (!roleId) return null;
+
+  return { userId, createdAt, expireAt, roleId };
+};

@@ -1,5 +1,7 @@
 import { Client } from 'discord.js';
 
+import membershipAcceptButton from './buttons/membership-accept.js';
+import membershipRejectButton from './buttons/membership-reject.js';
 import add_role from './commands/add-role.js';
 import add_yt_channel from './commands/add-yt-channel.js';
 import ocr from './commands/ocr.js';
@@ -23,6 +25,7 @@ DiscordBotConfig.addGuildCommands([
   verify,
   set_log_channel,
 ]);
+DiscordBotConfig.addButtons([membershipAcceptButton, membershipRejectButton]);
 DiscordBotConfig.addEventHandlers([ready, interactionCreate, guildCreate, guildUpdate]);
 
 // Create a new client instance

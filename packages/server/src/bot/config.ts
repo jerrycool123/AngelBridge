@@ -1,6 +1,7 @@
 import { Client, GatewayIntentBits, PermissionFlagsBits, REST, Routes } from 'discord.js';
 
 import Env from '../libs/env.js';
+import CustomButton from './buttons/index.js';
 import CustomBotCommand from './commands/index.js';
 import type { UnionCustomBotEventHandler } from './handlers/index.js';
 
@@ -14,6 +15,7 @@ class DiscordBotConfig {
   static globalCommands: CustomBotCommand[] = [];
   static guildCommands: CustomBotCommand[] = [];
   static allCommands: CustomBotCommand[] = [];
+  static buttons: CustomButton[] = [];
   static handlers: UnionCustomBotEventHandler[] = [];
 
   static addGlobalCommands(commands: CustomBotCommand[]) {
@@ -24,6 +26,10 @@ class DiscordBotConfig {
   static addGuildCommands(commands: CustomBotCommand[]) {
     DiscordBotConfig.guildCommands.push(...commands);
     DiscordBotConfig.allCommands.push(...commands);
+  }
+
+  static addButtons(buttons: CustomButton[]) {
+    DiscordBotConfig.buttons.push(...buttons);
   }
 
   static addEventHandlers(handlers: UnionCustomBotEventHandler[]) {

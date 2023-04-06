@@ -55,7 +55,6 @@ const verify = new CustomBotCommand({
         user.id,
         {
           $set: {
-            lastUsedGuild: guild.id,
             username: `${user.username}#${user.discriminator}`,
             avatar: user.displayAvatarURL(),
           },
@@ -184,9 +183,9 @@ const verify = new CustomBotCommand({
       // Timeout
     }
     if (!buttonInteraction) {
-      await interaction.followUp({
+      await interaction.editReply({
         content: 'Timed out. Please try again.',
-        ephemeral: true,
+        components: [],
       });
       return;
     }

@@ -27,4 +27,4 @@ const main = async () => {
   client.login(Env.DISCORD_BOT_TOKEN);
 };
 
-main();
+await main();

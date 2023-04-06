@@ -50,7 +50,7 @@ const oauthMembershipSchema = new Schema<OAuthMembershipDoc>({
 oauthMembershipSchema.add(baseMembershipSchema);
 
 type MembershipAttrs = OCRMembershipAttrs | OAuthMembershipAttrs;
-type MembershipDoc = OCRMembershipDoc | OAuthMembershipDoc;
+export type MembershipDoc = OCRMembershipDoc | OAuthMembershipDoc;
 
 interface MembershipModel extends Model<MembershipDoc> {
   build: (attrs: MembershipAttrs) => Promise<MembershipDoc>;

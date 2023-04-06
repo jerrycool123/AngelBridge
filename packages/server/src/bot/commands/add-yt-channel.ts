@@ -124,9 +124,9 @@ const add_yt_channel = new CustomBotCommand({
       // Timeout
     }
     if (!buttonInteraction) {
-      await interaction.followUp({
+      await interaction.editReply({
         content: 'Timed out. Please try again.',
-        ephemeral: true,
+        components: [],
       });
     } else if (buttonInteraction.customId === 'cancel') {
       await buttonInteraction.reply({
