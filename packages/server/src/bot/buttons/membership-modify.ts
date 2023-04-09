@@ -47,7 +47,7 @@ const membershipModifyButton = new CustomButton({
       .addComponents(
         new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
           new TextInputBuilder()
-            .setCustomId('membership-modify-date')
+            .setCustomId('membership-modify-date-input')
             .setLabel('Correct Date (must be YYYY/MM/DD)')
             .setPlaceholder('YYYY/MM/DD')
             .setStyle(TextInputStyle.Short)
@@ -86,8 +86,9 @@ const membershipModifyButton = new CustomButton({
     await modalSubmitInteraction.deferUpdate();
 
     // Parse modified date
-    const expireAtString =
-      modalSubmitInteraction.fields.getTextInputValue('membership-modify-date');
+    const expireAtString = modalSubmitInteraction.fields.getTextInputValue(
+      'membership-modify-date-input',
+    );
     const newExpireAt = dayjs.utc(expireAtString, 'YYYY/MM/DD', true);
     if (!newExpireAt.isValid()) {
       await interaction.followUp({

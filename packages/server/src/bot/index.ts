@@ -5,6 +5,7 @@ import membershipModifyButton from './buttons/membership-modify.js';
 import membershipRejectButton from './buttons/membership-reject.js';
 import add_role from './commands/add-role.js';
 import add_yt_channel from './commands/add-yt-channel.js';
+import delete_role from './commands/delete-role.js';
 import ocr from './commands/ocr.js';
 import set_log_channel from './commands/set-log-channel.js';
 import settings from './commands/settings.js';
@@ -15,6 +16,7 @@ import guildCreate from './handlers/guild-create.js';
 import guildUpdate from './handlers/guild-update.js';
 import interactionCreate from './handlers/interaction-create.js';
 import ready from './handlers/ready.js';
+import roleUpdate from './handlers/role-update.js';
 
 // Bot config
 DiscordBotConfig.addGlobalCommands([ocr]);
@@ -23,6 +25,7 @@ DiscordBotConfig.addGuildCommands([
   settings,
   add_yt_channel,
   add_role,
+  delete_role,
   verify,
   set_log_channel,
 ]);
@@ -31,7 +34,7 @@ DiscordBotConfig.addButtons([
   membershipRejectButton,
   membershipModifyButton,
 ]);
-DiscordBotConfig.addEventHandlers([ready, interactionCreate, guildCreate, guildUpdate]);
+DiscordBotConfig.addEventHandlers([ready, interactionCreate, guildCreate, guildUpdate, roleUpdate]);
 
 // Create a new client instance
 const client = new Client<true>({ intents: DiscordBotConfig.requiredIntents });

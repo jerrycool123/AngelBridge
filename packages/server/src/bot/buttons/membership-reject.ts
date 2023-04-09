@@ -13,7 +13,7 @@ import {
 import { ModalSubmitInteraction } from 'discord.js';
 import { CacheType } from 'discord.js';
 
-import { createRejectedActionRow } from '../../libs/discord-util.js';
+import { createDisabledRejectedActionRow } from '../../libs/discord-util.js';
 import {
   parseMembershipVerificationRequestEmbed,
   replyInvalidRequest,
@@ -43,7 +43,7 @@ const membershipRejectButton = new CustomButton({
       .addComponents(
         new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
           new TextInputBuilder()
-            .setCustomId('membership-reject-reason')
+            .setCustomId('membership-reject-reason-input')
             .setLabel('Reason (this will be sent to the user)')
             .setPlaceholder('We cannot recognize your picture...')
             .setStyle(TextInputStyle.Short)
@@ -97,7 +97,9 @@ const membershipRejectButton = new CustomButton({
       await interaction.followUp({ content: 'Timed out. Please try again.', ephemeral: true });
       return;
     }
-    const reason = modalSubmitInteraction.fields.getTextInputValue('membership-reject-reason');
+    const reason = modalSubmitInteraction.fields.getTextInputValue(
+      'membership-reject-reason-input',
+    );
 
     // DM the user
     let notified = false;
@@ -115,7 +117,7 @@ const membershipRejectButton = new CustomButton({
     }
 
     // Mark the request as rejected
-    const rejectedActionRow = createRejectedActionRow();
+    const rejectedActionRow = createDisabledRejectedActionRow();
     await interaction.message.edit({
       content: notified
         ? ''

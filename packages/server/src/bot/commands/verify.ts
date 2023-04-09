@@ -13,8 +13,8 @@ import {
 import { genericOption, upsertGuildConfig } from '../../libs/discord-util.js';
 import { recognizeMembership } from '../../libs/membership.js';
 import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
-import MembershipRole from '../../models/membership-role.js';
-import User from '../../models/user.js';
+import MembershipRoleCollection from '../../models/membership-role.js';
+import UserCollection from '../../models/user.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import CustomBotCommand from './index.js';
 
@@ -47,12 +47,12 @@ const verify = new CustomBotCommand({
       });
       return;
     }
-    const [dbGuild, dbRoles, dbUser] = await Promise.all([
+    const [guildDoc, membershipRoleDocs, userDoc] = await Promise.all([
       upsertGuildConfig(guild),
-      MembershipRole.find({ guild: guild.id }).populate<{
+      MembershipRoleCollection.find({ guild: guild.id }).populate<{
         youTubeChannel: YouTubeChannelDoc;
       }>('youTubeChannel'),
-      User.findByIdAndUpdate(
+      UserCollection.findByIdAndUpdate(
         user.id,
         {
           $set: {
@@ -67,19 +67,19 @@ const verify = new CustomBotCommand({
         },
       ),
     ]);
-    if (!dbGuild.allowedMembershipVerificationMethods.ocr) {
+    if (!guildDoc.allowedMembershipVerificationMethods.ocr) {
       await interaction.editReply({
         content:
           'This guild does not allow OCR verification.\nPlease contact the guild moderator to change this setting.',
       });
       return;
-    } else if (!dbGuild.logChannel) {
+    } else if (!guildDoc.logChannel) {
       await interaction.editReply({
         content:
           'There is no log channel set up in this guild.\nPlease contact the guild moderator to set one up with `/set-log-channel` first.',
       });
       return;
-    } else if (dbRoles.length === 0) {
+    } else if (membershipRoleDocs.length === 0) {
       await interaction.editReply({
         content:
           'There is no membership role in this guild.\nPlease contact the guild moderator to set one up with `/add-role` first.',
@@ -88,16 +88,15 @@ const verify = new CustomBotCommand({
     }
 
     let selectedRoleId =
-      dbRoles.find((role) => role._id === dbUser.lastVerifyingRoleId)?._id ?? null;
+      membershipRoleDocs.find((role) => role._id === userDoc.lastVerifyingRoleId)?._id ?? null;
     let selectedLanguage = supportedOCRLanguages.find(
-      ({ language }) => language === dbUser.language,
+      ({ language }) => language === userDoc.language,
     ) ?? { language: 'English', code: 'eng' };
-    const guildRoles = await guild.roles.fetch(undefined, { force: true });
-    const roleOptions = dbRoles.map((role) => ({
-      label: guildRoles.get(role._id)?.name ?? `<@&${role._id}>`,
-      description: `${role.youTubeChannel.title} (${role.youTubeChannel.customUrl})`,
-      value: role._id,
-      default: role._id === selectedRoleId,
+    const roleOptions = membershipRoleDocs.map(({ _id, name, youTubeChannel }) => ({
+      label: name,
+      description: `${youTubeChannel.title} (${youTubeChannel.customUrl})`,
+      value: _id,
+      default: _id === selectedRoleId,
     }));
     const languageOptions = supportedOCRLanguages.map(({ language, code }) => ({
       label: language,
@@ -107,18 +106,21 @@ const verify = new CustomBotCommand({
 
     const membershipRoleActionRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
       new StringSelectMenuBuilder()
-        .setCustomId('membership-roles')
+        .setCustomId('verify-membership-roles-menu')
         .setPlaceholder('Select a membership role')
         .addOptions(...roleOptions),
     );
     const languageActionRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
       new StringSelectMenuBuilder()
-        .setCustomId('ocr-languages')
+        .setCustomId('ocr-languages-menu')
         .setPlaceholder('Select a language')
         .addOptions(...languageOptions),
     );
     const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setCustomId('verify').setLabel('Verify').setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId('verify-button')
+        .setLabel('Verify')
+        .setStyle(ButtonStyle.Success),
     );
 
     const response = await interaction.editReply({
@@ -128,7 +130,11 @@ const verify = new CustomBotCommand({
 
     const stringSelectCollector = response.createMessageComponentCollector({
       componentType: ComponentType.StringSelect,
-      filter: (stringSelectMenuInteraction) => user.id === stringSelectMenuInteraction.user.id,
+      filter: (stringSelectMenuInteraction) =>
+        user.id === stringSelectMenuInteraction.user.id &&
+        ['verify-membership-roles-menu', 'ocr-languages-menu'].includes(
+          stringSelectMenuInteraction.customId,
+        ),
       time: 5 * 60 * 1000,
     });
 
@@ -136,7 +142,7 @@ const verify = new CustomBotCommand({
       await stringSelectMenuInteraction.deferUpdate();
 
       const { customId } = stringSelectMenuInteraction;
-      if (customId === 'membership-roles') {
+      if (customId === 'verify-membership-roles-menu') {
         selectedRoleId =
           roleOptions.find(({ value }) => value === stringSelectMenuInteraction.values[0])?.value ??
           null;
@@ -146,7 +152,7 @@ const verify = new CustomBotCommand({
             default: option.value === selectedRoleId,
           })),
         );
-      } else if (customId === 'ocr-languages') {
+      } else if (customId === 'ocr-languages-menu') {
         selectedLanguage = supportedOCRLanguages.find(
           ({ code }) => code === stringSelectMenuInteraction.values[0],
         ) ?? {
@@ -161,7 +167,6 @@ const verify = new CustomBotCommand({
         );
       }
       await stringSelectMenuInteraction.editReply({
-        content: 'Please select a membership role and the language of the text in your picture.\n',
         components: [membershipRoleActionRow, languageActionRow, buttonActionRow],
       });
     });
@@ -170,7 +175,8 @@ const verify = new CustomBotCommand({
     try {
       buttonInteraction = await response.awaitMessageComponent({
         componentType: ComponentType.Button,
-        filter: (buttonInteraction) => user.id === buttonInteraction.user.id,
+        filter: (buttonInteraction) =>
+          user.id === buttonInteraction.user.id && buttonInteraction.customId === 'verify-button',
         time: 60 * 1000,
       });
       await buttonInteraction.deferUpdate();
@@ -184,7 +190,7 @@ const verify = new CustomBotCommand({
       });
       return;
     }
-    const role = dbRoles.find((role) => role._id === selectedRoleId);
+    const role = membershipRoleDocs.find((role) => role._id === selectedRoleId);
     if (!role) {
       await buttonInteraction.followUp({
         content: 'Please select a membership role.',
@@ -193,9 +199,9 @@ const verify = new CustomBotCommand({
       return;
     }
 
-    dbUser.lastVerifyingRoleId = selectedRoleId;
-    dbUser.language = selectedLanguage.language;
-    await dbUser.save();
+    userDoc.lastVerifyingRoleId = selectedRoleId;
+    userDoc.language = selectedLanguage.language;
+    await userDoc.save();
 
     ocrWorker.addJob(
       recognizeMembership(
@@ -215,8 +221,8 @@ const verify = new CustomBotCommand({
       embeds: [
         new EmbedBuilder()
           .setAuthor({
-            name: dbUser.username,
-            iconURL: dbUser.avatar,
+            name: userDoc.username,
+            iconURL: userDoc.avatar,
           })
           .setTitle('Membership Verification Request Submitted')
           .setDescription(

@@ -12,7 +12,7 @@ import { youtube_v3 } from 'googleapis';
 
 import { genericOption } from '../../libs/discord-util.js';
 import { youtubeApi } from '../../libs/google.js';
-import YouTubeChannel from '../../models/youtube-channel.js';
+import YouTubeChannelCollection from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
 import CustomBotCommand from './index.js';
 
@@ -78,10 +78,13 @@ const add_yt_channel = new CustomBotCommand({
 
     const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
-        .setCustomId('confirm')
+        .setCustomId('add-yt-channel-confirm-button')
         .setLabel('Yes, I confirm')
         .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('cancel').setLabel('No, cancel').setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId('add-yt-channel-cancel-button')
+        .setLabel('No, cancel')
+        .setStyle(ButtonStyle.Danger),
     );
 
     const response = await interaction.editReply({
@@ -120,7 +123,11 @@ const add_yt_channel = new CustomBotCommand({
     try {
       buttonInteraction = await response.awaitMessageComponent({
         componentType: ComponentType.Button,
-        filter: (buttonInteraction) => user.id === buttonInteraction.user.id,
+        filter: (buttonInteraction) =>
+          user.id === buttonInteraction.user.id &&
+          ['add-yt-channel-confirm-button', 'add-yt-channel-cancel-button'].includes(
+            buttonInteraction.customId,
+          ),
         time: 60 * 1000,
       });
     } catch (error) {
@@ -131,14 +138,22 @@ const add_yt_channel = new CustomBotCommand({
         content: 'Timed out. Please try again.',
         components: [],
       });
-    } else if (buttonInteraction.customId === 'cancel') {
+    } else if (buttonInteraction.customId === 'add-yt-channel-cancel-button') {
+      actionRow.components.forEach((component) => component.setDisabled(true));
+      await interaction.editReply({
+        components: [actionRow],
+      });
       await buttonInteraction.reply({
         content: 'Cancelled.',
         ephemeral: true,
       });
-    } else if (buttonInteraction.customId === 'confirm') {
+    } else if (buttonInteraction.customId === 'add-yt-channel-confirm-button') {
+      actionRow.components.forEach((component) => component.setDisabled(true));
+      await interaction.editReply({
+        components: [actionRow],
+      });
       await buttonInteraction.deferReply({ ephemeral: true });
-      const youTubeChannel = await YouTubeChannel.findByIdAndUpdate(
+      const youTubeChannelDoc = await YouTubeChannelCollection.findByIdAndUpdate(
         channel.id,
         {
           $set: {
@@ -154,14 +169,8 @@ const add_yt_channel = new CustomBotCommand({
         { upsert: true, new: true },
       );
       await buttonInteraction.editReply({
-        content: `Successfully added the YouTube channel \`${youTubeChannel.title}\` to the bot's supported list.`,
+        content: `Successfully added the YouTube channel \`${youTubeChannelDoc.title}\` to the bot's supported list.`,
       });
-    } else {
-      await buttonInteraction.reply({
-        content: 'An error occurred. Please try again.',
-        ephemeral: true,
-      });
-      return;
     }
   },
 });

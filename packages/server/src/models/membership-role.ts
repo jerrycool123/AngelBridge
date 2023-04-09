@@ -50,10 +50,10 @@ const membershipRoleSchema = new Schema<MembershipRoleDoc>(
   },
 );
 
-const MembershipRole = model<MembershipRoleDoc, MembershipRoleModel>(
+const MembershipRoleCollection = model<MembershipRoleDoc, MembershipRoleModel>(
   'MembershipRole',
   membershipRoleSchema,
   'MembershipRole',
 );
 
-export default MembershipRole;
+export default MembershipRoleCollection;

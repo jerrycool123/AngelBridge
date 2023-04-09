@@ -10,8 +10,8 @@ import {
 } from 'discord.js';
 
 import { genericOption, replyGuildOnly } from '../../libs/discord-util.js';
-import MembershipRole from '../../models/membership-role.js';
-import YouTubeChannel, { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import MembershipRoleCollection from '../../models/membership-role.js';
+import YouTubeChannelCollection, { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
 import CustomBotCommand from './index.js';
 
@@ -54,7 +54,7 @@ const add_role = new CustomBotCommand({
     }
 
     const keyword = options.getString('keyword', true);
-    const youTubeChannels = await YouTubeChannel.find({
+    const youTubeChannelDocs = await YouTubeChannelCollection.find({
       $or: [
         { _id: { $regex: keyword, $options: 'i' } },
         { title: { $regex: keyword, $options: 'i' } },
@@ -62,42 +62,45 @@ const add_role = new CustomBotCommand({
       ],
     });
 
-    if (youTubeChannels.length === 0) {
+    if (youTubeChannelDocs.length === 0) {
       await interaction.editReply({
         content: `Could not find any registered YouTube channel for the keyword: \`${keyword}\`. Please try again or use \`/add-yt-channel\` to register the channel first.`,
       });
       return;
-    } else if (youTubeChannels.length > 1) {
+    } else if (youTubeChannelDocs.length > 1) {
       await interaction.editReply({
         content:
           `Found multiple registered YouTube channels for the keyword: \`${keyword}\`. Please try again with a more specific keyword.\n` +
           `Found channels:\n` +
-          youTubeChannels
+          youTubeChannelDocs
             .map((channel) => `\`${channel.title}\`: \`${channel._id}\` (\`${channel.customUrl}\`)`)
             .join('\n'),
       });
       return;
     }
-    const youTubeChannel = youTubeChannels[0];
+    const youTubeChannel = youTubeChannelDocs[0];
 
-    const oldMembershipRole = await MembershipRole.findOne({
+    const oldMembershipRoleDoc = await MembershipRoleCollection.findOne({
       $or: [{ _id: role.id }, { youTubeChannel: youTubeChannel._id }],
     }).populate<{
       youTubeChannel: YouTubeChannelDoc;
     }>('youTubeChannel');
-    if (oldMembershipRole) {
+    if (oldMembershipRoleDoc) {
       await interaction.editReply({
-        content: `The membership role <@&${oldMembershipRole.id}> is already assigned to the YouTube channel \`${oldMembershipRole.youTubeChannel.title}\`.`,
+        content: `The membership role <@&${oldMembershipRoleDoc.id}> is already assigned to the YouTube channel \`${oldMembershipRoleDoc.youTubeChannel.title}\`.`,
       });
       return;
     }
 
     const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
-        .setCustomId('confirm')
+        .setCustomId('add-role-confirm-button')
         .setLabel('Yes, I confirm')
         .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('cancel').setLabel('No, cancel').setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId('add-role-cancel-button')
+        .setLabel('No, cancel')
+        .setStyle(ButtonStyle.Danger),
     );
 
     const response = await interaction.editReply({
@@ -109,7 +112,11 @@ const add_role = new CustomBotCommand({
     try {
       buttonInteraction = await response.awaitMessageComponent({
         componentType: ComponentType.Button,
-        filter: (buttonInteraction) => user.id === buttonInteraction.user.id,
+        filter: (buttonInteraction) =>
+          user.id === buttonInteraction.user.id &&
+          ['add-role-confirm-button', 'add-role-cancel-button'].includes(
+            buttonInteraction.customId,
+          ),
         time: 60 * 1000,
       });
     } catch (error) {
@@ -120,33 +127,35 @@ const add_role = new CustomBotCommand({
         content: 'Timed out. Please try again.',
         components: [],
       });
-    } else if (buttonInteraction.customId === 'cancel') {
+    } else if (buttonInteraction.customId === 'add-role-cancel-button') {
+      actionRow.components.forEach((component) => component.setDisabled(true));
+      await interaction.editReply({
+        components: [actionRow],
+      });
       await buttonInteraction.reply({
         content: 'Cancelled.',
         ephemeral: true,
       });
-    } else if (buttonInteraction.customId === 'confirm') {
+    } else if (buttonInteraction.customId === 'add-role-confirm-button') {
+      actionRow.components.forEach((component) => component.setDisabled(true));
+      await interaction.editReply({
+        components: [actionRow],
+      });
       await buttonInteraction.deferReply({ ephemeral: true });
-      const newMembershipRole = await MembershipRole.build({
+      const newMembershipRoleDoc = await MembershipRoleCollection.build({
         _id: role.id,
         name: role.name,
         color: role.color,
         guild: guild.id,
         youTubeChannel: youTubeChannel._id,
       });
-      const populatedNewMembershipRole = await MembershipRole.populate<{
+      const populatedNewMembershipRoleDoc = await MembershipRoleCollection.populate<{
         youTubeChannel: YouTubeChannelDoc;
-      }>(newMembershipRole, 'youTubeChannel');
+      }>(newMembershipRoleDoc, 'youTubeChannel');
 
       await buttonInteraction.editReply({
-        content: `Successfully added the membership role <@&${populatedNewMembershipRole._id}> for the YouTube channel \`${populatedNewMembershipRole.youTubeChannel.title}\`.`,
+        content: `Successfully added the membership role <@&${populatedNewMembershipRoleDoc._id}> for the YouTube channel \`${populatedNewMembershipRoleDoc.youTubeChannel.title}\`.`,
       });
-    } else {
-      await buttonInteraction.reply({
-        content: 'An error occurred. Please try again.',
-        ephemeral: true,
-      });
-      return;
     }
   },
 });

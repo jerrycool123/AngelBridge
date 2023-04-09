@@ -46,10 +46,10 @@ const youTubeChannelSchema = new Schema<YouTubeChannelDoc>(
   },
 );
 
-const YouTubeChannel = model<YouTubeChannelDoc, YouTubeChannelModel>(
+const YouTubeChannelCollection = model<YouTubeChannelDoc, YouTubeChannelModel>(
   'YouTubeChannel',
   youTubeChannelSchema,
   'YouTubeChannel',
 );
 
-export default YouTubeChannel;
+export default YouTubeChannelCollection;

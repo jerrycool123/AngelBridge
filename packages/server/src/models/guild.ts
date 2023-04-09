@@ -64,6 +64,6 @@ const guildSchema = new Schema<GuildDoc>(
   },
 );
 
-const Guild = model<GuildDoc, GuildModel>('Guild', guildSchema, 'Guild');
+const GuildCollection = model<GuildDoc, GuildModel>('Guild', guildSchema, 'Guild');
 
-export default Guild;
+export default GuildCollection;

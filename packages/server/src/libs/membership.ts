@@ -15,8 +15,8 @@ import membershipAcceptButton from '../bot/buttons/membership-accept.js';
 import membershipModifyButton from '../bot/buttons/membership-modify.js';
 import membershipRejectButton from '../bot/buttons/membership-reject.js';
 import client from '../bot/index.js';
-import Guild from '../models/guild.js';
-import { createInvalidActionRow } from './discord-util.js';
+import GuildCollection from '../models/guild.js';
+import { createDisabledInvalidActionRow } from './discord-util.js';
 import { extractDate } from './i18n.js';
 import ocrWorker, { supportedOCRLanguages } from './ocr.js';
 
@@ -37,19 +37,21 @@ export const recognizeMembership =
   ) =>
   async () => {
     try {
-      const dbGuild = await Guild.findById(guildId);
-      if (!dbGuild) {
-        throw new Error(`Guild ID ${dbGuild} does not exist in the database`);
-      } else if (!dbGuild.allowedMembershipVerificationMethods.ocr) {
-        throw new Error(`Guild ${dbGuild.name}(ID:${dbGuild._id}) does not allow OCR verification`);
-      } else if (!dbGuild.logChannel) {
-        throw new Error(`Guild ${dbGuild.name}(ID:${dbGuild._id}) does not have a log channel`);
+      const guildDoc = await GuildCollection.findById(guildId);
+      if (!guildDoc) {
+        throw new Error(`Guild ID ${guildDoc} does not exist in the database`);
+      } else if (!guildDoc.allowedMembershipVerificationMethods.ocr) {
+        throw new Error(
+          `Guild ${guildDoc.name}(ID:${guildDoc._id}) does not allow OCR verification`,
+        );
+      } else if (!guildDoc.logChannel) {
+        throw new Error(`Guild ${guildDoc.name}(ID:${guildDoc._id}) does not have a log channel`);
       }
       const guild = await client.guilds.fetch(guildId);
-      const logChannel = await guild.channels.fetch(dbGuild.logChannel, { force: true });
+      const logChannel = await guild.channels.fetch(guildDoc.logChannel, { force: true });
       if (!logChannel) {
         throw new Error(
-          `The log channel ID ${dbGuild.logChannel} in guild ${guild.name}(ID: ${guild.id}) does not exist.`,
+          `The log channel ID ${guildDoc.logChannel} in guild ${guild.name}(ID: ${guild.id}) does not exist.`,
         );
       } else if (!(logChannel instanceof TextChannel)) {
         throw new Error(`The log channel ${logChannel.name} must be a text channel.`);
@@ -130,7 +132,7 @@ export const replyInvalidRequest = async (
   interaction: ButtonInteraction,
   content = 'Failed to retrieve membership verification request embed.',
 ) => {
-  const actionRow = createInvalidActionRow();
+  const actionRow = createDisabledInvalidActionRow();
   await interaction.message.edit({
     components: [actionRow],
   });

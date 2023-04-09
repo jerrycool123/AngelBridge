@@ -7,13 +7,13 @@ import {
 } from 'discord.js';
 import { GuildMember } from 'discord.js';
 
-import { createAcceptedActionRow } from '../../libs/discord-util.js';
+import { createDisabledAcceptedActionRow } from '../../libs/discord-util.js';
 import {
   parseMembershipVerificationRequestEmbed,
   replyInvalidRequest,
 } from '../../libs/membership.js';
-import Membership from '../../models/membership.js';
-import User from '../../models/user.js';
+import MembershipCollection from '../../models/membership.js';
+import UserCollection from '../../models/user.js';
 import DiscordBotConfig from '../config.js';
 import CustomButton from './index.js';
 
@@ -97,7 +97,7 @@ const membershipAcceptButton = new CustomButton({
     }
 
     // Update database
-    await User.findByIdAndUpdate(
+    await UserCollection.findByIdAndUpdate(
       member.id,
       {
         $set: {
@@ -111,7 +111,7 @@ const membershipAcceptButton = new CustomButton({
         new: true,
       },
     );
-    await Membership.findOneAndUpdate(
+    await MembershipCollection.findOneAndUpdate(
       {
         user: member.id,
         type: 'ocr',
@@ -157,7 +157,7 @@ const membershipAcceptButton = new CustomButton({
     }
 
     // Mark the request as accepted
-    const acceptedActionRow = createAcceptedActionRow();
+    const acceptedActionRow = createDisabledAcceptedActionRow();
     await interaction.message.edit({
       content: notified
         ? ''

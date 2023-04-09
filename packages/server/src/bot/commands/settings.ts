@@ -1,7 +1,7 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
 import { replyGuildOnly, upsertGuildConfig } from '../../libs/discord-util.js';
-import MembershipRole from '../../models/membership-role.js';
+import MembershipRoleCollection from '../../models/membership-role.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
 import CustomBotCommand from './index.js';
@@ -21,7 +21,7 @@ const settings = new CustomBotCommand({
     await interaction.deferReply({ ephemeral: true });
     const guildConfig = await upsertGuildConfig(guild);
 
-    const roles = await MembershipRole.find({ guild: guild.id }).populate<{
+    const membershipRoleDocs = await MembershipRoleCollection.find({ guild: guild.id }).populate<{
       youTubeChannel: YouTubeChannelDoc;
     }>('youTubeChannel');
 
@@ -60,8 +60,8 @@ const settings = new CustomBotCommand({
             {
               name: 'Membership Roles',
               value:
-                roles.length > 0
-                  ? roles
+                membershipRoleDocs.length > 0
+                  ? membershipRoleDocs
                       .map(
                         ({ _id, youTubeChannel }) =>
                           `<@&${_id}> - [${youTubeChannel.title}](https://www.youtube.com/channel/${youTubeChannel._id}) ([${youTubeChannel.customUrl}](https://www.youtube.com/${youTubeChannel.customUrl}))`,

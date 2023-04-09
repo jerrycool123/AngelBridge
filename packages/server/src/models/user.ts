@@ -49,6 +49,6 @@ const userSchema = new Schema<UserDoc>(
   },
 );
 
-const User = model<UserDoc, UserModel>('User', userSchema, 'User');
+const UserCollection = model<UserDoc, UserModel>('User', userSchema, 'User');
 
-export default User;
+export default UserCollection;

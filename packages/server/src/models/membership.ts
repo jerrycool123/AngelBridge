@@ -67,16 +67,16 @@ interface MembershipModel extends Model<MembershipDoc> {
 }
 
 baseMembershipSchema.statics.build = async function (attrs: MembershipAttrs) {
-  return await Membership.create(attrs);
+  return await MembershipCollection.create(attrs);
 };
 
-const Membership = model<MembershipDoc, MembershipModel>(
+const MembershipCollection = model<MembershipDoc, MembershipModel>(
   'Membership',
   baseMembershipSchema,
   'Membership',
 );
 
-Membership.discriminator('ocr', ocrMembershipSchema);
-Membership.discriminator('oauth', oauthMembershipSchema);
+MembershipCollection.discriminator('ocr', ocrMembershipSchema);
+MembershipCollection.discriminator('oauth', oauthMembershipSchema);
 
-export default Membership;
+export default MembershipCollection;
