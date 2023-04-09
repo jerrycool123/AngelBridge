@@ -1,9 +1,12 @@
 import { Document, Model, Schema, Types, model } from 'mongoose';
 
-export interface OCRMembershipAttrs {
-  type: 'ocr';
-  billingDate: number; // Date of month when membership is billed
+export interface BaseMembershipAttrs {
+  user: string; // Ref: User
   membershipRole: string; // Ref: MembershipRole
+}
+export interface OCRMembershipAttrs extends BaseMembershipAttrs {
+  type: 'ocr';
+  billingDate: Date;
 }
 
 export interface OCRMembershipDoc extends OCRMembershipAttrs, Document<Types.ObjectId> {
@@ -12,7 +15,7 @@ export interface OCRMembershipDoc extends OCRMembershipAttrs, Document<Types.Obj
   updatedAt: Date;
 }
 
-export interface OAuthMembershipAttrs {
+export interface OAuthMembershipAttrs extends BaseMembershipAttrs {
   type: 'oauth';
   youtubeChannel: string; // Ref: YouTubeChannel
 }
@@ -23,18 +26,25 @@ export interface OAuthMembershipDoc extends OAuthMembershipAttrs, Document<Types
   updatedAt: Date;
 }
 
-const baseMembershipSchema = new Schema({}, { discriminatorKey: 'type', timestamps: true });
+const baseMembershipSchema = new Schema(
+  {
+    user: {
+      type: String,
+      ref: 'User',
+      required: true,
+    },
+    membershipRole: {
+      type: String,
+      ref: 'MembershipRole',
+      required: true,
+    },
+  },
+  { discriminatorKey: 'type', timestamps: true },
+);
 
 const ocrMembershipSchema = new Schema<OCRMembershipDoc>({
   billingDate: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 31,
-  },
-  membershipRole: {
-    type: String,
-    ref: 'MembershipRole',
+    type: Date,
     required: true,
   },
 });

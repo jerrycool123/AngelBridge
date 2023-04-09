@@ -10,7 +10,7 @@ import {
 } from 'discord.js';
 import { youtube_v3 } from 'googleapis';
 
-import { generateRandomColorNumber, genericOption } from '../../libs/discord-util.js';
+import { genericOption } from '../../libs/discord-util.js';
 import { youtubeApi } from '../../libs/google.js';
 import YouTubeChannel from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
@@ -20,7 +20,7 @@ const add_yt_channel = new CustomBotCommand({
   data: new SlashCommandBuilder()
     .setName('add-yt-channel')
     .setDescription("Add a YouTube channel to the bot's supported list.")
-    .setDefaultMemberPermissions(DiscordBotConfig.adminPermissions)
+    .setDefaultMemberPermissions(DiscordBotConfig.moderatorPermissions)
     .addStringOption(genericOption('id', 'YouTube channel ID or video ID', true)),
   async execute(interaction) {
     const { user, options } = interaction;
@@ -42,7 +42,10 @@ const add_yt_channel = new CustomBotCommand({
       }
       if (!videoChannelId) {
         await interaction.editReply({
-          content: `Could not find a YouTube video for the video ID: \`${id}\`. Please try again.`,
+          content:
+            `Could not find a YouTube video for the video ID: \`${id}\`. Please try again. Here are some examples:\n\n` +
+            `The channel ID of <https://www.youtube.com/channel/UCZlDXzGoo7d44bwdNObFacg> is \`UCZlDXzGoo7d44bwdNObFacg\`. It must begins with 'UC...'. Currently we don't support custom channel ID search (e.g. \`@AmaneKanata\`). If you cannot find a valid channel ID, please provide a video ID instead.\n\n` +
+            `The video ID of <https://www.youtube.com/watch?v=Dji-ehIz5_k> is \`Dji-ehIz5_k\`.`,
         });
         return;
       } else {
@@ -108,7 +111,7 @@ const add_yt_channel = new CustomBotCommand({
             },
           ])
           .setTimestamp()
-          .setColor(generateRandomColorNumber())
+          .setColor('Random')
           .setFooter({ text: `ID: ${user.id}` }),
       ],
     });

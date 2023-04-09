@@ -9,7 +9,7 @@ class DiscordBotConfig {
   private static rest = new REST({ version: '10' }).setToken(Env.DISCORD_BOT_TOKEN);
 
   static requiredIntents = [GatewayIntentBits.Guilds];
-  static adminPermissions = PermissionFlagsBits.ManageRoles;
+  static moderatorPermissions = PermissionFlagsBits.ManageRoles;
 
   // Initialize later
   static globalCommands: CustomBotCommand[] = [];

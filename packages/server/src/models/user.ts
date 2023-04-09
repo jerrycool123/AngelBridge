@@ -1,4 +1,4 @@
-import { Document, Model, Schema, Types, model } from 'mongoose';
+import { Document, Model, Schema, model } from 'mongoose';
 
 export interface UserAttrs {
   _id: string; // Discord ID
@@ -8,7 +8,6 @@ export interface UserAttrs {
 
 export interface UserDoc extends UserAttrs, Document<string> {
   _id: string;
-  memberships: Types.ObjectId[];
   language: SupportedOCRLanguage['language'];
   createdAt: Date;
   updatedAt: Date;
@@ -28,17 +27,6 @@ const userSchema = new Schema<UserDoc>(
     avatar: {
       type: String,
       required: true,
-    },
-    memberships: {
-      type: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: 'Membership',
-          required: true,
-        },
-      ],
-      required: true,
-      default: [],
     },
     language: {
       type: String,

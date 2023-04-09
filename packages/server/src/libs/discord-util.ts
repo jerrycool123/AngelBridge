@@ -21,8 +21,6 @@ export const genericOption =
   (option: T) =>
     option.setName(name).setDescription(description).setRequired(required);
 
-export const generateRandomColorNumber = () => Math.floor(Math.random() * 16777215);
-
 export const upsertGuildConfig = async (guild: DiscordGuild) => {
   return await Guild.findByIdAndUpdate(
     guild.id,

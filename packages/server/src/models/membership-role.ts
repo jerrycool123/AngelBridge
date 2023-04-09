@@ -2,6 +2,8 @@ import { Document, Model, Schema, model } from 'mongoose';
 
 export interface MembershipRoleAttrs {
   _id: string; // Discord Role ID
+  name: string;
+  color: number;
   guild: string; // Ref: Guild
   youTubeChannel: string; // Ref: YouTubeChannel
 }
@@ -19,6 +21,14 @@ interface MembershipRoleModel extends Model<MembershipRoleDoc> {
 const membershipRoleSchema = new Schema<MembershipRoleDoc>(
   {
     _id: String,
+    name: {
+      type: String,
+      required: true,
+    },
+    color: {
+      type: Number,
+      required: true,
+    },
     guild: {
       type: String,
       ref: 'Guild',

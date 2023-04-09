@@ -43,3 +43,7 @@ type SupportedOCRLanguage =
       language: 'Vietnamese';
       code: 'vie';
     };
+interface CustomCronJob {
+  name: string;
+  cronjob: import('cron').CronJob;
+}

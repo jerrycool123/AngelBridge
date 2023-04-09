@@ -8,10 +8,10 @@ const set_log_channel = new CustomBotCommand({
   data: new SlashCommandBuilder()
     .setName('set-log-channel')
     .setDescription('Set a log channel where the membership verification requests would be sent.')
-    .setDefaultMemberPermissions(DiscordBotConfig.adminPermissions)
+    .setDefaultMemberPermissions(DiscordBotConfig.moderatorPermissions)
     .addChannelOption(genericOption('channel', 'The log channel in this guild', true)),
   async execute(interaction) {
-    const { guild, options } = interaction;
+    const { guild, options, client } = interaction;
     if (!guild) {
       await replyGuildOnly(interaction);
       return;
@@ -27,12 +27,12 @@ const set_log_channel = new CustomBotCommand({
         content: 'The log channel must be a text channel.',
       });
       return;
-    } else if (!guild.members.me?.permissionsIn(channel).has(PermissionFlagsBits.ViewChannel)) {
+    } else if (!channel.permissionsFor(client.user)?.has(PermissionFlagsBits.ViewChannel)) {
       await interaction.editReply({
         content: `The bot does not have the permission to view #${channel.name}(ID: ${channel.id}).`,
       });
       return;
-    } else if (!guild.members.me?.permissionsIn(channel).has(PermissionFlagsBits.SendMessages)) {
+    } else if (!channel.permissionsFor(client.user)?.has(PermissionFlagsBits.SendMessages)) {
       sendMessageSuccess = false;
     } else {
       try {

@@ -1,10 +1,6 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
-import {
-  generateRandomColorNumber,
-  replyGuildOnly,
-  upsertGuildConfig,
-} from '../../libs/discord-util.js';
+import { replyGuildOnly, upsertGuildConfig } from '../../libs/discord-util.js';
 import MembershipRole from '../../models/membership-role.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
@@ -14,7 +10,7 @@ const settings = new CustomBotCommand({
   data: new SlashCommandBuilder()
     .setName('settings')
     .setDescription('Display guild settings')
-    .setDefaultMemberPermissions(DiscordBotConfig.adminPermissions),
+    .setDefaultMemberPermissions(DiscordBotConfig.moderatorPermissions),
   async execute(interaction) {
     const { guild, user } = interaction;
     if (!guild) {
@@ -75,7 +71,7 @@ const settings = new CustomBotCommand({
             },
           ])
           .setTimestamp()
-          .setColor(generateRandomColorNumber())
+          .setColor('Random')
           .setFooter({ text: `ID: ${user.id}` }),
       ],
     });

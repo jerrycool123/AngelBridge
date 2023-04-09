@@ -1,6 +1,7 @@
 import { Client } from 'discord.js';
 
 import membershipAcceptButton from './buttons/membership-accept.js';
+import membershipModifyButton from './buttons/membership-modify.js';
 import membershipRejectButton from './buttons/membership-reject.js';
 import add_role from './commands/add-role.js';
 import add_yt_channel from './commands/add-yt-channel.js';
@@ -25,11 +26,15 @@ DiscordBotConfig.addGuildCommands([
   verify,
   set_log_channel,
 ]);
-DiscordBotConfig.addButtons([membershipAcceptButton, membershipRejectButton]);
+DiscordBotConfig.addButtons([
+  membershipAcceptButton,
+  membershipRejectButton,
+  membershipModifyButton,
+]);
 DiscordBotConfig.addEventHandlers([ready, interactionCreate, guildCreate, guildUpdate]);
 
 // Create a new client instance
-const client = new Client({ intents: DiscordBotConfig.requiredIntents });
+const client = new Client<true>({ intents: DiscordBotConfig.requiredIntents });
 
 // Register event handlers
 DiscordBotConfig.registerBotEventHandlers(client);

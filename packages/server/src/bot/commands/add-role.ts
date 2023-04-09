@@ -19,7 +19,7 @@ const add_role = new CustomBotCommand({
   data: new SlashCommandBuilder()
     .setName('add-role')
     .setDescription('Add a YouTube membership role in this guild')
-    .setDefaultMemberPermissions(DiscordBotConfig.adminPermissions)
+    .setDefaultMemberPermissions(DiscordBotConfig.moderatorPermissions)
     .addStringOption(genericOption('keyword', "The YouTube channel's ID, name or custom URL", true))
     .addRoleOption(genericOption('role', 'The YouTube Membership role in this guild', true)),
   async execute(interaction) {
@@ -129,6 +129,8 @@ const add_role = new CustomBotCommand({
       await buttonInteraction.deferReply({ ephemeral: true });
       const newMembershipRole = await MembershipRole.build({
         _id: role.id,
+        name: role.name,
+        color: role.color,
         guild: guild.id,
         youTubeChannel: youTubeChannel._id,
       });

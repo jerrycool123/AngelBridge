@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import client from './bot/index.js';
 import Env from './libs/env.js';
 import ocrWorker from './libs/ocr.js';
+import startCronjobs from './routines/index.js';
 import app from './server/index.js';
 
 const main = async () => {
@@ -24,7 +25,10 @@ const main = async () => {
   });
 
   // Login to Discord
-  client.login(Env.DISCORD_BOT_TOKEN);
+  await client.login(Env.DISCORD_BOT_TOKEN);
+
+  // Start cron jobs
+  startCronjobs();
 };
 
 await main();
