@@ -8,6 +8,7 @@ export interface UserAttrs {
 
 export interface UserDoc extends UserAttrs, Document<string> {
   _id: string;
+  lastVerifyingRoleId: string | null;
   language: SupportedOCRLanguage['language'];
   createdAt: Date;
   updatedAt: Date;
@@ -27,6 +28,10 @@ const userSchema = new Schema<UserDoc>(
     avatar: {
       type: String,
       required: true,
+    },
+    lastVerifyingRoleId: {
+      type: String,
+      default: null,
     },
     language: {
       type: String,

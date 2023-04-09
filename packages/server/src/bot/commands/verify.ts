@@ -5,6 +5,7 @@ import {
   ButtonStyle,
   CacheType,
   ComponentType,
+  EmbedBuilder,
   SlashCommandBuilder,
   StringSelectMenuBuilder,
 } from 'discord.js';
@@ -86,7 +87,8 @@ const verify = new CustomBotCommand({
       return;
     }
 
-    let selectedRoleId: string | null = null;
+    let selectedRoleId =
+      dbRoles.find((role) => role._id === dbUser.lastVerifyingRoleId)?._id ?? null;
     let selectedLanguage = supportedOCRLanguages.find(
       ({ language }) => language === dbUser.language,
     ) ?? { language: 'English', code: 'eng' };
@@ -95,6 +97,7 @@ const verify = new CustomBotCommand({
       label: guildRoles.get(role._id)?.name ?? `<@&${role._id}>`,
       description: `${role.youTubeChannel.title} (${role.youTubeChannel.customUrl})`,
       value: role._id,
+      default: role._id === selectedRoleId,
     }));
     const languageOptions = supportedOCRLanguages.map(({ language, code }) => ({
       label: language,
@@ -119,9 +122,7 @@ const verify = new CustomBotCommand({
     );
 
     const response = await interaction.editReply({
-      content:
-        'Please select a membership role and the language of the text in your picture.\n' +
-        `__Selected language__: \`${selectedLanguage.language}\``,
+      content: 'Please select a membership role and the language of the text in your picture.',
       components: [membershipRoleActionRow, languageActionRow, buttonActionRow],
     });
 
@@ -160,10 +161,7 @@ const verify = new CustomBotCommand({
         );
       }
       await stringSelectMenuInteraction.editReply({
-        content:
-          'Please select a membership role and the language of the text in your picture.\n' +
-          (selectedRoleId ? `__Selected role__: <@&${selectedRoleId}>\n` : '') +
-          `__Selected language__: \`${selectedLanguage.language}\``,
+        content: 'Please select a membership role and the language of the text in your picture.\n',
         components: [membershipRoleActionRow, languageActionRow, buttonActionRow],
       });
     });
@@ -175,10 +173,7 @@ const verify = new CustomBotCommand({
         filter: (buttonInteraction) => user.id === buttonInteraction.user.id,
         time: 60 * 1000,
       });
-      buttonActionRow.components[0].setDisabled(true);
-      await buttonInteraction.update({
-        components: [buttonActionRow],
-      });
+      await buttonInteraction.deferUpdate();
     } catch (error) {
       // Timeout
     }
@@ -198,6 +193,7 @@ const verify = new CustomBotCommand({
       return;
     }
 
+    dbUser.lastVerifyingRoleId = selectedRoleId;
     dbUser.language = selectedLanguage.language;
     await dbUser.save();
 
@@ -214,12 +210,43 @@ const verify = new CustomBotCommand({
         role._id,
       ),
     );
-    await buttonInteraction.followUp({
-      content:
-        'After I finished parsing your picture,\n' +
-        `It will be sent to the moderators of \`${guild.name}\` for further verification.\n` +
-        'You will get a message when your role is applied.',
-      ephemeral: true,
+    await buttonInteraction.editReply({
+      content: '',
+      embeds: [
+        new EmbedBuilder()
+          .setAuthor({
+            name: dbUser.username,
+            iconURL: dbUser.avatar,
+          })
+          .setTitle('Membership Verification Request Submitted')
+          .setDescription(
+            'After I finished recognizing your picture, ' +
+              'it will be sent to the moderators of the server for further verification.\n' +
+              'You will get a message when your role is applied.',
+          )
+          .addFields([
+            {
+              name: 'Membership Role',
+              value: `<@&${role._id}>`,
+              inline: true,
+            },
+            {
+              name: 'Language',
+              value: selectedLanguage.language,
+              inline: true,
+            },
+            {
+              name: 'Discord Server',
+              value: guild.name,
+              inline: true,
+            },
+          ])
+          .setImage(picture.url)
+          .setColor(role.color)
+          .setTimestamp()
+          .setFooter({ text: `ID: ${user.id}` }),
+      ],
+      components: [],
     });
   },
 });

@@ -38,7 +38,7 @@ const membershipRejectButton = new CustomButton({
 
     // Create reject modal
     const rejectModal = new ModalBuilder()
-      .setCustomId('membership-reject-modal')
+      .setCustomId(`membership-reject-modal-${interaction.id}`)
       .setTitle('Reject Membership Request')
       .addComponents(
         new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
@@ -84,9 +84,12 @@ const membershipRejectButton = new CustomButton({
       modalSubmitInteraction = await interaction.awaitModalSubmit({
         filter: (modalSubmitInteraction) =>
           moderator.id === modalSubmitInteraction.user.id &&
-          modalSubmitInteraction.customId === 'membership-reject-modal',
+          modalSubmitInteraction.customId === `membership-reject-modal-${interaction.id}`,
         time: 60 * 1000,
       });
+      // Acknowledge the modal
+
+      await modalSubmitInteraction.deferUpdate();
     } catch (error) {
       // Timeout
     }
@@ -95,9 +98,6 @@ const membershipRejectButton = new CustomButton({
       return;
     }
     const reason = modalSubmitInteraction.fields.getTextInputValue('membership-reject-reason');
-
-    // Acknowledge the modal
-    await modalSubmitInteraction.deferUpdate();
 
     // DM the user
     let notified = false;
