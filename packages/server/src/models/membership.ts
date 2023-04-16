@@ -17,7 +17,7 @@ export interface OCRMembershipDoc extends OCRMembershipAttrs, Document<Types.Obj
 
 export interface OAuthMembershipAttrs extends BaseMembershipAttrs {
   type: 'oauth';
-  youtubeChannel: string; // Ref: YouTubeChannel
+  refreshToken: string;
 }
 
 export interface OAuthMembershipDoc extends OAuthMembershipAttrs, Document<Types.ObjectId> {
@@ -51,9 +51,8 @@ const ocrMembershipSchema = new Schema<OCRMembershipDoc>({
 ocrMembershipSchema.add(baseMembershipSchema);
 
 const oauthMembershipSchema = new Schema<OAuthMembershipDoc>({
-  youtubeChannel: {
+  refreshToken: {
     type: String,
-    ref: 'YouTubeChannel',
     required: true,
   },
 });

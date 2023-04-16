@@ -1,7 +1,11 @@
-import { PermissionFlagsBits, SlashCommandBuilder, TextChannel } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 
-import { genericOption, replyGuildOnly, upsertGuildConfig } from '../../libs/discord-util.js';
 import DiscordBotConfig from '../config.js';
+import { requireGuildHasLogChannel } from '../utils/checker.js';
+import { genericOption } from '../utils/common.js';
+import { upsertGuildCollection } from '../utils/db.js';
+import { CustomError } from '../utils/error.js';
+import { useGuildOnly } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const set_log_channel = new CustomBotCommand({
@@ -9,57 +13,35 @@ const set_log_channel = new CustomBotCommand({
     .setName('set-log-channel')
     .setDescription('Set a log channel where the membership verification requests would be sent.')
     .setDefaultMemberPermissions(DiscordBotConfig.moderatorPermissions)
-    .addChannelOption(genericOption('channel', 'The log channel in this guild', true)),
-  async execute(interaction) {
-    const { guild, options, client } = interaction;
-    if (!guild) {
-      await replyGuildOnly(interaction);
-      return;
-    }
+    .addChannelOption(genericOption('channel', 'The log channel in this server', true)),
+  execute: useGuildOnly(async (interaction) => {
+    const { guild, options } = interaction;
 
     await interaction.deferReply({ ephemeral: true });
 
+    // Get log channel
     const channel = options.getChannel('channel', true);
+    const logChannel = await requireGuildHasLogChannel(interaction, guild, channel.id);
 
-    let sendMessageSuccess = true;
-    if (!(channel instanceof TextChannel)) {
-      await interaction.editReply({
-        content: 'The log channel must be a text channel.',
+    // Check if the bot can send messages in the log channel
+    try {
+      await logChannel.send({
+        content: 'I will send membership verification requests to this channel.',
       });
-      return;
-    } else if (!channel.permissionsFor(client.user)?.has(PermissionFlagsBits.ViewChannel)) {
-      await interaction.editReply({
-        content: `The bot does not have the permission to view #${channel.name}(ID: ${channel.id}).`,
-      });
-      return;
-    } else if (!channel.permissionsFor(client.user)?.has(PermissionFlagsBits.SendMessages)) {
-      sendMessageSuccess = false;
-    } else {
-      try {
-        await channel.send({
-          content: 'I will send membership verification requests to this channel.',
-        });
-      } catch (error) {
-        console.error(error);
-        sendMessageSuccess = false;
-      }
+    } catch (error) {
+      console.error(error);
+      throw new CustomError(`Failed to send messages in <#${logChannel.id}>.`, interaction);
     }
 
-    if (!sendMessageSuccess) {
-      await interaction.editReply({
-        content: `The bot does not have the permission to send messages in #${channel.name}(ID: ${channel.id}).`,
-      });
-      return;
-    }
-
-    const guildConfig = await upsertGuildConfig(guild);
+    // Add the log channel to DB
+    const guildConfig = await upsertGuildCollection(guild);
     guildConfig.logChannel = channel.id;
     await guildConfig.save();
 
     await interaction.editReply({
       content: `The log channel has been set to <#${channel.id}>.`,
     });
-  },
+  }),
 });
 
 export default set_log_channel;

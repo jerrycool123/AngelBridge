@@ -1,10 +1,10 @@
-import { upsertGuildConfig } from '../../libs/discord-util.js';
+import { upsertGuildCollection } from '../utils/db.js';
 import CustomBotEventHandler from './index.js';
 
 const guildUpdate = new CustomBotEventHandler<'guildUpdate'>({
   name: 'guildUpdate',
   execute: async (_oldGuild, newGuild) => {
-    await upsertGuildConfig(newGuild);
+    await upsertGuildCollection(newGuild);
   },
 });
 

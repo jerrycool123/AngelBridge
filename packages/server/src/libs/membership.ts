@@ -15,8 +15,9 @@ import membershipAcceptButton from '../bot/buttons/membership-accept.js';
 import membershipModifyButton from '../bot/buttons/membership-modify.js';
 import membershipRejectButton from '../bot/buttons/membership-reject.js';
 import client from '../bot/index.js';
+import { createDisabledInvalidActionRow } from '../bot/utils/common.js';
+import { CustomError } from '../bot/utils/error.js';
 import GuildCollection from '../models/guild.js';
-import { createDisabledInvalidActionRow } from './discord-util.js';
 import { extractDate } from './i18n.js';
 import ocrWorker, { supportedOCRLanguages } from './ocr.js';
 
@@ -95,7 +96,7 @@ export const recognizeMembership =
             .setTitle('Membership Verification Request')
             .addFields([
               {
-                name: 'Recognized Date',
+                name: 'Expiration Date',
                 value:
                   year !== null && month !== null && day !== null
                     ? `${year}/${month.toString().padStart(2, '0')}/${day
@@ -128,7 +129,7 @@ export const recognizeMembership =
     }
   };
 
-export const replyInvalidRequest = async (
+export const replyInvalidMembershipVerificationRequest = async (
   interaction: ButtonInteraction,
   content = 'Failed to retrieve membership verification request embed.',
 ) => {
@@ -136,8 +137,7 @@ export const replyInvalidRequest = async (
   await interaction.message.edit({
     components: [actionRow],
   });
-  await interaction.reply({ content });
-  return;
+  throw new CustomError(content, interaction);
 };
 
 export const parseMembershipVerificationRequestEmbed = (
@@ -159,7 +159,7 @@ export const parseMembershipVerificationRequestEmbed = (
   if (!createdAt) return null;
 
   const expireAtString =
-    infoEmbed.fields.find(({ name }) => name === 'Recognized Date')?.value ?? null;
+    infoEmbed.fields.find(({ name }) => name === 'Expiration Date')?.value ?? null;
   const rawExpireAt = expireAtString ? dayjs.utc(expireAtString, 'YYYY/MM/DD', true) : null;
   const expireAt = rawExpireAt?.isValid() ? rawExpireAt : null;
 

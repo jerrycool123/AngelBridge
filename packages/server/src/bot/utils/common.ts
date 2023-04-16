@@ -3,63 +3,21 @@ import {
   ApplicationCommandOptionBase,
   ButtonBuilder,
   ButtonStyle,
-  CommandInteraction,
-  Guild,
-  Role,
+  InteractionEditReplyOptions,
+  InteractionReplyOptions,
 } from 'discord.js';
-
-import GuildCollection from '../models/guild.js';
-import MembershipRoleCollection from '../models/membership-role.js';
-
-export const replyGuildOnly = async (interaction: CommandInteraction) => {
-  await interaction.reply({
-    content: 'This command is unavailable in DM channels!',
-    ephemeral: true,
-  });
-};
 
 export const genericOption =
   <T extends ApplicationCommandOptionBase>(name: string, description: string, required = false) =>
   (option: T) =>
     option.setName(name).setDescription(description).setRequired(required);
 
-export const upsertGuildConfig = async (guild: Guild) => {
-  return await GuildCollection.findByIdAndUpdate(
-    guild.id,
-    {
-      $set: {
-        name: guild.name,
-        icon: guild.iconURL(),
-      },
-      $setOnInsert: {
-        _id: guild.id,
-        allowedMembershipVerificationMethods: {
-          oauth: false,
-          ocr: true,
-        },
-      },
-    },
-    {
-      upsert: true,
-      new: true,
-    },
-  );
-};
-
-export const updateRoleConfig = async (role: Role) => {
-  return await MembershipRoleCollection.findByIdAndUpdate(
-    role.id,
-    {
-      $set: {
-        name: role.name,
-        color: role.color,
-      },
-    },
-    {
-      new: true,
-    },
-  );
-};
+export const genericReply =
+  <T extends RepliableInteraction>(interaction: T, ephemeral = true) =>
+  (options: Partial<Intersect<InteractionReplyOptions, InteractionEditReplyOptions>>) =>
+    interaction.deferred
+      ? interaction.editReply(options)
+      : interaction.reply({ ...options, ephemeral });
 
 export const createDisabledInvalidActionRow = (label = 'Invalid request') =>
   new ActionRowBuilder<ButtonBuilder>().addComponents(

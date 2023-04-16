@@ -66,7 +66,7 @@ const OCRMembershipCheckRoutine: CustomCronJob = {
       if (!guildDoc) {
         // Remove user membership record in DB
         console.error(
-          `Failed to find the guild with ID: ${membershipRoleDoc.guild} which the role ${membershipRoleDoc.name}(ID: ${membershipRoleDoc._id}) belongs to in the database. The corresponding membership records will be removed.`,
+          `Failed to find the server with ID: ${membershipRoleDoc.guild} which the role ${membershipRoleDoc.name}(ID: ${membershipRoleDoc._id}) belongs to in the database. The corresponding membership records will be removed.`,
         );
         await MembershipCollection.deleteMany({ membershipRole: membershipRoleId });
 
@@ -124,8 +124,6 @@ const OCRMembershipCheckRoutine: CustomCronJob = {
           // Remove user membership
           let roleRemoved = false;
           let user: User | null = null;
-
-          await MembershipCollection.findOneAndDelete({ membershipRole: membershipRoleId });
 
           // Remove the role from the user
           if (guild) {

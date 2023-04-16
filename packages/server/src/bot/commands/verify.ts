@@ -10,83 +10,66 @@ import {
   StringSelectMenuBuilder,
 } from 'discord.js';
 
-import { genericOption, upsertGuildConfig } from '../../libs/discord-util.js';
 import { recognizeMembership } from '../../libs/membership.js';
 import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
-import UserCollection from '../../models/user.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import {
+  requireGuildDocumentAllowOCR,
+  requireGuildDocumentHasLogChannel,
+} from '../utils/checker.js';
+import { genericOption } from '../utils/common.js';
+import { upsertGuildCollection, upsertUserCollection } from '../utils/db.js';
+import { CustomError } from '../utils/error.js';
 import CustomBotCommand from './index.js';
 
 const verify = new CustomBotCommand({
   data: new SlashCommandBuilder()
     .setName('verify')
     .setDescription(
-      'Verify your YouTube membership and request access to the membership role in this guild.',
+      'Verify your YouTube membership and request access to the membership role in this server.',
     )
     .setDMPermission(true)
     .addAttachmentOption(genericOption('picture', 'Picture to OCR', true)),
-
   async execute(interaction) {
     const { guild, user, options } = interaction;
     if (!guild) {
-      await interaction.reply({
-        content:
-          'This command can only be used in a guild.\nHowever, we are developing a DM version of this command. Stay tuned!',
-        ephemeral: true,
-      });
-      return;
+      throw new CustomError(
+        'This command can only be used in a server.\n' +
+          'However, we are developing a DM version of this command. Stay tuned!',
+        interaction,
+      );
     }
 
     await interaction.deferReply({ ephemeral: true });
 
+    // Get user attachment
     const picture = options.getAttachment('picture', true);
     if (!picture.contentType?.startsWith('image/')) {
-      await interaction.editReply({
-        content: 'Please provide an image file.',
-      });
-      return;
+      throw new CustomError('Please provide an image file.', interaction);
     }
-    const [guildDoc, membershipRoleDocs, userDoc] = await Promise.all([
-      upsertGuildConfig(guild),
+
+    // Upsert guild and user config, get membership roles
+    const [guildDoc, userDoc, membershipRoleDocs] = await Promise.all([
+      upsertGuildCollection(guild),
+      upsertUserCollection(user),
       MembershipRoleCollection.find({ guild: guild.id }).populate<{
         youTubeChannel: YouTubeChannelDoc;
       }>('youTubeChannel'),
-      UserCollection.findByIdAndUpdate(
-        user.id,
-        {
-          $set: {
-            username: `${user.username}#${user.discriminator}`,
-            avatar: user.displayAvatarURL(),
-          },
-          $setOnInsert: { _id: user.id },
-        },
-        {
-          upsert: true,
-          new: true,
-        },
-      ),
     ]);
-    if (!guildDoc.allowedMembershipVerificationMethods.ocr) {
-      await interaction.editReply({
-        content:
-          'This guild does not allow OCR verification.\nPlease contact the guild moderator to change this setting.',
-      });
-      return;
-    } else if (!guildDoc.logChannel) {
-      await interaction.editReply({
-        content:
-          'There is no log channel set up in this guild.\nPlease contact the guild moderator to set one up with `/set-log-channel` first.',
-      });
-      return;
-    } else if (membershipRoleDocs.length === 0) {
-      await interaction.editReply({
-        content:
-          'There is no membership role in this guild.\nPlease contact the guild moderator to set one up with `/add-role` first.',
-      });
-      return;
+
+    // Guild and membership role checks
+    requireGuildDocumentAllowOCR(interaction, guildDoc);
+    requireGuildDocumentHasLogChannel(interaction, guildDoc);
+    if (membershipRoleDocs.length === 0) {
+      throw new CustomError(
+        'There is no membership role in this server.\n' +
+          'A server moderator can set one up with `/add-role` first.',
+        interaction,
+      );
     }
 
+    // Initialize action rows, buttons and menus
     let selectedRoleId =
       membershipRoleDocs.find((role) => role._id === userDoc.lastVerifyingRoleId)?._id ?? null;
     let selectedLanguage = supportedOCRLanguages.find(
@@ -128,6 +111,7 @@ const verify = new CustomBotCommand({
       components: [membershipRoleActionRow, languageActionRow, buttonActionRow],
     });
 
+    // Wait for user to select a membership role and language
     const stringSelectCollector = response.createMessageComponentCollector({
       componentType: ComponentType.StringSelect,
       filter: (stringSelectMenuInteraction) =>
@@ -171,6 +155,7 @@ const verify = new CustomBotCommand({
       });
     });
 
+    // Wait for user to click the verify button
     let buttonInteraction: ButtonInteraction<CacheType> | undefined = undefined;
     try {
       buttonInteraction = await response.awaitMessageComponent({
@@ -185,24 +170,21 @@ const verify = new CustomBotCommand({
     }
     if (!buttonInteraction) {
       await interaction.editReply({
-        content: 'Timed out. Please try again.',
         components: [],
       });
-      return;
+      throw new CustomError('Timed out. Please try again.', interaction);
     }
     const role = membershipRoleDocs.find((role) => role._id === selectedRoleId);
     if (!role) {
-      await buttonInteraction.followUp({
-        content: 'Please select a membership role.',
-        ephemeral: true,
-      });
-      return;
+      throw new CustomError('Please select a membership role.', buttonInteraction);
     }
 
+    // Save user config to DB
     userDoc.lastVerifyingRoleId = selectedRoleId;
     userDoc.language = selectedLanguage.language;
     await userDoc.save();
 
+    // Send picture to OCR worker
     ocrWorker.addJob(
       recognizeMembership(
         guild.id,
@@ -216,6 +198,8 @@ const verify = new CustomBotCommand({
         role._id,
       ),
     );
+
+    // Send response to user
     await buttonInteraction.editReply({
       content: '',
       embeds: [

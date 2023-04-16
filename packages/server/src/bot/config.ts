@@ -76,7 +76,7 @@ class DiscordBotConfig {
       console.log(
         '-',
         (command.data.name ?? '<unknown command>') + ':',
-        command.data.description?.slice(0, 32) ?? '',
+        command.data.description?.slice(0, 64) ?? '',
       );
     }
 

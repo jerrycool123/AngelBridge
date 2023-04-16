@@ -1,4 +1,4 @@
-import type { CacheType, ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 
 class CustomBotCommand {
   readonly data: Partial<SlashCommandBuilder>;

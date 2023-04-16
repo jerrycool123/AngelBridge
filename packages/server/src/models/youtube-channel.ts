@@ -25,7 +25,9 @@ const youTubeChannelSchema = new Schema<YouTubeChannelDoc>(
     },
     description: {
       type: String,
-      required: true,
+      required: function allowEmptyString(this: YouTubeChannelDoc) {
+        return typeof this.description !== 'string';
+      },
     },
     customUrl: {
       type: String,

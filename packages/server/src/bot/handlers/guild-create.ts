@@ -1,5 +1,5 @@
-import { upsertGuildConfig } from '../../libs/discord-util.js';
 import DiscordBotConfig from '../config.js';
+import { upsertGuildCollection } from '../utils/db.js';
 import CustomBotEventHandler from './index.js';
 
 const guildCreate = new CustomBotEventHandler<'guildCreate'>({
@@ -8,7 +8,7 @@ const guildCreate = new CustomBotEventHandler<'guildCreate'>({
     console.log(`Joined guild ${guild.name} [ID: ${guild.id}]`);
     await Promise.all([
       DiscordBotConfig.registerBotGuildCommands(guild.id),
-      upsertGuildConfig(guild),
+      upsertGuildCollection(guild),
     ]);
   },
 });
