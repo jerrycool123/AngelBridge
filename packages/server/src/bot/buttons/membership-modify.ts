@@ -15,13 +15,13 @@ import {
 } from 'discord.js';
 
 import { parseMembershipVerificationRequestEmbed } from '../../libs/membership.js';
-import { requireGivenDateNotTooFarInFuture } from '../utils/checker.js';
 import { CustomError } from '../utils/error.js';
 import {
   useFollowUpCustomError,
   useGuildOnly,
   useUserWithManageRolePermission,
 } from '../utils/middleware.js';
+import { requireGivenDateNotTooFarInFuture } from '../utils/validator.js';
 import CustomButton from './index.js';
 
 dayjs.extend(utc);

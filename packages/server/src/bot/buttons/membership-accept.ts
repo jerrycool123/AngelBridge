@@ -4,8 +4,6 @@ import {
   invalidateMembershipVerificationEmbed,
   parseMembershipVerificationRequestEmbed,
 } from '../../libs/membership.js';
-import { requireGivenDateNotTooFarInFuture, requireManageableRole } from '../utils/checker.js';
-import { requireGuildMember } from '../utils/checker.js';
 import { createDisabledAcceptedActionRow } from '../utils/common.js';
 import { upsertOCRMembershipCollection } from '../utils/db.js';
 import { upsertUserCollection } from '../utils/db.js';
@@ -16,6 +14,8 @@ import {
   useGuildOnly,
   useUserWithManageRolePermission,
 } from '../utils/middleware.js';
+import { requireGivenDateNotTooFarInFuture, requireManageableRole } from '../utils/validator.js';
+import { requireGuildMember } from '../utils/validator.js';
 import CustomButton from './index.js';
 
 const membershipAcceptButton = new CustomButton({

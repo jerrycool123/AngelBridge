@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from 'discord.js';
 
 import DiscordBotConfig from '../config.js';
-import { requireGuildHasLogChannel } from '../utils/checker.js';
 import { genericOption } from '../utils/common.js';
 import { upsertGuildCollection } from '../utils/db.js';
 import { CustomError } from '../utils/error.js';
 import { useGuildOnly } from '../utils/middleware.js';
+import { requireGuildHasLogChannel } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const set_log_channel = new CustomBotCommand({

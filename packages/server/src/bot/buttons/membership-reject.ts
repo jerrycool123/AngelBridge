@@ -12,13 +12,14 @@ import { ModalSubmitInteraction } from 'discord.js';
 import { CacheType } from 'discord.js';
 
 import { parseMembershipVerificationRequestEmbed } from '../../libs/membership.js';
-import { requireGuildMember } from '../utils/checker.js';
 import { createDisabledRejectedActionRow } from '../utils/common.js';
+import { CustomError } from '../utils/error.js';
 import {
   useFollowUpCustomError,
   useGuildOnly,
   useUserWithManageRolePermission,
 } from '../utils/middleware.js';
+import { requireGuildMember } from '../utils/validator.js';
 import CustomButton from './index.js';
 
 const membershipRejectButton = new CustomButton({
@@ -70,8 +71,7 @@ const membershipRejectButton = new CustomButton({
           // Timeout
         }
         if (!modalSubmitInteraction) {
-          await interaction.followUp({ content: 'Timed out. Please try again.', ephemeral: true });
-          return;
+          throw new CustomError('Timed out. Please try again.', interaction);
         }
         const reason = modalSubmitInteraction.fields.getTextInputValue(
           'membership-reject-reason-input',

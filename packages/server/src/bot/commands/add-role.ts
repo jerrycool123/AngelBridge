@@ -3,11 +3,11 @@ import { SlashCommandBuilder } from 'discord.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import YouTubeChannelCollection, { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
-import { requireManageableRole } from '../utils/checker.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirmButtonInteraction from '../utils/confirm.js';
 import { CustomError } from '../utils/error.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
+import { requireManageableRole } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const add_role = new CustomBotCommand({

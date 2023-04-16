@@ -4,6 +4,11 @@ import utc from 'dayjs/plugin/utc.js';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
 import DiscordBotConfig from '../config.js';
+import { genericOption } from '../utils/common.js';
+import awaitConfirm from '../utils/confirm.js';
+import { upsertOCRMembershipCollection } from '../utils/db.js';
+import { CustomError } from '../utils/error.js';
+import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
 import {
   requireGivenDateNotTooFarInFuture,
   requireGuildDocumentAllowOCR,
@@ -13,12 +18,7 @@ import {
   requireManageableRole,
   requireMembershipRoleDocumentWithYouTubeChannel,
   requiredGuildDocument,
-} from '../utils/checker.js';
-import { genericOption } from '../utils/common.js';
-import awaitConfirm from '../utils/confirm.js';
-import { upsertOCRMembershipCollection } from '../utils/db.js';
-import { CustomError } from '../utils/error.js';
-import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
+} from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);

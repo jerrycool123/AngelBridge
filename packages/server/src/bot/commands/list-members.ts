@@ -14,9 +14,9 @@ import MembershipCollection, {
   OCRMembershipDoc,
 } from '../../models/membership.js';
 import DiscordBotConfig from '../config.js';
-import { requireMembershipRoleDocumentWithYouTubeChannel } from '../utils/checker.js';
 import { genericOption } from '../utils/common.js';
 import { useGuildOnly } from '../utils/middleware.js';
+import { requireMembershipRoleDocumentWithYouTubeChannel } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);

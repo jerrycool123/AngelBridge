@@ -7,9 +7,9 @@ import MembershipCollection, {
   OCRMembershipDoc,
 } from '../../models/membership.js';
 import DiscordBotConfig from '../config.js';
-import { requireGuildMember } from '../utils/checker.js';
 import { genericOption } from '../utils/common.js';
 import { useGuildOnly } from '../utils/middleware.js';
+import { requireGuildMember } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);

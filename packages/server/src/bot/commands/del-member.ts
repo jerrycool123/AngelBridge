@@ -5,6 +5,10 @@ import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
 import MembershipCollection from '../../models/membership.js';
 import DiscordBotConfig from '../config.js';
+import { genericOption } from '../utils/common.js';
+import awaitConfirm from '../utils/confirm.js';
+import { CustomError } from '../utils/error.js';
+import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
 import {
   requireGuildDocumentAllowOCR,
   requireGuildDocumentHasLogChannel,
@@ -13,11 +17,7 @@ import {
   requireMembershipRoleDocumentWithYouTubeChannel,
   requireOCRMembershipDocumentWithGivenMembershipRole,
   requiredGuildDocument,
-} from '../utils/checker.js';
-import { genericOption } from '../utils/common.js';
-import awaitConfirm from '../utils/confirm.js';
-import { CustomError } from '../utils/error.js';
-import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
+} from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);

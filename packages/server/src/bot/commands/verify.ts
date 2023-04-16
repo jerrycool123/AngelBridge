@@ -14,13 +14,13 @@ import { recognizeMembership } from '../../libs/membership.js';
 import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
-import {
-  requireGuildDocumentAllowOCR,
-  requireGuildDocumentHasLogChannel,
-} from '../utils/checker.js';
 import { genericOption } from '../utils/common.js';
 import { upsertGuildCollection, upsertUserCollection } from '../utils/db.js';
 import { CustomError } from '../utils/error.js';
+import {
+  requireGuildDocumentAllowOCR,
+  requireGuildDocumentHasLogChannel,
+} from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const verify = new CustomBotCommand({
