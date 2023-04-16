@@ -1,3 +1,5 @@
+import { RepliableInteraction } from 'discord.js';
+
 import DiscordBotConfig from '../config.js';
 import { genericReply } from '../utils/common.js';
 import { CustomError } from '../utils/error.js';
@@ -29,14 +31,16 @@ const interactionCreate = new CustomBotEventHandler<'interactionCreate'>({
     } catch (error) {
       let errorInteraction = interaction as RepliableInteraction;
       let errorMessage = 'There was an error while handling this interaction!';
+      let followUp = false;
       if (error instanceof CustomError) {
         errorInteraction = error.interaction;
         errorMessage = error.message;
+        followUp = error.followUp;
       } else {
         console.error(error);
       }
       const reply = genericReply(errorInteraction);
-      await reply({ content: errorMessage });
+      await reply({ content: errorMessage }, followUp);
     }
   },
 });

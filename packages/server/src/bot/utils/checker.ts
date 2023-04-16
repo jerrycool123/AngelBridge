@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { Guild, PermissionFlagsBits, TextChannel } from 'discord.js';
+import { Guild, PermissionFlagsBits, RepliableInteraction, TextChannel } from 'discord.js';
 
 import GuildCollection, { GuildDoc } from '../../models/guild.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
@@ -92,22 +92,29 @@ export const requireMembershipRoleDocumentWithYouTubeChannel = async (
 
 export const requireGivenDateNotTooFarInFuture = (
   interaction: RepliableInteraction,
-  targetDate: dayjs.Dayjs,
+  targetDate: dayjs.Dayjs | null,
+  baseDate = dayjs(),
   limitDays = 60,
 ) => {
-  const current = dayjs();
-  const reasonableTimeLimit = current.add(limitDays, 'days');
-  if (targetDate.isAfter(reasonableTimeLimit)) {
+  const reasonableTimeLimit = baseDate.add(limitDays, 'days');
+
+  if (!targetDate) {
     throw new CustomError(
-      'The recognized date is too far in the future.\n' +
-        `The recognized date (\`${targetDate.format(
+      'The target date is invalid.\n' + 'Please set the correct date manually.',
+      interaction,
+    );
+  } else if (targetDate.isAfter(reasonableTimeLimit)) {
+    throw new CustomError(
+      'The target date is too far in the future.\n' +
+        `The target date (\`${targetDate.format(
           'YYYY/MM/DD',
-        )}\`) must not be more than ${limitDays} days after the request was made (\`${current.format(
+        )}\`) must not be more than ${limitDays} days after the base date (\`${baseDate.format(
           'YYYY/MM/DD',
         )}\`).`,
       interaction,
     );
   }
+  return targetDate;
 };
 
 export const requireGuildMember = async (
@@ -116,7 +123,7 @@ export const requireGuildMember = async (
   userId: string,
 ) => {
   try {
-    return await guild.members.fetch(userId);
+    return await guild.members.fetch({ user: userId, force: true });
   } catch (error) {
     console.error(error);
   }

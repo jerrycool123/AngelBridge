@@ -9,7 +9,7 @@ import { requireManageableRole } from '../utils/checker.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { CustomError } from '../utils/error.js';
-import { useBotWithManageRolePermission, useGuildOnly } from '../utils/validator.js';
+import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
 import CustomBotCommand from './index.js';
 
 const delete_role = new CustomBotCommand({

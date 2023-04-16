@@ -5,6 +5,7 @@ import {
   ButtonStyle,
   InteractionEditReplyOptions,
   InteractionReplyOptions,
+  RepliableInteraction,
 } from 'discord.js';
 
 export const genericOption =
@@ -14,8 +15,13 @@ export const genericOption =
 
 export const genericReply =
   <T extends RepliableInteraction>(interaction: T, ephemeral = true) =>
-  (options: Partial<Intersect<InteractionReplyOptions, InteractionEditReplyOptions>>) =>
-    interaction.deferred
+  (
+    options: Partial<Intersect<InteractionReplyOptions, InteractionEditReplyOptions>>,
+    followUp = false,
+  ) =>
+    followUp && (interaction.replied || interaction.deferred)
+      ? interaction.followUp({ ...options, ephemeral })
+      : interaction.deferred
       ? interaction.editReply(options)
       : interaction.reply({ ...options, ephemeral });
 

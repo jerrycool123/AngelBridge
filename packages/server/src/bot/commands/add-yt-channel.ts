@@ -7,7 +7,7 @@ import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { upsertYouTubeChannelCollection } from '../utils/db.js';
 import { CustomError } from '../utils/error.js';
-import { useGuildOnly } from '../utils/validator.js';
+import { useGuildOnly } from '../utils/middleware.js';
 import CustomBotCommand from './index.js';
 
 const add_yt_channel = new CustomBotCommand({

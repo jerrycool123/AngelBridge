@@ -51,7 +51,3 @@ interface CustomCronJob {
 type Intersect<T, U> = {
   [K in Extract<keyof T, keyof U>]: T[K] & U[K];
 };
-
-type RepliableInteraction =
-  | import('discord.js').ChatInputCommandInteraction<import('discord.js').CacheType>
-  | import('discord.js').ButtonInteraction<import('discord.js').CacheType>;

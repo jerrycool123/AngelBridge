@@ -14,11 +14,14 @@ import {
   TextInputStyle,
 } from 'discord.js';
 
+import { parseMembershipVerificationRequestEmbed } from '../../libs/membership.js';
+import { requireGivenDateNotTooFarInFuture } from '../utils/checker.js';
+import { CustomError } from '../utils/error.js';
 import {
-  parseMembershipVerificationRequestEmbed,
-  replyInvalidMembershipVerificationRequest,
-} from '../../libs/membership.js';
-import { useGuildOnly, useUserWithManageRolePermission } from '../utils/validator.js';
+  useFollowUpCustomError,
+  useGuildOnly,
+  useUserWithManageRolePermission,
+} from '../utils/middleware.js';
 import CustomButton from './index.js';
 
 dayjs.extend(utc);
@@ -27,126 +30,112 @@ dayjs.extend(customParseFormat);
 const membershipModifyButton = new CustomButton({
   customId: 'membership-modify',
   data: new ButtonBuilder().setStyle(ButtonStyle.Primary).setLabel('Modify Date'),
-  execute: useGuildOnly(
-    useUserWithManageRolePermission(async (interaction) => {
-      const { user: moderator } = interaction;
+  execute: useFollowUpCustomError(
+    useGuildOnly(
+      useUserWithManageRolePermission(async (interaction) => {
+        const { user: moderator } = interaction;
 
-      // Create modify modal
-      const modifyModal = new ModalBuilder()
-        .setCustomId('membership-modify-modal')
-        .setTitle('Modify Expiration Date')
-        .addComponents(
-          new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-            new TextInputBuilder()
-              .setCustomId('membership-modify-date-input')
-              .setLabel('Correct Date (must be YYYY/MM/DD)')
-              .setPlaceholder('YYYY/MM/DD')
-              .setStyle(TextInputStyle.Short)
-              .setRequired(true),
-          ),
+        // Create modify modal
+        const modifyModal = new ModalBuilder()
+          .setCustomId('membership-modify-modal')
+          .setTitle('Modify Expiration Date')
+          .addComponents(
+            new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+              new TextInputBuilder()
+                .setCustomId('membership-modify-date-input')
+                .setLabel('Correct Date (must be YYYY/MM/DD)')
+                .setPlaceholder('YYYY/MM/DD')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true),
+            ),
+          );
+        await interaction.showModal(modifyModal);
+
+        // Parse embed
+        const { infoEmbed, createdAt } = await parseMembershipVerificationRequestEmbed(
+          interaction,
+          interaction.message.embeds[0] ?? null,
         );
-      await interaction.showModal(modifyModal);
 
-      // Parse embed
-      const parsedResult = parseMembershipVerificationRequestEmbed(
-        interaction.message.embeds[0] ?? null,
-      );
-      if (!parsedResult) {
-        return await replyInvalidMembershipVerificationRequest(interaction);
-      }
-      const { infoEmbed, createdAt } = parsedResult;
+        // Receive correct date from the modal
+        let modalSubmitInteraction: ModalSubmitInteraction<CacheType> | null = null;
+        try {
+          modalSubmitInteraction = await interaction.awaitModalSubmit({
+            filter: (modalSubmitInteraction) =>
+              moderator.id === modalSubmitInteraction.user.id &&
+              modalSubmitInteraction.customId === 'membership-modify-modal',
+            time: 60 * 1000,
+          });
+        } catch (error) {
+          // Timeout
+        }
+        if (!modalSubmitInteraction) {
+          throw new CustomError('Timed out. Please try again.', interaction);
+        }
 
-      // Receive correct date from the modal
-      let modalSubmitInteraction: ModalSubmitInteraction<CacheType> | null = null;
-      try {
-        modalSubmitInteraction = await interaction.awaitModalSubmit({
-          filter: (modalSubmitInteraction) =>
-            moderator.id === modalSubmitInteraction.user.id &&
-            modalSubmitInteraction.customId === 'membership-modify-modal',
-          time: 60 * 1000,
-        });
-      } catch (error) {
-        // Timeout
-      }
-      if (!modalSubmitInteraction) {
-        await interaction.followUp({ content: 'Timed out. Please try again.', ephemeral: true });
-        return;
-      }
+        // Acknowledge the modal
+        await modalSubmitInteraction.deferUpdate();
 
-      // Acknowledge the modal
-      await modalSubmitInteraction.deferUpdate();
+        // Parse modified date
+        const expireAtString = modalSubmitInteraction.fields.getTextInputValue(
+          'membership-modify-date-input',
+        );
+        const newExpireAt = dayjs.utc(expireAtString, 'YYYY/MM/DD', true);
+        if (!newExpireAt.isValid()) {
+          throw new CustomError(
+            'Invalid date. The date must be in YYYY/MM/DD format. Please try again.',
+            interaction,
+          );
+        }
 
-      // Parse modified date
-      const expireAtString = modalSubmitInteraction.fields.getTextInputValue(
-        'membership-modify-date-input',
-      );
-      const newExpireAt = dayjs.utc(expireAtString, 'YYYY/MM/DD', true);
-      if (!newExpireAt.isValid()) {
-        await interaction.followUp({
-          content: 'Invalid date. The date must be in YYYY/MM/DD format. Please try again.',
-        });
-        return;
-      }
+        // Check if the modified date is too far in the future
+        requireGivenDateNotTooFarInFuture(interaction, newExpireAt, createdAt);
 
-      // Check if the modified date is too far in the future
-      const reasonableTimeLimit = createdAt.add(60, 'days');
-      if (newExpireAt.isAfter(reasonableTimeLimit)) {
-        await interaction.followUp({
-          content:
-            'The modified date is too far in the future.\n' +
-            `The modified date (\`${newExpireAt.format(
-              'YYYY/MM/DD',
-            )}\`) must not be more than 60 days after the request was made (\`${createdAt.format(
-              'YYYY/MM/DD',
-            )}\`).`,
-        });
-        return;
-      }
-
-      // Modify the date
-      let apiEmbedFields = infoEmbed.data.fields ?? [];
-      const recognizedDateFieldIndex =
-        apiEmbedFields.findIndex(({ name }) => name === 'Expiration Date') ?? -1;
-      const modifiedByFieldIndex =
-        apiEmbedFields.findIndex(({ name }) => name === 'Modified By') ?? -1;
-      if (recognizedDateFieldIndex === -1) {
-        apiEmbedFields.push({
-          name: 'Expiration Date',
-          value: newExpireAt.format('YYYY/MM/DD'),
-          inline: true,
-        });
-      } else {
-        apiEmbedFields = [
-          ...apiEmbedFields.slice(0, recognizedDateFieldIndex),
-          {
+        // Modify the date
+        let apiEmbedFields = infoEmbed.data.fields ?? [];
+        const recognizedDateFieldIndex =
+          apiEmbedFields.findIndex(({ name }) => name === 'Expiration Date') ?? -1;
+        const modifiedByFieldIndex =
+          apiEmbedFields.findIndex(({ name }) => name === 'Modified By') ?? -1;
+        if (recognizedDateFieldIndex === -1) {
+          apiEmbedFields.push({
             name: 'Expiration Date',
             value: newExpireAt.format('YYYY/MM/DD'),
             inline: true,
-          },
-          ...apiEmbedFields.slice(recognizedDateFieldIndex + 1),
-        ];
-      }
-      if (modifiedByFieldIndex === -1) {
-        apiEmbedFields.push({
-          name: 'Modified By',
-          value: `<@${moderator.id}>`,
-          inline: true,
-        });
-      } else {
-        apiEmbedFields = [
-          ...apiEmbedFields.slice(0, modifiedByFieldIndex),
-          {
+          });
+        } else {
+          apiEmbedFields = [
+            ...apiEmbedFields.slice(0, recognizedDateFieldIndex),
+            {
+              name: 'Expiration Date',
+              value: newExpireAt.format('YYYY/MM/DD'),
+              inline: true,
+            },
+            ...apiEmbedFields.slice(recognizedDateFieldIndex + 1),
+          ];
+        }
+        if (modifiedByFieldIndex === -1) {
+          apiEmbedFields.push({
             name: 'Modified By',
             value: `<@${moderator.id}>`,
             inline: true,
-          },
-          ...apiEmbedFields.slice(modifiedByFieldIndex + 1),
-        ];
-      }
-      await interaction.message.edit({
-        embeds: [EmbedBuilder.from(infoEmbed.data).setFields(apiEmbedFields).setColor('#FEE75C')],
-      });
-    }),
+          });
+        } else {
+          apiEmbedFields = [
+            ...apiEmbedFields.slice(0, modifiedByFieldIndex),
+            {
+              name: 'Modified By',
+              value: `<@${moderator.id}>`,
+              inline: true,
+            },
+            ...apiEmbedFields.slice(modifiedByFieldIndex + 1),
+          ];
+        }
+        await interaction.message.edit({
+          embeds: [EmbedBuilder.from(infoEmbed.data).setFields(apiEmbedFields).setColor('#FEE75C')],
+        });
+      }),
+    ),
   ),
 });
 

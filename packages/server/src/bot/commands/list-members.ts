@@ -16,7 +16,7 @@ import MembershipCollection, {
 import DiscordBotConfig from '../config.js';
 import { requireMembershipRoleDocumentWithYouTubeChannel } from '../utils/checker.js';
 import { genericOption } from '../utils/common.js';
-import { useGuildOnly } from '../utils/validator.js';
+import { useGuildOnly } from '../utils/middleware.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);

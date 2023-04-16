@@ -10,6 +10,7 @@ import {
   requireGuildDocumentHasLogChannel,
   requireGuildHasLogChannel,
   requireGuildMember,
+  requireManageableRole,
   requireMembershipRoleDocumentWithYouTubeChannel,
   requiredGuildDocument,
 } from '../utils/checker.js';
@@ -17,7 +18,7 @@ import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { upsertOCRMembershipCollection } from '../utils/db.js';
 import { CustomError } from '../utils/error.js';
-import { useBotWithManageRolePermission, useGuildOnly } from '../utils/validator.js';
+import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);
@@ -50,9 +51,10 @@ const add_member = new CustomBotCommand({
       const logChannelId = requireGuildDocumentHasLogChannel(interaction, guildDoc);
       const logChannel = await requireGuildHasLogChannel(interaction, guild, logChannelId);
 
-      // Get membership role
+      // Get membership role and check if it's manageable
       const role = options.getRole('role', true);
       await requireMembershipRoleDocumentWithYouTubeChannel(interaction, role.id);
+      await requireManageableRole(interaction, guild, role.id);
 
       // Get the next billing date
       let expireAt: dayjs.Dayjs;
@@ -86,15 +88,11 @@ const add_member = new CustomBotCommand({
       await confirmButtonInteraction.deferReply({ ephemeral: true });
 
       // Add role to member
-      const botMember = await guild.members.fetchMe({ force: true });
       try {
         await member.roles.add(role.id);
       } catch (error) {
         console.error(error);
-        throw new CustomError(
-          `Due to the role hierarchy, the bot cannot assign the role <@&${role.id}> to users.\nI can only manage a role whose order is lower than that of my highest role <@&${botMember.roles.highest.id}>.`,
-          confirmButtonInteraction,
-        );
+        throw new CustomError('Failed to add the role to the member.', interaction);
       }
       await confirmButtonInteraction.editReply({
         content: `Successfully assigned the membership role <@&${role.id}> to <@${

@@ -4,10 +4,11 @@ import utc from 'dayjs/plugin/utc.js';
 import {
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonInteraction,
   Embed,
   EmbedBuilder,
+  Message,
   PermissionFlagsBits,
+  RepliableInteraction,
   TextChannel,
 } from 'discord.js';
 
@@ -129,34 +130,46 @@ export const recognizeMembership =
     }
   };
 
-export const replyInvalidMembershipVerificationRequest = async (
-  interaction: ButtonInteraction,
-  content = 'Failed to retrieve membership verification request embed.',
+export const invalidateMembershipVerificationEmbed = async (
+  interaction: RepliableInteraction & {
+    message: Message;
+  },
 ) => {
   const actionRow = createDisabledInvalidActionRow();
   await interaction.message.edit({
     components: [actionRow],
   });
-  throw new CustomError(content, interaction);
 };
 
-export const parseMembershipVerificationRequestEmbed = (
+export const parseMembershipVerificationRequestEmbed = async (
+  interaction: RepliableInteraction & {
+    message: Message;
+  },
   infoEmbed: Embed | null,
-): {
+): Promise<{
   infoEmbed: Embed;
   userId: string;
   createdAt: dayjs.Dayjs;
   expireAt: dayjs.Dayjs | null;
   roleId: string;
-} | null => {
-  if (!infoEmbed) return null;
+}> => {
+  const throwParseError = async () => {
+    await invalidateMembershipVerificationEmbed(interaction);
+    throw new CustomError(
+      'Failed to retrieve membership verification request embed.',
+      interaction,
+      true,
+    );
+  };
+
+  if (!infoEmbed) return await throwParseError();
 
   const userId = infoEmbed.footer?.text.split('User ID: ')[1] ?? null;
-  if (!userId) return null;
+  if (!userId) return await throwParseError();
 
   const createdAtString = infoEmbed.timestamp ?? null;
   const createdAt = createdAtString ? dayjs.utc(createdAtString) : null;
-  if (!createdAt) return null;
+  if (!createdAt) return await throwParseError();
 
   const expireAtString =
     infoEmbed.fields.find(({ name }) => name === 'Expiration Date')?.value ?? null;
@@ -167,7 +180,7 @@ export const parseMembershipVerificationRequestEmbed = (
   const roleId =
     infoEmbed.fields.find(({ name }) => name === 'Membership Role')?.value?.match(roleRegex)?.[1] ??
     null;
-  if (!roleId) return null;
+  if (!roleId) return await throwParseError();
 
   return { infoEmbed, userId, createdAt, expireAt, roleId };
 };

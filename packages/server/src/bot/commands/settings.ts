@@ -11,7 +11,7 @@ import MembershipRoleCollection from '../../models/membership-role.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
 import { upsertGuildCollection } from '../utils/db.js';
-import { useGuildOnly } from '../utils/validator.js';
+import { useGuildOnly } from '../utils/middleware.js';
 import CustomBotCommand from './index.js';
 
 const settings = new CustomBotCommand({
