@@ -7,20 +7,22 @@ import {
   Embed,
   EmbedBuilder,
   Message,
-  PermissionFlagsBits,
   RepliableInteraction,
-  TextChannel,
 } from 'discord.js';
 
-import membershipAcceptButton from '../bot/buttons/membership-accept.js';
-import membershipModifyButton from '../bot/buttons/membership-modify.js';
-import membershipRejectButton from '../bot/buttons/membership-reject.js';
-import client from '../bot/index.js';
-import { createDisabledInvalidActionRow } from '../bot/utils/common.js';
-import { CustomError } from '../bot/utils/error.js';
-import GuildCollection from '../models/guild.js';
-import { extractDate } from './i18n.js';
-import ocrWorker, { supportedOCRLanguages } from './ocr.js';
+import { extractDate } from '../../libs/i18n.js';
+import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
+import membershipAcceptButton from '../buttons/membership-accept.js';
+import membershipModifyButton from '../buttons/membership-modify.js';
+import membershipRejectButton from '../buttons/membership-reject.js';
+import client from '../index.js';
+import { createDisabledInvalidActionRow } from './common.js';
+import { CustomError } from './error.js';
+import {
+  requireGuildDocument,
+  requireGuildDocumentHasLogChannel,
+  requireGuildHasLogChannel,
+} from './validator.js';
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -39,33 +41,11 @@ export const recognizeMembership =
   ) =>
   async () => {
     try {
-      const guildDoc = await GuildCollection.findById(guildId);
-      if (!guildDoc) {
-        throw new Error(`Guild ID ${guildDoc} does not exist in the database`);
-      } else if (!guildDoc.allowedMembershipVerificationMethods.ocr) {
-        throw new Error(
-          `Guild ${guildDoc.name}(ID:${guildDoc._id}) does not allow OCR verification`,
-        );
-      } else if (!guildDoc.logChannel) {
-        throw new Error(`Guild ${guildDoc.name}(ID:${guildDoc._id}) does not have a log channel`);
-      }
       const guild = await client.guilds.fetch(guildId);
-      const logChannel = await guild.channels.fetch(guildDoc.logChannel, { force: true });
-      if (!logChannel) {
-        throw new Error(
-          `The log channel ID ${guildDoc.logChannel} in guild ${guild.name}(ID: ${guild.id}) does not exist.`,
-        );
-      } else if (!(logChannel instanceof TextChannel)) {
-        throw new Error(`The log channel ${logChannel.name} must be a text channel.`);
-      } else if (!logChannel.permissionsFor(client.user)?.has(PermissionFlagsBits.ViewChannel)) {
-        throw new Error(
-          `The bot does not have the permission to view #${logChannel.name}(ID: ${logChannel.id}).`,
-        );
-      } else if (!logChannel.permissionsFor(client.user)?.has(PermissionFlagsBits.SendMessages)) {
-        throw new Error(
-          `The bot does not have the permission to send messages in #${logChannel.name}(ID: ${logChannel.id}).`,
-        );
-      }
+      const guildDoc = await requireGuildDocument(null, guild);
+      const logChannelId = requireGuildDocumentHasLogChannel(null, guildDoc);
+      const logChannel = await requireGuildHasLogChannel(null, guild, logChannelId);
+
       let text = await ocrWorker.recognize(languageCode, url);
       if (!text) {
         throw new Error('The OCR worker failed to recognize the text.');

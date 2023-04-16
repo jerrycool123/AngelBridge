@@ -10,13 +10,13 @@ import awaitConfirm from '../utils/confirm.js';
 import { CustomError } from '../utils/error.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
 import {
+  requireGuildDocument,
   requireGuildDocumentAllowOCR,
   requireGuildDocumentHasLogChannel,
   requireGuildHasLogChannel,
   requireGuildMember,
   requireMembershipRoleDocumentWithYouTubeChannel,
   requireOCRMembershipDocumentWithGivenMembershipRole,
-  requiredGuildDocument,
 } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
@@ -39,7 +39,7 @@ const del_member = new CustomBotCommand({
       await interaction.deferReply({ ephemeral: true });
 
       // Guild and log channel checks
-      const guildDoc = await requiredGuildDocument(interaction, guild);
+      const guildDoc = await requireGuildDocument(interaction, guild);
       requireGuildDocumentAllowOCR(interaction, guildDoc);
       const logChannelId = requireGuildDocumentHasLogChannel(interaction, guildDoc);
       const logChannel = await requireGuildHasLogChannel(interaction, guild, logChannelId);

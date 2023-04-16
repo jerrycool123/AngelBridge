@@ -1,13 +1,13 @@
 import { ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 
-import {
-  invalidateMembershipVerificationEmbed,
-  parseMembershipVerificationRequestEmbed,
-} from '../../libs/membership.js';
 import { createDisabledAcceptedActionRow } from '../utils/common.js';
 import { upsertOCRMembershipCollection } from '../utils/db.js';
 import { upsertUserCollection } from '../utils/db.js';
 import { CustomError } from '../utils/error.js';
+import {
+  invalidateMembershipVerificationEmbed,
+  parseMembershipVerificationRequestEmbed,
+} from '../utils/membership.js';
 import {
   useBotWithManageRolePermission,
   useFollowUpCustomError,

@@ -10,13 +10,13 @@ import {
   StringSelectMenuBuilder,
 } from 'discord.js';
 
-import { recognizeMembership } from '../../libs/membership.js';
 import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import { genericOption } from '../utils/common.js';
 import { upsertGuildCollection, upsertUserCollection } from '../utils/db.js';
 import { CustomError } from '../utils/error.js';
+import { recognizeMembership } from '../utils/membership.js';
 import {
   requireGuildDocumentAllowOCR,
   requireGuildDocumentHasLogChannel,

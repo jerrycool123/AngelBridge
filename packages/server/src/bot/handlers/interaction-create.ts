@@ -33,7 +33,7 @@ const interactionCreate = new CustomBotEventHandler<'interactionCreate'>({
       let errorMessage = 'There was an error while handling this interaction!';
       let followUp = false;
       if (error instanceof CustomError) {
-        errorInteraction = error.interaction;
+        if (error.interaction) errorInteraction = error.interaction;
         errorMessage = error.message;
         followUp = error.followUp;
       } else {

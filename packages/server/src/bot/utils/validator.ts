@@ -5,9 +5,13 @@ import GuildCollection, { GuildDoc } from '../../models/guild.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import MembershipCollection from '../../models/membership.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import client from '../index.js';
 import { CustomError } from './error.js';
 
-export const requiredGuildDocument = async (interaction: RepliableInteraction, guild: Guild) => {
+export const requireGuildDocument = async (
+  interaction: RepliableInteraction | null,
+  guild: Guild,
+) => {
   return await GuildCollection.findById(guild.id).orFail(
     new CustomError(
       `The server ${guild.name}(ID: ${guild.id}) does not exist in the database.`,
@@ -17,26 +21,27 @@ export const requiredGuildDocument = async (interaction: RepliableInteraction, g
 };
 
 export const requireGuildDocumentAllowOCR = (
-  interaction: RepliableInteraction,
+  interaction: RepliableInteraction | null,
   guildDoc: GuildDoc,
 ) => {
   if (!guildDoc.allowedMembershipVerificationMethods.ocr) {
     throw new CustomError(
       `This server does not allow OCR mode.\n` +
-        'A server moderator can enable OCR mode in `/settings.`',
+        'A server moderator can enable OCR mode in `/settings`.',
       interaction,
     );
   }
 };
 
 export const requireGuildDocumentHasLogChannel = (
-  interaction: RepliableInteraction,
+  interaction: RepliableInteraction | null,
   guildDoc: GuildDoc,
 ) => {
+  console.log(guildDoc);
   if (!guildDoc.logChannel) {
     throw new CustomError(
       `This server does not have a log channel.\n` +
-        'A server moderator can set a log channel in `/settings.`',
+        'A server moderator can set a log channel with `/set-log-channel`.',
       interaction,
     );
   }
@@ -44,13 +49,11 @@ export const requireGuildDocumentHasLogChannel = (
 };
 
 export const requireGuildHasLogChannel = async (
-  interaction: RepliableInteraction,
+  interaction: RepliableInteraction | null,
   guild: Guild,
   logChannelId: string,
 ) => {
-  const {
-    client: { user: botUser },
-  } = interaction;
+  const { user: botUser } = client;
 
   const logChannel = await guild.channels.fetch(logChannelId, { force: true });
   if (!logChannel) {
@@ -76,7 +79,7 @@ export const requireGuildHasLogChannel = async (
 };
 
 export const requireMembershipRoleDocumentWithYouTubeChannel = async (
-  interaction: RepliableInteraction,
+  interaction: RepliableInteraction | null,
   roleId: string,
 ) => {
   return await MembershipRoleCollection.findById(roleId)
@@ -91,7 +94,7 @@ export const requireMembershipRoleDocumentWithYouTubeChannel = async (
 };
 
 export const requireGivenDateNotTooFarInFuture = (
-  interaction: RepliableInteraction,
+  interaction: RepliableInteraction | null,
   targetDate: dayjs.Dayjs | null,
   baseDate = dayjs(),
   limitDays = 60,
@@ -118,7 +121,7 @@ export const requireGivenDateNotTooFarInFuture = (
 };
 
 export const requireGuildMember = async (
-  interaction: RepliableInteraction,
+  interaction: RepliableInteraction | null,
   guild: Guild,
   userId: string,
 ) => {
@@ -131,7 +134,7 @@ export const requireGuildMember = async (
 };
 
 export const requireOCRMembershipDocumentWithGivenMembershipRole = async (
-  interaction: RepliableInteraction,
+  interaction: RepliableInteraction | null,
   userId: string,
   membershipRoleId: string,
 ) => {
@@ -148,7 +151,7 @@ export const requireOCRMembershipDocumentWithGivenMembershipRole = async (
 };
 
 export const requireManageableRole = async (
-  interaction: RepliableInteraction,
+  interaction: RepliableInteraction | null,
   guild: Guild,
   roleId: string,
 ) => {

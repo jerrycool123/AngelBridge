@@ -14,8 +14,8 @@ import {
   TextInputStyle,
 } from 'discord.js';
 
-import { parseMembershipVerificationRequestEmbed } from '../../libs/membership.js';
 import { CustomError } from '../utils/error.js';
+import { parseMembershipVerificationRequestEmbed } from '../utils/membership.js';
 import {
   useFollowUpCustomError,
   useGuildOnly,
