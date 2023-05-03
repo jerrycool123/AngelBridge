@@ -200,7 +200,7 @@ const verify = new CustomBotCommand({
       user: user.id,
       membershipRole: selectedRoleId,
     });
-    if (oauthMembershipDoc === null) {
+    if (oauthMembershipDoc !== null) {
       prevInteraction = await awaitConfirm(prevInteraction, 'verify-detected-oauth', {
         content:
           'You already have an OAuth membership with this membership role.\n' +
