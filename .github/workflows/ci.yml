@@ -24,4 +24,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 18.x
-      - run: ./start.sh
+      - run: echo "${SERVER_PROD_ENV}" | base64 --decode > "./packages/server/.env"
+      - run: echo "${WEB_PROD_ENV}" | base64 --decode > "./packages/web/.env.production.local"
+      - run: yarn
+      - run: yarn build
