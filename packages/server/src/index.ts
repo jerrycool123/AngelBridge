@@ -1,23 +1,24 @@
 import mongoose from 'mongoose';
 
+import app from './app/index.js';
 import client from './bot/index.js';
 import Env from './libs/env.js';
 import ocrWorker from './libs/ocr.js';
 import startCronjobs from './routines/index.js';
-import app from './server/index.js';
 
 const main = async () => {
   // Initialize OCR worker
-  // throw new Error('TODO: emoji action of moderators to verify membership');
 
-  ocrWorker.init().then(() => {
-    console.log('OCR worker initialized');
-  });
+  ocrWorker
+    .init()
+    .then(() => console.log('OCR worker initialized'))
+    .catch(console.error);
 
   // Connect to MongoDB
-  mongoose.connect(Env.MONGO_URL).then(() => {
-    console.log('Connected to MongoDB');
-  });
+  mongoose
+    .connect(Env.MONGO_URL)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(console.error);
 
   // Start the server
   app.listen(Env.PORT, () => {

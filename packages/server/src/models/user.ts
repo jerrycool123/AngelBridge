@@ -10,6 +10,14 @@ export interface UserDoc extends UserAttrs, Document<string> {
   _id: string;
   lastVerifyingRoleId: string | null;
   language: SupportedOCRLanguage['language'];
+  refreshToken: string | null;
+  youTube: {
+    id: string;
+    title: string;
+    customUrl: string;
+    thumbnail: string;
+    refreshToken: string;
+  } | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,12 +46,55 @@ const userSchema = new Schema<UserDoc>(
       required: true,
       default: 'English',
     },
+    refreshToken: {
+      type: String,
+      default: null,
+    },
+    youTube: {
+      type: new Schema(
+        {
+          id: {
+            type: String,
+            required: true,
+          },
+          title: {
+            type: String,
+            required: true,
+          },
+          customUrl: {
+            type: String,
+            required: true,
+          },
+          thumbnail: {
+            type: String,
+            required: true,
+          },
+          refreshToken: {
+            type: String,
+            required: true,
+          },
+        },
+        {
+          _id: false,
+        },
+      ),
+      default: null,
+    },
   },
   {
     timestamps: true,
     statics: {
       async build(attrs: UserAttrs) {
         return this.create(attrs);
+      },
+    },
+    virtuals: {
+      memberships: {
+        options: {
+          ref: 'Membership',
+          localField: '_id',
+          foreignField: 'user',
+        },
       },
     },
   },

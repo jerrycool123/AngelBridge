@@ -62,10 +62,22 @@ const list_members = new CustomBotCommand({
 
     const ocrEmbed = new EmbedBuilder()
       .setTitle(`Membership verified via OCR method`)
-      .setDescription(
-        `There are ${ocrMembershipDocs.length} members with the membership role <@&${role.id}> for the YouTube channel \`${membershipRoleDoc.youTubeChannel.title}\` in this server.`,
-      )
       .addFields([
+        {
+          name: 'Count',
+          value: ocrMembershipDocs.length.toString(),
+          inline: true,
+        },
+        {
+          name: 'Membership Role',
+          value: `<@&${role.id}>`,
+          inline: true,
+        },
+        {
+          name: 'YouTube Channel',
+          value: `${membershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'}`,
+          inline: true,
+        },
         {
           name: 'Member',
           value:
@@ -106,7 +118,6 @@ const list_members = new CustomBotCommand({
     );
 
     const ocrResponse = await interaction.editReply({
-      content: `Following is the list of members with the role <@&${role.id}> for the YouTube channel \`${membershipRoleDoc.youTubeChannel.title}\``,
       embeds: [ocrEmbed],
       components: [ocrActionRow],
     });
@@ -136,6 +147,21 @@ const list_members = new CustomBotCommand({
 
       ocrEmbed
         .setFields([
+          {
+            name: 'Count',
+            value: ocrMembershipDocs.length.toString(),
+            inline: true,
+          },
+          {
+            name: 'Membership Role',
+            value: `<@&${role.id}>`,
+            inline: true,
+          },
+          {
+            name: 'YouTube Channel',
+            value: `${membershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'}`,
+            inline: true,
+          },
           {
             name: 'Member',
             value:
@@ -170,10 +196,22 @@ const list_members = new CustomBotCommand({
 
     const oauthEmbed = new EmbedBuilder()
       .setTitle(`Membership verified via OAuth method`)
-      .setDescription(
-        `There are ${oauthMembershipDocs.length} members with the membership role <@&${role.id}> for the YouTube channel \`${membershipRoleDoc.youTubeChannel.title}\` in this server.`,
-      )
       .addFields([
+        {
+          name: 'Count',
+          value: oauthMembershipDocs.length.toString(),
+          inline: true,
+        },
+        {
+          name: 'Membership Role',
+          value: `<@&${role.id}>`,
+          inline: true,
+        },
+        {
+          name: 'YouTube Channel',
+          value: `${membershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'}`,
+          inline: true,
+        },
         {
           name: 'Member',
           value:
@@ -243,6 +281,21 @@ const list_members = new CustomBotCommand({
 
       oauthEmbed
         .setFields([
+          {
+            name: 'Count',
+            value: oauthMembershipDocs.length.toString(),
+            inline: true,
+          },
+          {
+            name: 'Membership Role',
+            value: `<@&${role.id}>`,
+            inline: true,
+          },
+          {
+            name: 'YouTube Channel',
+            value: `${membershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'}`,
+            inline: true,
+          },
           {
             name: 'Member',
             value:

@@ -1,9 +1,9 @@
 import { SlashCommandBuilder } from 'discord.js';
 
 import DiscordBotConfig from '../config.js';
+import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import { upsertGuildCollection } from '../utils/db.js';
-import { CustomError } from '../utils/error.js';
 import { useGuildOnly } from '../utils/middleware.js';
 import { requireGuildHasLogChannel } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
@@ -30,7 +30,7 @@ const set_log_channel = new CustomBotCommand({
       });
     } catch (error) {
       console.error(error);
-      throw new CustomError(`Failed to send messages in <#${logChannel.id}>.`, interaction);
+      throw new CustomBotError(`Failed to send messages in <#${logChannel.id}>.`, interaction);
     }
 
     // Add the log channel to DB

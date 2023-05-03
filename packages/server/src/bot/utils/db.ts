@@ -3,7 +3,13 @@ import { Guild, Role, User } from 'discord.js';
 
 import GuildCollection from '../../models/guild.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
-import MembershipCollection from '../../models/membership.js';
+import {
+  MembershipDoc,
+  OAuthMembershipCollection,
+  OAuthMembershipDoc,
+  OCRMembershipCollection,
+  OCRMembershipDoc,
+} from '../../models/membership.js';
 import UserCollection from '../../models/user.js';
 import YouTubeChannelCollection from '../../models/youtube-channel.js';
 
@@ -17,10 +23,6 @@ export const upsertGuildCollection = async (guild: Guild) => {
       },
       $setOnInsert: {
         _id: guild.id,
-        allowedMembershipVerificationMethods: {
-          oauth: false,
-          ocr: true,
-        },
       },
     },
     {
@@ -45,19 +47,22 @@ export const updateMembershipRoleCollection = async (role: Role) => {
   );
 };
 
-export const upsertYouTubeChannelCollection = async ({
-  id,
-  title,
-  description,
-  customUrl,
-  thumbnail,
-}: {
-  id: string;
-  title: string;
-  description: string;
-  customUrl: string;
-  thumbnail: string;
-}) => {
+export const upsertYouTubeChannelCollection = async (
+  {
+    id,
+    title,
+    description,
+    customUrl,
+    thumbnail,
+  }: {
+    id: string;
+    title: string;
+    description: string;
+    customUrl: string;
+    thumbnail: string;
+  },
+  memberOnlyVideoIds: string[],
+) => {
   return await YouTubeChannelCollection.findByIdAndUpdate(
     id,
     {
@@ -66,6 +71,7 @@ export const upsertYouTubeChannelCollection = async ({
         description,
         customUrl,
         thumbnail,
+        memberOnlyVideoIds,
       },
       $setOnInsert: {
         _id: id,
@@ -75,45 +81,96 @@ export const upsertYouTubeChannelCollection = async ({
   );
 };
 
-export const upsertOCRMembershipCollection = async ({
-  userId,
-  membershipRoleId,
-  expireAt,
-}: {
-  userId: string;
-  membershipRoleId: string;
-  expireAt: dayjs.Dayjs;
-}) => {
-  return await MembershipCollection.findOneAndUpdate(
-    {
-      user: userId,
-      type: 'ocr',
-      membershipRole: membershipRoleId,
-    },
-    {
-      $set: {
-        billingDate: expireAt.toDate(),
-      },
-      $setOnInsert: {
-        type: 'ocr',
+export const upsertMembershipCollection = async (
+  props: {
+    userId: string;
+    membershipRoleId: string;
+  } & (
+    | {
+        type: 'ocr';
+        expireAt: dayjs.Dayjs;
+      }
+    | {
+        type: 'oauth';
+      }
+  ),
+): Promise<MembershipDoc> => {
+  const { type, userId, membershipRoleId } = props;
+  if (type === 'oauth') {
+    const [oauthMembershipDoc] = await Promise.all([
+      OAuthMembershipCollection.findOneAndUpdate<OAuthMembershipDoc>(
+        {
+          user: userId,
+          membershipRole: membershipRoleId,
+        },
+        {
+          $set: {
+            type,
+          },
+          $unset: {
+            billingDate: 1,
+          },
+          $setOnInsert: {
+            user: userId,
+            membershipRole: membershipRoleId,
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+        },
+      ) as Promise<OAuthMembershipDoc>,
+      OCRMembershipCollection.deleteOne({
         user: userId,
         membershipRole: membershipRoleId,
-      },
-    },
-    {
-      upsert: true,
-      new: true,
-    },
-  );
+      }),
+    ]);
+    return oauthMembershipDoc;
+  } else if (type === 'ocr') {
+    const { expireAt } = props;
+    const [ocrMembershipDoc] = await Promise.all([
+      OCRMembershipCollection.findOneAndUpdate(
+        {
+          user: userId,
+          membershipRole: membershipRoleId,
+        },
+        {
+          $set: {
+            type,
+            billingDate: expireAt.toDate(),
+          },
+          $setOnInsert: {
+            user: userId,
+            membershipRole: membershipRoleId,
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+        },
+      ) as Promise<OCRMembershipDoc>,
+      OAuthMembershipCollection.deleteOne({
+        user: userId,
+        membershipRole: membershipRoleId,
+      }),
+    ]);
+    return ocrMembershipDoc;
+  }
+  throw new Error('Unsupported membership type');
 };
 
-export const upsertUserCollection = async (user: User) => {
+export const upsertUserCollection = async (
+  user: Pick<User, 'id' | 'username' | 'discriminator'>,
+  avatar: string,
+  refreshToken?: string,
+) => {
   return await UserCollection.findByIdAndUpdate(
     user.id,
     {
       $set: {
         username: `${user.username}#${user.discriminator}`,
-        avatar: user.displayAvatarURL(),
+        avatar,
+        ...(refreshToken !== undefined && { refreshToken }),
       },
       $setOnInsert: { _id: user.id },
     },

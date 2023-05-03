@@ -11,16 +11,15 @@ import {
 } from 'discord.js';
 
 import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
-import MembershipRoleCollection from '../../models/membership-role.js';
+import MembershipRoleCollection, { MembershipRoleDoc } from '../../models/membership-role.js';
+import MembershipCollection from '../../models/membership.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
+import awaitConfirm from '../utils/confirm.js';
 import { upsertGuildCollection, upsertUserCollection } from '../utils/db.js';
-import { CustomError } from '../utils/error.js';
 import { recognizeMembership } from '../utils/membership.js';
-import {
-  requireGuildDocumentAllowOCR,
-  requireGuildDocumentHasLogChannel,
-} from '../utils/validator.js';
+import { requireGuildDocumentHasLogChannel } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const verify = new CustomBotCommand({
@@ -33,8 +32,8 @@ const verify = new CustomBotCommand({
     .addAttachmentOption(genericOption('picture', 'Picture to OCR', true)),
   async execute(interaction) {
     const { guild, user, options } = interaction;
-    if (!guild) {
-      throw new CustomError(
+    if (guild === null) {
+      throw new CustomBotError(
         'This command can only be used in a server.\n' +
           'However, we are developing a DM version of this command. Stay tuned!',
         interaction,
@@ -45,24 +44,23 @@ const verify = new CustomBotCommand({
 
     // Get user attachment
     const picture = options.getAttachment('picture', true);
-    if (!picture.contentType?.startsWith('image/')) {
-      throw new CustomError('Please provide an image file.', interaction);
+    if (!(picture.contentType?.startsWith('image/') ?? false)) {
+      throw new CustomBotError('Please provide an image file.', interaction);
     }
 
     // Upsert guild and user config, get membership roles
     const [guildDoc, userDoc, membershipRoleDocs] = await Promise.all([
       upsertGuildCollection(guild),
-      upsertUserCollection(user),
+      upsertUserCollection(user, user.displayAvatarURL()),
       MembershipRoleCollection.find({ guild: guild.id }).populate<{
-        youTubeChannel: YouTubeChannelDoc;
+        youTubeChannel: YouTubeChannelDoc | null;
       }>('youTubeChannel'),
     ]);
 
-    // Guild and membership role checks
-    requireGuildDocumentAllowOCR(interaction, guildDoc);
+    // Log channel and membership role checks
     requireGuildDocumentHasLogChannel(interaction, guildDoc);
     if (membershipRoleDocs.length === 0) {
-      throw new CustomError(
+      throw new CustomBotError(
         'There is no membership role in this server.\n' +
           'A server moderator can set one up with `/add-role` first.',
         interaction,
@@ -75,12 +73,20 @@ const verify = new CustomBotCommand({
     let selectedLanguage = supportedOCRLanguages.find(
       ({ language }) => language === userDoc.language,
     ) ?? { language: 'English', code: 'eng' };
-    const roleOptions = membershipRoleDocs.map(({ _id, name, youTubeChannel }) => ({
-      label: name,
-      description: `${youTubeChannel.title} (${youTubeChannel.customUrl})`,
-      value: _id,
-      default: _id === selectedRoleId,
-    }));
+    const roleOptions = membershipRoleDocs
+      .filter(
+        (
+          membershipRoleDoc,
+        ): membershipRoleDoc is Omit<MembershipRoleDoc, 'youTubeChannel'> & {
+          youTubeChannel: YouTubeChannelDoc;
+        } => membershipRoleDoc.youTubeChannel !== null,
+      )
+      .map(({ _id, name, youTubeChannel }) => ({
+        label: name,
+        description: `${youTubeChannel.title} (${youTubeChannel.customUrl})`,
+        value: _id,
+        default: _id === selectedRoleId,
+      }));
     const languageOptions = supportedOCRLanguages.map(({ language, code }) => ({
       label: language,
       value: code,
@@ -156,7 +162,7 @@ const verify = new CustomBotCommand({
     });
 
     // Wait for user to click the verify button
-    let buttonInteraction: ButtonInteraction<CacheType> | undefined = undefined;
+    let buttonInteraction: ButtonInteraction<CacheType> | null = null;
     try {
       buttonInteraction = await response.awaitMessageComponent({
         componentType: ComponentType.Button,
@@ -164,19 +170,43 @@ const verify = new CustomBotCommand({
           user.id === buttonInteraction.user.id && buttonInteraction.customId === 'verify-button',
         time: 60 * 1000,
       });
-      await buttonInteraction.deferUpdate();
     } catch (error) {
       // Timeout
     }
-    if (!buttonInteraction) {
+    if (buttonInteraction === null) {
       await interaction.editReply({
         components: [],
       });
-      throw new CustomError('Timed out. Please try again.', interaction);
+      throw new CustomBotError('Timed out. Please try again.', interaction);
     }
+    let prevInteraction = buttonInteraction;
+    await prevInteraction.deferReply({ ephemeral: true });
     const role = membershipRoleDocs.find((role) => role._id === selectedRoleId);
-    if (!role) {
-      throw new CustomError('Please select a membership role.', buttonInteraction);
+    if (role === undefined) {
+      throw new CustomBotError('Please select a membership role.', prevInteraction);
+    }
+
+    // Disable verify button
+    membershipRoleActionRow.components[0].setDisabled(true);
+    languageActionRow.components[0].setDisabled(true);
+    buttonActionRow.components[0].setDisabled(true);
+    await interaction.editReply({
+      components: [membershipRoleActionRow, languageActionRow, buttonActionRow],
+    });
+
+    // Check if the user already has OAuth membership
+    const oauthMembershipDoc = await MembershipCollection.findOne({
+      type: 'oauth',
+      user: user.id,
+      membershipRole: selectedRoleId,
+    });
+    if (oauthMembershipDoc === null) {
+      prevInteraction = await awaitConfirm(prevInteraction, 'verify-detected-oauth', {
+        content:
+          'You already have an OAuth membership with this membership role.\n' +
+          'If your OCR request is accepted, your OAuth membership will be overwritten. Do you want to continue?',
+      });
+      await prevInteraction.deferReply({ ephemeral: true });
     }
 
     // Save user config to DB
@@ -200,8 +230,7 @@ const verify = new CustomBotCommand({
     );
 
     // Send response to user
-    await buttonInteraction.editReply({
-      content: '',
+    await prevInteraction.editReply({
       embeds: [
         new EmbedBuilder()
           .setAuthor({
@@ -236,7 +265,6 @@ const verify = new CustomBotCommand({
           .setTimestamp()
           .setFooter({ text: `ID: ${user.id}` }),
       ],
-      components: [],
     });
   },
 });

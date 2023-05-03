@@ -12,14 +12,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SERVER_PROD_ENV: ${{ secrets.SERVER_PROD_ENV }}
+      WEB_PROD_ENV: ${{ secrets.WEB_PROD_ENV }}
     defaults:
       run:
         shell: bash
     steps:
       - uses: actions/checkout@v2
-      - name: Use Node.js 16
+      - name: Use Node.js 18
         uses: actions/setup-node@v2
         with:
-          node-version: 16.x
-      - run: yarn install
-      - run: yarn build
+          node-version: 18.x
+      - run: ./start.sh

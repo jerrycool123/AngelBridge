@@ -3,7 +3,7 @@ import type { Client, ClientEvents } from 'discord.js';
 class CustomBotEventHandler<E extends keyof ClientEvents> {
   readonly name: E;
   readonly once: boolean = false;
-  readonly execute: (...args: ClientEvents[E]) => Promise<void>;
+  readonly execute: (...args: ClientEvents[E]) => Promise<void> | void;
 
   constructor({
     name,
@@ -12,10 +12,10 @@ class CustomBotEventHandler<E extends keyof ClientEvents> {
   }: {
     name: E;
     once?: boolean;
-    execute: (...args: ClientEvents[E]) => Promise<void>;
+    execute: (...args: ClientEvents[E]) => Promise<void> | void;
   }) {
     this.name = name;
-    if (once) this.once = once;
+    if (once === true) this.once = once;
     this.execute = execute;
   }
 

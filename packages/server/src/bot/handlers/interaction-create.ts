@@ -1,8 +1,8 @@
 import { RepliableInteraction } from 'discord.js';
 
 import DiscordBotConfig from '../config.js';
+import { CustomBotError } from '../utils/bot-error.js';
 import { genericReply } from '../utils/common.js';
-import { CustomError } from '../utils/error.js';
 import CustomBotEventHandler from './index.js';
 
 const interactionCreate = new CustomBotEventHandler<'interactionCreate'>({
@@ -15,7 +15,7 @@ const interactionCreate = new CustomBotEventHandler<'interactionCreate'>({
           ({ data }) => data.name === interaction.commandName,
         );
 
-        if (!command) return;
+        if (command === undefined) return;
 
         await command.execute(interaction);
       } else if (interaction.isButton()) {
@@ -24,7 +24,7 @@ const interactionCreate = new CustomBotEventHandler<'interactionCreate'>({
           ({ customId }) => customId === interaction.customId,
         );
 
-        if (!button) return;
+        if (button === undefined) return;
 
         await button.execute(interaction);
       }
@@ -32,8 +32,8 @@ const interactionCreate = new CustomBotEventHandler<'interactionCreate'>({
       let errorInteraction = interaction as RepliableInteraction;
       let errorMessage = 'There was an error while handling this interaction!';
       let followUp = false;
-      if (error instanceof CustomError) {
-        if (error.interaction) errorInteraction = error.interaction;
+      if (error instanceof CustomBotError) {
+        if (error.interaction !== null) errorInteraction = error.interaction;
         errorMessage = error.message;
         followUp = error.followUp;
       } else {

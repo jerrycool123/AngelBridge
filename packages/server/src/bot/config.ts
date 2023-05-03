@@ -37,8 +37,8 @@ class DiscordBotConfig {
   }
 
   static async registerBotGlobalCommands() {
-    DiscordBotConfig.rest
-      .put(Routes.applicationCommands(Env.DISCORD_BOT_CLIENT_ID), {
+    await DiscordBotConfig.rest
+      .put(Routes.applicationCommands(Env.DISCORD_CLIENT_ID), {
         body: DiscordBotConfig.globalCommands.map(({ data }) => data),
       })
       .then(() => console.log(`Successfully registered global application commands.`))
@@ -46,8 +46,8 @@ class DiscordBotConfig {
   }
 
   static async registerBotGuildCommands(guildId: string) {
-    DiscordBotConfig.rest
-      .put(Routes.applicationGuildCommands(Env.DISCORD_BOT_CLIENT_ID, guildId), {
+    await DiscordBotConfig.rest
+      .put(Routes.applicationGuildCommands(Env.DISCORD_CLIENT_ID, guildId), {
         body: DiscordBotConfig.guildCommands.map(({ data }) => data),
       })
       .then(() => console.log(`Successfully registered application commands to guild ${guildId}.`))

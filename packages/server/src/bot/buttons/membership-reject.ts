@@ -11,8 +11,8 @@ import {
 import { ModalSubmitInteraction } from 'discord.js';
 import { CacheType } from 'discord.js';
 
+import { CustomBotError } from '../utils/bot-error.js';
 import { createDisabledRejectedActionRow } from '../utils/common.js';
-import { CustomError } from '../utils/error.js';
 import { parseMembershipVerificationRequestEmbed } from '../utils/membership.js';
 import {
   useFollowUpCustomError,
@@ -70,8 +70,8 @@ const membershipRejectButton = new CustomButton({
         } catch (error) {
           // Timeout
         }
-        if (!modalSubmitInteraction) {
-          throw new CustomError('Timed out. Please try again.', interaction);
+        if (modalSubmitInteraction === null) {
+          throw new CustomBotError('Timed out. Please try again.', interaction);
         }
         const reason = modalSubmitInteraction.fields.getTextInputValue(
           'membership-reject-reason-input',
@@ -86,7 +86,7 @@ const membershipRejectButton = new CustomButton({
           await member.send({
             content:
               `You have been rejected to be granted the membership role **${
-                role ? `@${role.name}` : `<@&${roleId}>`
+                role !== null ? `@${role.name}` : `<@&${roleId}>`
               }** in the server \`${guild.name}\`.` +
               (reason.length > 0 ? `\nReason: \`\`\`\n${reason}\n\`\`\`` : ''),
           });
@@ -103,7 +103,7 @@ const membershipRejectButton = new CustomButton({
             : "**[NOTE]** Due to the user's __Privacy Settings__ of this server, **I cannot send DM to notify them.**\nYou might need to notify them yourself.",
           embeds: [
             EmbedBuilder.from(infoEmbed.data)
-              .setTitle('❌ [Rejected] ' + infoEmbed.title)
+              .setTitle('❌ [Rejected] ' + (infoEmbed.title ?? ''))
               .addFields([
                 {
                   name: 'Rejected By',

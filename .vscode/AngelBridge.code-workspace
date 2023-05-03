@@ -1,0 +1,25 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "../packages/server"
+    },
+    {
+      "path": "../packages/web"
+    },
+    {
+      "path": "../packages/common"
+    }
+  ],
+  "settings": {
+    "typescript.preferences.quoteStyle": "single",
+    "javascript.preferences.quoteStyle": "single",
+    "cSpell.words": ["APIV", "middlewares", "openapi", "virtuals"],
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/build": true
+    }
+  }
+}

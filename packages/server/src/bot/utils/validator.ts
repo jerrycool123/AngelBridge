@@ -6,40 +6,26 @@ import MembershipRoleCollection from '../../models/membership-role.js';
 import MembershipCollection from '../../models/membership.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import client from '../index.js';
-import { CustomError } from './error.js';
+import { CustomBotError } from './bot-error.js';
 
 export const requireGuildDocument = async (
   interaction: RepliableInteraction | null,
   guild: Guild,
 ) => {
   return await GuildCollection.findById(guild.id).orFail(
-    new CustomError(
+    new CustomBotError(
       `The server ${guild.name}(ID: ${guild.id}) does not exist in the database.`,
       interaction,
     ),
   );
 };
 
-export const requireGuildDocumentAllowOCR = (
-  interaction: RepliableInteraction | null,
-  guildDoc: GuildDoc,
-) => {
-  if (!guildDoc.allowedMembershipVerificationMethods.ocr) {
-    throw new CustomError(
-      `This server does not allow OCR mode.\n` +
-        'A server moderator can enable OCR mode in `/settings`.',
-      interaction,
-    );
-  }
-};
-
 export const requireGuildDocumentHasLogChannel = (
   interaction: RepliableInteraction | null,
   guildDoc: GuildDoc,
 ) => {
-  console.log(guildDoc);
-  if (!guildDoc.logChannel) {
-    throw new CustomError(
+  if (guildDoc.logChannel === null) {
+    throw new CustomBotError(
       `This server does not have a log channel.\n` +
         'A server moderator can set a log channel with `/set-log-channel`.',
       interaction,
@@ -56,20 +42,22 @@ export const requireGuildHasLogChannel = async (
   const { user: botUser } = client;
 
   const logChannel = await guild.channels.fetch(logChannelId, { force: true });
-  if (!logChannel) {
-    throw new CustomError(`The log channel <#${logChannelId}> does not exist.`, interaction);
+  if (logChannel === null) {
+    throw new CustomBotError(`The log channel <#${logChannelId}> does not exist.`, interaction);
   } else if (!(logChannel instanceof TextChannel)) {
-    throw new CustomError(
+    throw new CustomBotError(
       `The log channel <#${logChannel.id}> must be a text channel.`,
       interaction,
     );
-  } else if (!logChannel.permissionsFor(botUser)?.has(PermissionFlagsBits.ViewChannel)) {
-    throw new CustomError(
+  } else if (!(logChannel.permissionsFor(botUser)?.has(PermissionFlagsBits.ViewChannel) ?? false)) {
+    throw new CustomBotError(
       `The bot does not have the permission to view <#${logChannel.id}>.`,
       interaction,
     );
-  } else if (!logChannel.permissionsFor(botUser)?.has(PermissionFlagsBits.SendMessages)) {
-    throw new CustomError(
+  } else if (
+    !(logChannel.permissionsFor(botUser)?.has(PermissionFlagsBits.SendMessages) ?? false)
+  ) {
+    throw new CustomBotError(
       `The bot does not have the permission to send messages in <#${logChannel.id}>.`,
       interaction,
     );
@@ -83,9 +71,9 @@ export const requireMembershipRoleDocumentWithYouTubeChannel = async (
   roleId: string,
 ) => {
   return await MembershipRoleCollection.findById(roleId)
-    .populate<{ youTubeChannel: YouTubeChannelDoc }>('youTubeChannel')
+    .populate<{ youTubeChannel: YouTubeChannelDoc | null }>('youTubeChannel')
     .orFail(
-      new CustomError(
+      new CustomBotError(
         `The role <@&${roleId}> is not a membership role in this server.\n` +
           'You can use `/settings` to see the list of membership roles in this server.',
         interaction,
@@ -101,13 +89,13 @@ export const requireGivenDateNotTooFarInFuture = (
 ) => {
   const reasonableTimeLimit = baseDate.add(limitDays, 'days');
 
-  if (!targetDate) {
-    throw new CustomError(
+  if (targetDate === null) {
+    throw new CustomBotError(
       'The target date is invalid.\n' + 'Please set the correct date manually.',
       interaction,
     );
   } else if (targetDate.isAfter(reasonableTimeLimit)) {
-    throw new CustomError(
+    throw new CustomBotError(
       'The target date is too far in the future.\n' +
         `The target date (\`${targetDate.format(
           'YYYY/MM/DD',
@@ -130,20 +118,19 @@ export const requireGuildMember = async (
   } catch (error) {
     console.error(error);
   }
-  throw new CustomError(`The user <@${userId}> is not a member of this server.`, interaction);
+  throw new CustomBotError(`The user <@${userId}> is not a member of this server.`, interaction);
 };
 
-export const requireOCRMembershipDocumentWithGivenMembershipRole = async (
+export const requireMembershipDocumentWithGivenMembershipRole = async (
   interaction: RepliableInteraction | null,
   userId: string,
   membershipRoleId: string,
 ) => {
   return await MembershipCollection.findOne({
-    type: 'ocr',
     user: userId,
     membershipRole: membershipRoleId,
   }).orFail(
-    new CustomError(
+    new CustomBotError(
       `The member <@${userId}> does not have the membership role <@&${membershipRoleId}>.`,
       interaction,
     ),
@@ -158,12 +145,12 @@ export const requireManageableRole = async (
   const botMember = await guild.members.fetchMe({ force: true });
   if (roleId === guild.id) {
     // @everyone
-    throw new CustomError(
+    throw new CustomBotError(
       'You cannot manipulate @everyone role.\n' + 'Please try again with a valid role.',
       interaction,
     );
   } else if (botMember.roles.highest.comparePositionTo(roleId) <= 0) {
-    throw new CustomError(
+    throw new CustomBotError(
       `Due to the role hierarchy, the bot cannot manage the role <@&${roleId}>.\n` +
         `I can only manage a role whose order is lower than that of my highest role highest role <@&${botMember.roles.highest.id}>.`,
       interaction,

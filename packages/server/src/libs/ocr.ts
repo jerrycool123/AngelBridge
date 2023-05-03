@@ -1,4 +1,4 @@
-import Queue from 'queue';
+import PQueue from 'p-queue';
 import { Worker, createWorker } from 'tesseract.js';
 
 import Env from './env.js';
@@ -54,18 +54,9 @@ const supportedOCRLanguageString = supportedOCRLanguages.map((lang) => lang.code
 class OCRWorker {
   private worker: Worker | null = null;
   private languageCode: SupportedOCRLanguage['code'] = 'eng';
-  private jobQueue: Queue = new Queue({ concurrency: 1, autostart: true });
-
-  constructor() {
-    this.jobQueue.on('timeout', (e) => {
-      console.log(e);
-    });
-  }
+  private jobQueue: PQueue = new PQueue({ autoStart: true, concurrency: 1 });
 
   async init() {
-    // TODO: multiple languages
-    // TODO: research how VeraBot detect talent names
-
     this.worker = await createWorker({
       langPath: Env.TESSDATA_PATH,
       cachePath: `${Env.TESSDATA_CACHE_PATH}`,
@@ -76,7 +67,7 @@ class OCRWorker {
   }
 
   async recognize(languageCode: SupportedOCRLanguage['code'], imageUrl: string) {
-    if (!this.worker) {
+    if (this.worker === null) {
       throw new Error('Worker not initialized');
     }
 
@@ -98,7 +89,7 @@ class OCRWorker {
   }
 
   addJob(func: (...args: unknown[]) => void) {
-    this.jobQueue.push(func);
+    void this.jobQueue.add(func);
   }
 }
 

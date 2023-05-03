@@ -5,18 +5,17 @@ import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
 import MembershipCollection from '../../models/membership.js';
 import DiscordBotConfig from '../config.js';
+import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
-import { CustomError } from '../utils/error.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
 import {
   requireGuildDocument,
-  requireGuildDocumentAllowOCR,
   requireGuildDocumentHasLogChannel,
   requireGuildHasLogChannel,
   requireGuildMember,
+  requireMembershipDocumentWithGivenMembershipRole,
   requireMembershipRoleDocumentWithYouTubeChannel,
-  requireOCRMembershipDocumentWithGivenMembershipRole,
 } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
@@ -26,9 +25,7 @@ dayjs.extend(customParseFormat);
 const del_member = new CustomBotCommand({
   data: new SlashCommandBuilder()
     .setName('del-member')
-    .setDescription(
-      'Manually remove a YouTube membership role to from member in this server in OCR mode',
-    )
+    .setDescription('Manually remove a YouTube membership role to from a member in this server')
     .setDefaultMemberPermissions(DiscordBotConfig.moderatorPermissions)
     .addUserOption(genericOption('member', 'The member to remove the role from', true))
     .addRoleOption(genericOption('role', 'The YouTube Membership role in this server', true)),
@@ -40,7 +37,6 @@ const del_member = new CustomBotCommand({
 
       // Guild and log channel checks
       const guildDoc = await requireGuildDocument(interaction, guild);
-      requireGuildDocumentAllowOCR(interaction, guildDoc);
       const logChannelId = requireGuildDocumentHasLogChannel(interaction, guildDoc);
       const logChannel = await requireGuildHasLogChannel(interaction, guild, logChannelId);
 
@@ -53,7 +49,7 @@ const del_member = new CustomBotCommand({
       const member = await requireGuildMember(interaction, guild, user.id);
 
       // Get the membership
-      const membershipDoc = await requireOCRMembershipDocumentWithGivenMembershipRole(
+      const membershipDoc = await requireMembershipDocumentWithGivenMembershipRole(
         interaction,
         member.id,
         role.id,
@@ -61,7 +57,9 @@ const del_member = new CustomBotCommand({
 
       // Ask for confirmation
       const confirmButtonInteraction = await awaitConfirm(interaction, 'del-member', {
-        content: `Are you sure you want to remove the membership role <@&${role.id}> from <@${member.id}>?`,
+        content:
+          `Are you sure you want to remove the membership role <@&${role.id}> from <@${member.id}>?\n` +
+          'Please note that this does not block the user from applying for the membership again.',
       });
       await confirmButtonInteraction.deferReply({ ephemeral: true });
 
@@ -71,7 +69,7 @@ const del_member = new CustomBotCommand({
         await member.roles.remove(role.id);
       } catch (error) {
         console.error(error);
-        throw new CustomError(
+        throw new CustomBotError(
           `Due to the role hierarchy, the bot cannot remove the role <@&${role.id}> from users.\nI can only manage a role whose order is lower than that of my highest role <@&${botMember.roles.highest.id}>.`,
           confirmButtonInteraction,
         );
@@ -83,15 +81,29 @@ const del_member = new CustomBotCommand({
       // Remove membership
       await MembershipCollection.findByIdAndDelete(membershipDoc._id);
 
+      // DM the user
+      let notified = false;
+      try {
+        await member.send({
+          content: `Your membership role **@${role.name}** has been manually removed from the server \`${guild.name}\`.`,
+        });
+        notified = true;
+      } catch (error) {
+        // User does not allow DMs
+      }
+
       // Send log message
       await logChannel.send({
+        content: notified
+          ? ''
+          : "**[NOTE]** Due to the user's __Privacy Settings__ of this server, **I cannot send DM to notify them.**\nYou might need to notify them yourself.",
         embeds: [
           new EmbedBuilder()
             .setAuthor({
               name: `${user.username}#${user.discriminator}`,
               iconURL: user.displayAvatarURL(),
             })
-            .setTitle('❌ [Removed] Manual Membership Verification')
+            .setTitle('❌ Manual Membership Removal')
             .addFields([
               {
                 name: 'Membership Role',

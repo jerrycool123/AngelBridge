@@ -10,7 +10,7 @@ export const extractDate = (text: string, languageCode: string) => {
       /Nextbillingdate:(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\d{1,2}),(\d{4})/;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         const abbreviatedMonth = match[1];
         const monthMap: Record<string, number> = {
           Jan: 1,
@@ -35,7 +35,7 @@ export const extractDate = (text: string, languageCode: string) => {
     const regex = /帳單日期:(\d{4})年(\d{1,2})月(\d{1,2})日/;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         [year, month, day] = match.slice(1, 4).map((s) => parseInt(s, 10));
         break;
       }
@@ -44,7 +44,7 @@ export const extractDate = (text: string, languageCode: string) => {
     const regex = /结算日期:(\d{4})年(\d{1,2})月(\d{1,2})日/;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         [year, month, day] = match.slice(1, 4).map((s) => parseInt(s, 10));
         break;
       }
@@ -53,7 +53,7 @@ export const extractDate = (text: string, languageCode: string) => {
     const regex = /NächstesAbrechnungsdatum:(\d{1,2})\.(\d{1,2})\.(\d{4})/;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         [day, month, year] = match.slice(1, 4).map((s) => parseInt(s, 10));
         break;
       }
@@ -63,7 +63,7 @@ export const extractDate = (text: string, languageCode: string) => {
       /Susunodnapetsangpagsingil:(Ene|Peb|Mar|Abr|Mayo|Hun|Hul|Ago|Set|Okt|Nob|Dis)(\d{1,2}),(\d{4})/;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         const abbreviatedMonth = match[1];
         const monthMap: Record<string, number> = {
           Ene: 1,
@@ -89,7 +89,7 @@ export const extractDate = (text: string, languageCode: string) => {
       /Tanggalpenagihanberikutnya:(\d{1,2})(Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)(\d{4})/;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         const abbreviatedMonth = match[2];
         const monthMap: Record<string, number> = {
           Jan: 1,
@@ -114,7 +114,7 @@ export const extractDate = (text: string, languageCode: string) => {
     const regex = /次回請求日:(\d{4})\/(\d{2})\/(\d{2})/;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         [year, month, day] = match.slice(1, 4).map((s) => parseInt(s, 10));
         break;
       }
@@ -123,7 +123,7 @@ export const extractDate = (text: string, languageCode: string) => {
     const regex = /다음결제일:(\d{4})\.(\d{1,2})\.(\d{1,2})\./;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         [year, month, day] = match.slice(1, 4).map((s) => parseInt(s, 10));
         break;
       }
@@ -133,7 +133,7 @@ export const extractDate = (text: string, languageCode: string) => {
       /Tarikhpengebilanseterusnya:(\d{1,2})(Jan|Feb|Mac|Apr|Mei|Jun|Jul|Ogos|Sep|Okt|Nov|Dis)(\d{4})/;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         const abbreviatedMonth = match[2];
         const monthMap: Record<string, number> = {
           Jan: 1,
@@ -159,7 +159,7 @@ export const extractDate = (text: string, languageCode: string) => {
       /เรียกเก็บเงินครั้งถัดไปในวันที่(\d{1,2})(ม.ค.|ก.พ.|มี.ค.|เม.ย.|พ.ค.|มิ.ย.|ก.ค.|ส.ค.|ก.ย.|ต.ค.|พ.ย.|ธ.ค.)(\d{4})/;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         const abbreviatedMonth = match[2];
         const monthMap: Record<string, number> = {
           'ม.ค.': 1,
@@ -184,7 +184,7 @@ export const extractDate = (text: string, languageCode: string) => {
     const regex = /Ngàythanhtoántiếptheo:(\d{1,2})thg(\d{1,2}),(\d{4})/;
     for (const line of lines) {
       const match = line.match(regex);
-      if (match) {
+      if (match !== null) {
         [day, month, year] = match.slice(1, 4).map((s) => parseInt(s, 10));
         break;
       }

@@ -3,9 +3,9 @@ import { SlashCommandBuilder } from 'discord.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import YouTubeChannelCollection, { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
+import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirmButtonInteraction from '../utils/confirm.js';
-import { CustomError } from '../utils/error.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
 import { requireManageableRole } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
@@ -39,13 +39,13 @@ const add_role = new CustomBotCommand({
         ],
       });
       if (youTubeChannelDocs.length === 0) {
-        throw new CustomError(
+        throw new CustomBotError(
           `Could not find any registered YouTube channel for the keyword: \`${keyword}\`.\n` +
             'Please try again or use `/add-yt-channel` to register the channel first.',
           interaction,
         );
       } else if (youTubeChannelDocs.length > 1) {
-        throw new CustomError(
+        throw new CustomBotError(
           `Found multiple registered YouTube channels for the keyword: \`${keyword}\`.\n` +
             'Please try again with a more specific keyword.\n\n' +
             'Found channels:\n' +
@@ -63,11 +63,15 @@ const add_role = new CustomBotCommand({
       const oldMembershipRoleDoc = await MembershipRoleCollection.findOne({
         $or: [{ _id: role.id }, { youTubeChannel: youTubeChannel._id }],
       }).populate<{
-        youTubeChannel: YouTubeChannelDoc;
+        youTubeChannel: YouTubeChannelDoc | null;
       }>('youTubeChannel');
-      if (oldMembershipRoleDoc) {
-        throw new CustomError(
-          `The membership role <@&${oldMembershipRoleDoc.id}> is already assigned to the YouTube channel \`${oldMembershipRoleDoc.youTubeChannel.title}\`.`,
+      if (oldMembershipRoleDoc !== null) {
+        throw new CustomBotError(
+          `The membership role <@&${
+            oldMembershipRoleDoc._id
+          }> is already assigned to the YouTube channel \`${
+            oldMembershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'
+          }\`.`,
           interaction,
         );
       }
@@ -91,10 +95,14 @@ const add_role = new CustomBotCommand({
         youTubeChannel: youTubeChannel._id,
       });
       const populatedNewMembershipRoleDoc = await MembershipRoleCollection.populate<{
-        youTubeChannel: YouTubeChannelDoc;
+        youTubeChannel: YouTubeChannelDoc | null;
       }>(newMembershipRoleDoc, 'youTubeChannel');
       await confirmButtonInteraction.editReply({
-        content: `Successfully added the membership role <@&${populatedNewMembershipRoleDoc._id}> for the YouTube channel \`${populatedNewMembershipRoleDoc.youTubeChannel.title}\`.`,
+        content: `Successfully added the membership role <@&${
+          populatedNewMembershipRoleDoc._id
+        }> for the YouTube channel \`${
+          populatedNewMembershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'
+        }\`.`,
       });
     }),
   ),

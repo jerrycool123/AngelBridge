@@ -4,15 +4,15 @@ import {
   ButtonInteraction,
   ButtonStyle,
   CacheType,
-  ChatInputCommandInteraction,
   ComponentType,
   InteractionReplyOptions,
+  RepliableInteraction,
 } from 'discord.js';
 
-import { CustomError } from './error.js';
+import { CustomBotError } from './bot-error.js';
 
 const awaitConfirm = async (
-  originalInteraction: ChatInputCommandInteraction<CacheType>,
+  originalInteraction: RepliableInteraction<CacheType>,
   uniquePrefix: string,
   payload: InteractionReplyOptions,
   timeout = 60 * 1000,
@@ -53,19 +53,19 @@ const awaitConfirm = async (
   } catch (error) {
     // Timeout
   }
-  if (!buttonInteraction) {
+  if (buttonInteraction === undefined) {
     // Timeout
     await originalInteraction.editReply({
       components: [],
     });
-    throw new CustomError('Timed out. Please try again.', originalInteraction);
+    throw new CustomBotError('Timed out. Please try again.', originalInteraction);
   } else if (buttonInteraction.customId === `${uniquePrefix}-cancel-button`) {
     // Cancelled
     actionRow.components.forEach((component) => component.setDisabled(true));
     await originalInteraction.editReply({
       components: [actionRow],
     });
-    throw new CustomError('Cancelled', buttonInteraction);
+    throw new CustomBotError('Cancelled', buttonInteraction);
   } else if (buttonInteraction.customId === `${uniquePrefix}-confirm-button`) {
     actionRow.components.forEach((component) => component.setDisabled(true));
     await originalInteraction.editReply({

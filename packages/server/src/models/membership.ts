@@ -17,7 +17,6 @@ export interface OCRMembershipDoc extends OCRMembershipAttrs, Document<Types.Obj
 
 export interface OAuthMembershipAttrs extends BaseMembershipAttrs {
   type: 'oauth';
-  refreshToken: string;
 }
 
 export interface OAuthMembershipDoc extends OAuthMembershipAttrs, Document<Types.ObjectId> {
@@ -50,12 +49,7 @@ const ocrMembershipSchema = new Schema<OCRMembershipDoc>({
 });
 ocrMembershipSchema.add(baseMembershipSchema);
 
-const oauthMembershipSchema = new Schema<OAuthMembershipDoc>({
-  refreshToken: {
-    type: String,
-    required: true,
-  },
-});
+const oauthMembershipSchema = new Schema<OAuthMembershipDoc>();
 oauthMembershipSchema.add(baseMembershipSchema);
 
 type MembershipAttrs = OCRMembershipAttrs | OAuthMembershipAttrs;
@@ -75,7 +69,15 @@ const MembershipCollection = model<MembershipDoc, MembershipModel>(
   'Membership',
 );
 
-MembershipCollection.discriminator('ocr', ocrMembershipSchema);
-MembershipCollection.discriminator('oauth', oauthMembershipSchema);
+export const OCRMembershipCollection = MembershipCollection.discriminator(
+  'OCRMembershipCollection',
+  ocrMembershipSchema,
+  'ocr',
+);
+export const OAuthMembershipCollection = MembershipCollection.discriminator(
+  'OAuthMembershipCollection',
+  oauthMembershipSchema,
+  'oauth',
+);
 
 export default MembershipCollection;

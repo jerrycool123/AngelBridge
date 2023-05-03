@@ -10,6 +10,7 @@
     "server": "yarn workspace server dev",
     "dev": "yarn workspaces foreach -vip run dev",
     "build": "yarn workspaces foreach -vit run build",
+    "start": "yarn workspaces foreach -vip run start",
     "format": "yarn workspaces foreach -vi run format",
     "lint": "yarn workspaces foreach -vi run lint"
   },

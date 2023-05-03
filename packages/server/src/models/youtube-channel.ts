@@ -6,10 +6,13 @@ export interface YouTubeChannelAttrs {
   description: string;
   customUrl: string;
   thumbnail: string;
+  memberOnlyVideoIds: string[];
 }
 
 export interface YouTubeChannelDoc extends YouTubeChannelAttrs, Document<string> {
   _id: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface YouTubeChannelModel extends Model<YouTubeChannelDoc> {
@@ -35,6 +38,10 @@ const youTubeChannelSchema = new Schema<YouTubeChannelDoc>(
     },
     thumbnail: {
       type: String,
+      required: true,
+    },
+    memberOnlyVideoIds: {
+      type: [String],
       required: true,
     },
   },

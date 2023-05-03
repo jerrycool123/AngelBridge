@@ -1,12 +1,12 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
-import { youtube_v3 } from 'googleapis';
+import { google, youtube_v3 } from 'googleapis';
 
-import { youtubeApi } from '../../libs/google.js';
+import GoogleUtility from '../../libs/google.js';
 import DiscordBotConfig from '../config.js';
+import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { upsertYouTubeChannelCollection } from '../utils/db.js';
-import { CustomError } from '../utils/error.js';
 import { useGuildOnly } from '../utils/middleware.js';
 import CustomBotCommand from './index.js';
 
@@ -24,6 +24,7 @@ const add_yt_channel = new CustomBotCommand({
     // Search YouTube channel by ID via YouTube API
     let channelId: string;
     const id = options.getString('id', true);
+    const youtubeApi = google.youtube({ version: 'v3', auth: GoogleUtility.apiKey });
     if (id.startsWith('UC') && id.length === 24) {
       // Channel ID
       channelId = id;
@@ -36,8 +37,8 @@ const add_yt_channel = new CustomBotCommand({
       } catch (error) {
         console.error(error);
       }
-      if (!videoChannelId) {
-        throw new CustomError(
+      if (videoChannelId == null) {
+        throw new CustomBotError(
           `Could not find a YouTube video for the video ID: \`${id}\`. Please try again. Here are some examples:\n\n` +
             `The channel ID of <https://www.youtube.com/channel/UCZlDXzGoo7d44bwdNObFacg> is \`UCZlDXzGoo7d44bwdNObFacg\`. It must begins with 'UC...'. Currently we don't support custom channel ID search (e.g. \`@AmaneKanata\`). If you cannot find a valid channel ID, please provide a video ID instead.\n\n` +
             `The video ID of <https://www.youtube.com/watch?v=Dji-ehIz5_k> is \`Dji-ehIz5_k\`.`,
@@ -49,10 +50,10 @@ const add_yt_channel = new CustomBotCommand({
     }
 
     // Get channel info from YouTube API
-    let channel: youtube_v3.Schema$Channel | undefined = undefined;
+    let channel: youtube_v3.Schema$Channel | null = null;
     try {
       const response = await youtubeApi.channels.list({ part: ['snippet'], id: [channelId] });
-      channel = response.data.items?.[0];
+      channel = response.data.items?.[0] ?? null;
     } catch (error) {
       console.error(error);
     }
@@ -70,7 +71,7 @@ const add_yt_channel = new CustomBotCommand({
       customUrl == null ||
       thumbnail == null
     ) {
-      throw new CustomError(
+      throw new CustomBotError(
         `Could not find a YouTube channel for the channel ID: \`${channelId}\`. Please try again.`,
         interaction,
       );
@@ -108,10 +109,34 @@ const add_yt_channel = new CustomBotCommand({
           .setFooter({ text: `ID: ${user.id}` }),
       ],
     });
+    await confirmButtonInteraction.deferReply({ ephemeral: true });
+
+    // Fetch member only video IDs
+    const memberOnlyVideoIds: string[] = [];
+    try {
+      const memberOnlyPlaylistId = 'UUMO' + youTubeChannelId.slice(2);
+      const { data } = await youtubeApi.playlistItems.list({
+        part: ['contentDetails'],
+        playlistId: memberOnlyPlaylistId,
+        maxResults: 20,
+      });
+      data.items?.forEach((item) => {
+        if (item.contentDetails?.videoId != null) {
+          memberOnlyVideoIds.push(item.contentDetails.videoId);
+        }
+      });
+    } catch (error) {
+      console.error(error);
+    }
+    if (memberOnlyVideoIds.length === 0) {
+      throw new CustomBotError(
+        `Could not find any member only videos for the YouTube channel: \`${channelInfo.title}\`. Please try again.`,
+        confirmButtonInteraction,
+      );
+    }
 
     // Add YouTube channel to database
-    await confirmButtonInteraction.deferReply({ ephemeral: true });
-    const youTubeChannelDoc = await upsertYouTubeChannelCollection(channelInfo);
+    const youTubeChannelDoc = await upsertYouTubeChannelCollection(channelInfo, memberOnlyVideoIds);
 
     await confirmButtonInteraction.editReply({
       content: `Successfully added the YouTube channel \`${youTubeChannelDoc.title}\` to the bot's supported list.`,

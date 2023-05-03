@@ -4,10 +4,6 @@ export interface GuildAttrs {
   _id: string; // Discord Guild ID
   name: string;
   icon: string | null;
-  allowedMembershipVerificationMethods: {
-    oauth: boolean;
-    ocr: boolean;
-  };
 }
 
 export interface GuildDoc extends GuildAttrs, Document<string> {
@@ -36,29 +32,21 @@ const guildSchema = new Schema<GuildDoc>(
       type: String,
       default: null,
     },
-    allowedMembershipVerificationMethods: new Schema<
-      GuildDoc['allowedMembershipVerificationMethods']
-    >(
-      {
-        oauth: {
-          type: Boolean,
-          required: true,
-        },
-        ocr: {
-          type: Boolean,
-          required: true,
-        },
-      },
-      {
-        _id: false,
-      },
-    ),
   },
   {
     timestamps: true,
     statics: {
       async build(attrs: GuildAttrs) {
         return this.create(attrs);
+      },
+    },
+    virtuals: {
+      membershipRoles: {
+        options: {
+          ref: 'MembershipRole',
+          localField: '_id',
+          foreignField: 'guild',
+        },
       },
     },
   },

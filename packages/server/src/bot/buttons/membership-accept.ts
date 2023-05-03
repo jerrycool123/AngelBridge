@@ -1,9 +1,8 @@
 import { ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 
+import { CustomBotError } from '../utils/bot-error.js';
 import { createDisabledAcceptedActionRow } from '../utils/common.js';
-import { upsertOCRMembershipCollection } from '../utils/db.js';
-import { upsertUserCollection } from '../utils/db.js';
-import { CustomError } from '../utils/error.js';
+import { upsertMembershipCollection } from '../utils/db.js';
 import {
   invalidateMembershipVerificationEmbed,
   parseMembershipVerificationRequestEmbed,
@@ -46,9 +45,9 @@ const membershipAcceptButton = new CustomButton({
 
           // Fetch role and check if it's manageable
           const role = await guild.roles.fetch(roleId, { force: true });
-          if (!role) {
+          if (role === null) {
             await invalidateMembershipVerificationEmbed(interaction);
-            throw new CustomError(
+            throw new CustomBotError(
               `Failed to retrieve the role <@&${roleId}> from the server.`,
               interaction,
             );
@@ -58,22 +57,20 @@ const membershipAcceptButton = new CustomButton({
           // Fetch guild member
           const member = await requireGuildMember(interaction, guild, userId);
 
-          // Update database
-          await Promise.all([
-            upsertUserCollection(member.user),
-            upsertOCRMembershipCollection({
-              userId: member.id,
-              membershipRoleId: roleId,
-              expireAt,
-            }),
-          ]);
+          // Update membership in DB
+          await upsertMembershipCollection({
+            type: 'ocr',
+            userId: member.id,
+            membershipRoleId: roleId,
+            expireAt,
+          });
 
           // Add role to member
           try {
             await member.roles.add(role);
           } catch (error) {
             console.error(error);
-            throw new CustomError('Failed to add the role to the member.', interaction);
+            throw new CustomBotError('Failed to add the role to the member.', interaction);
           }
 
           // DM the user
@@ -95,7 +92,7 @@ const membershipAcceptButton = new CustomButton({
               : "**[NOTE]** Due to the user's __Privacy Settings__ of this server, **I cannot send DM to notify them.**\nYou might need to notify them yourself.",
             embeds: [
               EmbedBuilder.from(infoEmbed.data)
-                .setTitle('✅ [Accepted] ' + infoEmbed.title)
+                .setTitle('✅ [Accepted] ' + (infoEmbed.title ?? ''))
                 .addFields([
                   {
                     name: 'Verified By',

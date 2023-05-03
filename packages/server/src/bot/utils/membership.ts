@@ -16,8 +16,8 @@ import membershipAcceptButton from '../buttons/membership-accept.js';
 import membershipModifyButton from '../buttons/membership-modify.js';
 import membershipRejectButton from '../buttons/membership-reject.js';
 import client from '../index.js';
+import { CustomBotError } from './bot-error.js';
 import { createDisabledInvalidActionRow } from './common.js';
-import { CustomError } from './error.js';
 import {
   requireGuildDocument,
   requireGuildDocumentHasLogChannel,
@@ -47,7 +47,7 @@ export const recognizeMembership =
       const logChannel = await requireGuildHasLogChannel(null, guild, logChannelId);
 
       let text = await ocrWorker.recognize(languageCode, url);
-      if (!text) {
+      if (text === null) {
         throw new Error('The OCR worker failed to recognize the text.');
       }
       // post-process the text
@@ -135,32 +135,33 @@ export const parseMembershipVerificationRequestEmbed = async (
 }> => {
   const throwParseError = async () => {
     await invalidateMembershipVerificationEmbed(interaction);
-    throw new CustomError(
+    throw new CustomBotError(
       'Failed to retrieve membership verification request embed.',
       interaction,
       true,
     );
   };
 
-  if (!infoEmbed) return await throwParseError();
+  if (infoEmbed === null) return await throwParseError();
 
   const userId = infoEmbed.footer?.text.split('User ID: ')[1] ?? null;
-  if (!userId) return await throwParseError();
+  if (userId === null) return await throwParseError();
 
   const createdAtString = infoEmbed.timestamp ?? null;
-  const createdAt = createdAtString ? dayjs.utc(createdAtString) : null;
-  if (!createdAt) return await throwParseError();
+  const createdAt = createdAtString === null ? dayjs.utc(createdAtString) : null;
+  if (createdAt === null) return await throwParseError();
 
   const expireAtString =
     infoEmbed.fields.find(({ name }) => name === 'Expiration Date')?.value ?? null;
-  const rawExpireAt = expireAtString ? dayjs.utc(expireAtString, 'YYYY/MM/DD', true) : null;
-  const expireAt = rawExpireAt?.isValid() ? rawExpireAt : null;
+  const rawExpireAt =
+    expireAtString === null ? dayjs.utc(expireAtString, 'YYYY/MM/DD', true) : null;
+  const expireAt = rawExpireAt?.isValid() ?? false ? rawExpireAt : null;
 
   const roleRegex = /<@&(\d+)>/;
   const roleId =
     infoEmbed.fields.find(({ name }) => name === 'Membership Role')?.value?.match(roleRegex)?.[1] ??
     null;
-  if (!roleId) return await throwParseError();
+  if (roleId === null) return await throwParseError();
 
   return { infoEmbed, userId, createdAt, expireAt, roleId };
 };

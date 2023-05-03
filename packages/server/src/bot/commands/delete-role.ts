@@ -1,13 +1,13 @@
 import { SlashCommandBuilder, User } from 'discord.js';
 
-import sleep from '../../libs/sleep.js';
+import DiscordUtility from '../../libs/discord.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import MembershipCollection from '../../models/membership.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
+import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
-import { CustomError } from '../utils/error.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
 import { requireManageableRole } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
@@ -32,10 +32,10 @@ const delete_role = new CustomBotCommand({
       const [membershipRoleDoc, membershipDocs] = await Promise.all([
         MembershipRoleCollection.findById(role.id)
           .populate<{
-            youTubeChannel: YouTubeChannelDoc;
+            youTubeChannel: YouTubeChannelDoc | null;
           }>('youTubeChannel')
           .orFail(
-            new CustomError(
+            new CustomBotError(
               `The role <@&${role.id}> is not a membership role in this server.\n` +
                 'You can use `/settings` to see the list of membership roles in this server.',
               interaction,
@@ -49,7 +49,11 @@ const delete_role = new CustomBotCommand({
       // Ask for confirmation
       const confirmButtonInteraction = await awaitConfirm(interaction, 'delete-role', {
         content:
-          `Are you sure you want to delete the membership role <@&${role.id}> for the YouTube channel \`${membershipRoleDoc.youTubeChannel.title}\`?\n` +
+          `Are you sure you want to delete the membership role <@&${
+            role.id
+          }> for the YouTube channel \`${
+            membershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'
+          }\`?\n` +
           `This action will remove the membership role from ${membershipDocs.length} members.\n\n` +
           `Note that we won't delete the role in Discord. Instead, we just delete the membership role in the database, and remove the role from registered members.`,
       });
@@ -63,34 +67,39 @@ const delete_role = new CustomBotCommand({
       // Remove membership role in DB
       await MembershipRoleCollection.findByIdAndDelete(membershipRoleDoc._id);
       await confirmButtonInteraction.editReply({
-        content: `Successfully deleted the membership role <@&${role.id}> for the YouTube channel \`${membershipRoleDoc.youTubeChannel.title}\`.`,
+        content: `Successfully deleted the membership role <@&${
+          role.id
+        }> for the YouTube channel \`${
+          membershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'
+        }\`.`,
       });
 
       // DM user about the removal
-      for (const membershipDoc of membershipDocs) {
-        let user: User | null = null;
-        try {
-          const member = await guild.members.fetch(membershipDoc.user);
-          user = member.user;
-          await member.roles.remove(membershipRoleDoc._id);
-        } catch (error) {
-          console.error(error);
-          console.error(
-            `Failed to remove role ${membershipRoleDoc.name}(ID: ${membershipRoleDoc._id}) from user with ID ${membershipDoc.user} in guild ${guild.name}(ID: ${guild.id}).`,
-          );
-        }
+      membershipDocs.forEach((membershipDoc) =>
+        DiscordUtility.addJobToQueue(async () => {
+          let user: User | null = null;
+          try {
+            const member = await guild.members.fetch(membershipDoc.user);
+            user = member.user;
+            await member.roles.remove(membershipRoleDoc._id);
+          } catch (error) {
+            console.error(error);
+            console.error(
+              `Failed to remove role ${membershipRoleDoc.name}(ID: ${membershipRoleDoc._id}) from user with ID ${membershipDoc.user} in guild ${guild.name}(ID: ${guild.id}).`,
+            );
+          }
 
-        try {
-          if (!user) user = await client.users.fetch(membershipDoc.user);
-          await user.send(
-            `Your membership role **@${membershipRoleDoc.name}** has been removed, since it has been deleted by a moderator in the server \`${guild.name}\`.`,
-          );
-        } catch (error) {
-          // We cannot DM the user, so we just ignore it
-          console.error(error);
-        }
-        await sleep(100);
-      }
+          try {
+            if (user === null) user = await client.users.fetch(membershipDoc.user);
+            await user.send(
+              `Your membership role **@${membershipRoleDoc.name}** has been removed, since it has been deleted by a moderator in the server \`${guild.name}\`.`,
+            );
+          } catch (error) {
+            // We cannot DM the user, so we just ignore it
+            console.error(error);
+          }
+        }),
+      );
     }),
   ),
 });

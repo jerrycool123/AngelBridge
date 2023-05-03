@@ -14,7 +14,7 @@ import {
   TextInputStyle,
 } from 'discord.js';
 
-import { CustomError } from '../utils/error.js';
+import { CustomBotError } from '../utils/bot-error.js';
 import { parseMembershipVerificationRequestEmbed } from '../utils/membership.js';
 import {
   useFollowUpCustomError,
@@ -69,8 +69,8 @@ const membershipModifyButton = new CustomButton({
         } catch (error) {
           // Timeout
         }
-        if (!modalSubmitInteraction) {
-          throw new CustomError('Timed out. Please try again.', interaction);
+        if (modalSubmitInteraction === null) {
+          throw new CustomBotError('Timed out. Please try again.', interaction);
         }
 
         // Acknowledge the modal
@@ -82,7 +82,7 @@ const membershipModifyButton = new CustomButton({
         );
         const newExpireAt = dayjs.utc(expireAtString, 'YYYY/MM/DD', true);
         if (!newExpireAt.isValid()) {
-          throw new CustomError(
+          throw new CustomBotError(
             'Invalid date. The date must be in YYYY/MM/DD format. Please try again.',
             interaction,
           );
