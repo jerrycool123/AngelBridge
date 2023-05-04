@@ -6,6 +6,7 @@ const Env = {
   FRONTEND_URL: '',
   BACKEND_URL: '',
   NEXTAUTH_SECRET: '',
+  DATA_ENCRYPTION_SECRET: '',
   MONGO_URL: '',
   DISCORD_BOT_TOKEN: '',
   DISCORD_CLIENT_ID: '',

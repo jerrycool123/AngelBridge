@@ -162,7 +162,7 @@ export const upsertMembershipCollection = async (
 export const upsertUserCollection = async (
   user: Pick<User, 'id' | 'username' | 'discriminator'>,
   avatar: string,
-  refreshToken?: string,
+  refreshToken?: Buffer,
 ) => {
   return await UserCollection.findByIdAndUpdate(
     user.id,

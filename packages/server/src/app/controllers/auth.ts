@@ -5,10 +5,11 @@ import { google, youtube_v3 } from 'googleapis';
 import jwt from 'jsonwebtoken';
 
 import { upsertUserCollection } from '../../bot/utils/db.js';
+import { symmetricEncrypt } from '../../libs/crypto.js';
 import DiscordUtility from '../../libs/discord.js';
 import Env from '../../libs/env.js';
 import GoogleUtility from '../../libs/google.js';
-import { BadRequestError } from '../../libs/request-error.js';
+import { BadRequestError, InternalServerError } from '../../libs/request-error.js';
 import UserCollection from '../../models/user.js';
 import { getSession } from '../middlewares/auth.js';
 
@@ -44,6 +45,10 @@ namespace AuthController {
     }
 
     // Upsert user info
+    const newEncryptedRefreshToken = symmetricEncrypt(newRefreshToken);
+    if (newEncryptedRefreshToken === null) {
+      throw new InternalServerError('Failed to encrypt refresh token');
+    }
     const userDoc = await upsertUserCollection(
       {
         id,
@@ -51,7 +56,7 @@ namespace AuthController {
         discriminator,
       },
       avatar,
-      newRefreshToken,
+      newEncryptedRefreshToken,
     );
 
     return res.status(201).send({ id: userDoc._id });
@@ -111,12 +116,16 @@ namespace AuthController {
     }
 
     // Update user YouTube channel info
+    const encryptedRefreshToken = symmetricEncrypt(refreshToken);
+    if (encryptedRefreshToken === null) {
+      throw new InternalServerError('Could not encrypt refresh token');
+    }
     userDoc.youTube = {
       id: youTubeChannelId,
       title,
       customUrl,
       thumbnail,
-      refreshToken,
+      refreshToken: encryptedRefreshToken,
     };
     await userDoc.save();
 

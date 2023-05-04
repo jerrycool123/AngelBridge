@@ -6,6 +6,7 @@ import { google } from 'googleapis';
 
 import client from '../../bot/index.js';
 import { upsertMembershipCollection } from '../../bot/utils/db.js';
+import { symmetricDecrypt, symmetricEncrypt } from '../../libs/crypto.js';
 import DiscordUtility from '../../libs/discord.js';
 import GoogleUtility from '../../libs/google.js';
 import { BadRequestError, InternalServerError } from '../../libs/request-error.js';
@@ -30,7 +31,11 @@ namespace MembershipController {
     } else if (userDoc.youTube === null) {
       throw new BadRequestError('You have not linked a YouTube channel');
     }
-    const result = await DiscordUtility.getAccessToken(userDoc.refreshToken);
+    const discordRefreshToken = symmetricDecrypt(userDoc.refreshToken);
+    if (discordRefreshToken === null) {
+      throw new InternalServerError('Failed to decrypt Discord refresh token');
+    }
+    const result = await DiscordUtility.getAccessToken(discordRefreshToken);
     if (!result.success) {
       throw new BadRequestError(
         `An error occurred when trying to refresh your Discord access token: ${result.error}\n` +
@@ -38,7 +43,11 @@ namespace MembershipController {
       );
     }
     const { accessToken, newRefreshToken } = result;
-    userDoc.refreshToken = newRefreshToken;
+    const newEncryptedDiscordRefreshToken = symmetricEncrypt(newRefreshToken);
+    if (newEncryptedDiscordRefreshToken === null) {
+      throw new InternalServerError('Failed to encrypt refresh token');
+    }
+    userDoc.refreshToken = newEncryptedDiscordRefreshToken;
     await userDoc.save();
 
     // Check if membership role exists
@@ -126,8 +135,12 @@ namespace MembershipController {
     }
 
     // OAuth membership check
+    const youTubeRefreshToken = symmetricDecrypt(userDoc.youTube.refreshToken);
+    if (youTubeRefreshToken === null) {
+      throw new InternalServerError('Failed to decrypt YouTube refresh token');
+    }
     const oauth2Client = GoogleUtility.createOAuth2Client();
-    oauth2Client.setCredentials({ refresh_token: userDoc.youTube.refreshToken });
+    oauth2Client.setCredentials({ refresh_token: youTubeRefreshToken });
     const youTubeApi = google.youtube({ version: 'v3', auth: oauth2Client });
     try {
       await youTubeApi.commentThreads.list({

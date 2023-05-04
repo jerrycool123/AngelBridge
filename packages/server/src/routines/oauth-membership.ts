@@ -3,6 +3,7 @@ import { Guild, User } from 'discord.js';
 import { google } from 'googleapis';
 
 import client from '../bot/index.js';
+import { symmetricDecrypt } from '../libs/crypto.js';
 import DiscordUtility from '../libs/discord.js';
 import GoogleUtility from '../libs/google.js';
 import GuildCollection from '../models/guild.js';
@@ -180,9 +181,14 @@ const OAuthMembershipCheckRoutine: CustomCronJob = {
           GoogleUtility.addJobToQueue(async () => {
             const oauth2Client = GoogleUtility.createOAuth2Client();
 
-            if (membershipDoc.user.youTube?.refreshToken !== undefined) {
+            let refreshToken: string | null = null;
+            if (membershipDoc.user.youTube !== null) {
+              refreshToken = symmetricDecrypt(membershipDoc.user.youTube.refreshToken);
+            }
+
+            if (refreshToken !== null) {
               oauth2Client.setCredentials({
-                refresh_token: membershipDoc.user.youTube.refreshToken,
+                refresh_token: refreshToken,
               });
               const youTubeApi = google.youtube({ version: 'v3', auth: oauth2Client });
               try {

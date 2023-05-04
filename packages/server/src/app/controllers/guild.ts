@@ -2,8 +2,9 @@ import { CustomRequestHandler, ReadGuildRequest } from '@angel-bridge/common';
 import { UsersAPI } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
 
+import { symmetricDecrypt, symmetricEncrypt } from '../../libs/crypto.js';
 import DiscordUtility from '../../libs/discord.js';
-import { BadRequestError } from '../../libs/request-error.js';
+import { BadRequestError, InternalServerError } from '../../libs/request-error.js';
 import GuildCollection from '../../models/guild.js';
 import { MembershipRoleDoc } from '../../models/membership-role.js';
 import { MembershipDoc } from '../../models/membership.js';
@@ -21,18 +22,26 @@ namespace GuildController {
     if (userDoc?.refreshToken == null) {
       throw new BadRequestError('You have not authorized with Discord');
     }
+    const refreshToken = symmetricDecrypt(userDoc.refreshToken);
+    if (refreshToken === null) {
+      throw new InternalServerError('Failed to decrypt refresh token');
+    }
     const membershipRecord = userDoc.memberships.reduce<Record<string, MembershipDoc>>(
       (prev, membership) => ({ ...prev, [membership.membershipRole]: membership }),
       {},
     );
 
     // Get guilds from Discord API
-    const result = await DiscordUtility.getAccessToken(userDoc.refreshToken);
+    const result = await DiscordUtility.getAccessToken(refreshToken);
     if (!result.success) {
       throw new BadRequestError(result.error);
     }
     const { accessToken, newRefreshToken } = result;
-    userDoc.refreshToken = newRefreshToken;
+    const newEncryptedRefreshToken = symmetricEncrypt(newRefreshToken);
+    if (newEncryptedRefreshToken === null) {
+      throw new InternalServerError('Failed to encrypt refresh token');
+    }
+    userDoc.refreshToken = newEncryptedRefreshToken;
 
     const discordRestApi = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(accessToken);
     const discordUsersApi = new UsersAPI(discordRestApi);

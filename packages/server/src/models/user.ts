@@ -10,13 +10,13 @@ export interface UserDoc extends UserAttrs, Document<string> {
   _id: string;
   lastVerifyingRoleId: string | null;
   language: SupportedOCRLanguage['language'];
-  refreshToken: string | null;
+  refreshToken: Buffer | null;
   youTube: {
     id: string;
     title: string;
     customUrl: string;
     thumbnail: string;
-    refreshToken: string;
+    refreshToken: Buffer;
   } | null;
   createdAt: Date;
   updatedAt: Date;
@@ -47,7 +47,7 @@ const userSchema = new Schema<UserDoc>(
       default: 'English',
     },
     refreshToken: {
-      type: String,
+      type: Buffer,
       default: null,
     },
     youTube: {
@@ -70,7 +70,7 @@ const userSchema = new Schema<UserDoc>(
             required: true,
           },
           refreshToken: {
-            type: String,
+            type: Buffer,
             required: true,
           },
         },
