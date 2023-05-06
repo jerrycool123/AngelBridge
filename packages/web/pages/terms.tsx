@@ -1,11 +1,12 @@
 import { GetStaticProps } from 'next';
 import Link from 'next/link';
+import fs from 'node:fs';
+import path from 'node:path';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 
 import styles from '../styles/Markdown.module.css';
 
 import MainLayout from '../layouts/MainLayout';
-import publicEnv from '../libs/public-env';
 
 interface TermsOfUsePageProps {
   markdown: string;
@@ -27,10 +28,8 @@ const TermsOfUsePage: NextPageWithLayout<TermsOfUsePageProps> = ({ markdown }) =
   </div>
 );
 
-export const getStaticProps: GetStaticProps<TermsOfUsePageProps> = async () => {
-  const res = await fetch(`
-  ${publicEnv.NEXT_PUBLIC_FRONTEND_URL}/terms.md`);
-  const markdown = await res.text();
+export const getStaticProps: GetStaticProps<TermsOfUsePageProps> = () => {
+  const markdown = fs.readFileSync(path.join(process.cwd(), './public/terms.md'), 'utf-8');
 
   return {
     props: {
