@@ -89,8 +89,8 @@ const AppPage: NextPageWithLayout = () => {
 
   if (guilds === null) {
     return (
-      <div className="h-100 d-flex flex-column justify-content-center align-items-center">
-        <div className="poppins mb-4 fs-5 fw-medium text-white">Loading...</div>
+      <div className="vh-100 d-flex flex-column justify-content-center align-items-center">
+        <div className="poppins mb-4 fs-5 fw-500 text-white">Loading...</div>
         <Spin className="mb-5" indicator={<LoadingOutlined className="text-white fs-2" spin />} />
       </div>
     );
@@ -113,16 +113,14 @@ const AppPage: NextPageWithLayout = () => {
         {selectedMembershipRole !== null && (
           <>
             <div className="mt-3 mb-4">
-              <div className={`fs-6 mb-2 text-white fw-bold ${styles.modalSubTitle}`}>
-                OAuth Mode
-              </div>
+              <div className="fs-6 mb-2 text-white fw-700 poppins">OAuth Mode</div>
               <div className="mb-3">
                 <div className="mb-1">
                   You can link your YouTube channel and authorize Angel Bridge to verify your
                   membership for{' '}
                   <span
                     role="button"
-                    className={styles.modalChannelTitle}
+                    className={`fw-700 ${styles.modalChannelTitle}`}
                     onClick={() => {
                       window.open(
                         `https://www.youtube.com/${selectedMembershipRole.youTubeChannel.customUrl}`,
@@ -135,7 +133,7 @@ const AppPage: NextPageWithLayout = () => {
                   .
                 </div>
                 {user?.youTube == null && (
-                  <div className="fw-medium text-white">
+                  <div className="fw-500 text-white">
                     Please link your YouTube account to continue.
                   </div>
                 )}
@@ -154,7 +152,7 @@ const AppPage: NextPageWithLayout = () => {
                   </>
                 ) : (
                   <div className={`px-3 py-2 rounded d-flex flex-column ${styles.channelWrapper}`}>
-                    <div className={`mb-2 text-white ${styles.linkedChannelTitle}`}>
+                    <div className="mb-2 text-white fw-500 poppins">
                       Your linked YouTube channel
                     </div>
                     <div className="d-flex align-items-center">
@@ -275,17 +273,17 @@ const AppPage: NextPageWithLayout = () => {
               </div>
             </div>
             <div>
-              <div className={`fs-6 mb-2 text-white fw-bold ${styles.modalSubTitle}`}>OCR Mode</div>
+              <div className={`fs-6 mb-2 text-white fw-700 ${styles.modalSubTitle}`}>OCR Mode</div>
               <div className="mb-3">
                 <div className="mb-1">
                   Alternatively, You can to go to the Discord server{' '}
-                  <span className={styles.modalGuildName}>
+                  <span className={`fw-700 ${styles.modalGuildName}`}>
                     {guilds.find(({ id }) => id === selectedMembershipRole.guild)?.name ??
                       '[Unknown Server]'}
                   </span>{' '}
                   and use the slash command{' '}
-                  <span className={`text-white mx-1 ${styles.modalCommand}`}>/verify</span> to
-                  submit your membership screenshot.
+                  <span className={`text-white mx-1 fw-700 ${styles.modalCommand}`}>/verify</span>{' '}
+                  to submit your membership screenshot.
                 </div>
                 <div>Your request will be manually handled by the server moderators.</div>
               </div>
@@ -308,7 +306,7 @@ const AppPage: NextPageWithLayout = () => {
       <div className="my-5">
         <div className={`container ${styles.container}`}>
           <div className="row">
-            <div className={`fs-5 ms-2 mt-4 mb-3 ${styles.title}`}>
+            <div className="fs-5 ms-2 mt-4 mb-3 poppins fw-700 text-white">
               Membership Roles in your servers
             </div>
           </div>
@@ -334,12 +332,12 @@ const AppPage: NextPageWithLayout = () => {
                             height={40}
                           />
                         )}
-                        <div className="flex-grow-1 text-truncate fw-bold fs-4 mx-3">
+                        <div className="flex-grow-1 text-truncate fw-700 fs-4 mx-3">
                           {guild.name}
                         </div>
                       </div>
                       <div
-                        className={`flex-shrink-0 ${styles.membershipRoleCount}`}
+                        className={`flex-shrink-0 fw-600 ${styles.membershipRoleCount}`}
                       >{`Roles: ${guild.membershipRoles.length}`}</div>
                     </div>
                     <div className={`pb-1 d-flex overflow-auto ${styles.cardBody}`}>
@@ -387,7 +385,7 @@ const AppPage: NextPageWithLayout = () => {
                             <div className="flex-shrink-0 mb-1 d-flex align-items-center">
                               Membership Role:
                               <div
-                                className={`ms-2 ${styles.membershipRolePill}`}
+                                className={`ms-2 fw-500 ${styles.membershipRolePill}`}
                                 onMouseEnter={() => setHoveredRoleId(membershipRole.id)}
                                 onMouseLeave={() => setHoveredRoleId(null)}
                                 style={{
@@ -429,7 +427,7 @@ const AppPage: NextPageWithLayout = () => {
                                 <div className="flex-shrink-0 mb-1">Verification Mode: OCR</div>
                                 <div className="flex-shrink-0">
                                   Next Billing Date:{' '}
-                                  <span className={`fw-bold ${styles.billingDate}`}>
+                                  <span className={`fw-700 ${styles.billingDate}`}>
                                     {dayjs
                                       .utc(membershipRole.membership.billingDate)
                                       .format('YYYY-MM-DD')}

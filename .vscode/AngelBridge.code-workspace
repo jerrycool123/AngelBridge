@@ -16,7 +16,7 @@
   "settings": {
     "typescript.preferences.quoteStyle": "single",
     "javascript.preferences.quoteStyle": "single",
-    "cSpell.words": ["APIV", "middlewares", "openapi", "virtuals"],
+    "cSpell.words": ["APIV", "middlewares", "openapi", "postbuild", "virtuals"],
     "search.exclude": {
       "**/node_modules": true,
       "**/build": true

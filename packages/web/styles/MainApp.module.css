@@ -3,12 +3,6 @@
   border-radius: 0.25rem;
 }
 
-.title {
-  font-family: 'Poppins', sans-serif;
-  color: rgb(255, 255, 255);
-  font-weight: 700;
-}
-
 .card {
   background-color: rgb(65, 79, 103);
   padding: 1rem;
@@ -27,7 +21,6 @@
 
 .membershipRoleCount {
   color: #dfa3ff;
-  font-weight: 600;
 }
 
 .membershipRole {
@@ -42,7 +35,6 @@
 }
 
 .membershipRolePill {
-  font-weight: 500;
   border-radius: 3px;
   padding: 0 2px;
 }
@@ -84,16 +76,11 @@
 }
 
 .modalChannelTitle {
-  font-weight: 700;
   color: rgb(125, 195, 255);
 }
 
 .modalChannelTitle:hover {
   text-decoration: underline;
-}
-
-.modalSubTitle {
-  font-family: 'Poppins', sans-serif;
 }
 
 .modal :global(.ant-modal-content) {
@@ -110,18 +97,8 @@
   width: 20rem;
 }
 
-.linkedChannelTitle {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-}
-
 .modalGuildName {
-  font-weight: 700;
   color: rgb(255, 183, 74);
-}
-
-.modalCommand {
-  font-weight: 700;
 }
 
 .modalGotoServer {

@@ -41,6 +41,10 @@
 }
 
 .children {
-  height: 100vh;
+  min-height: 100vh;
   padding-top: 56px;
+}
+
+.footer {
+  background-color: #1b1b1b;
 }

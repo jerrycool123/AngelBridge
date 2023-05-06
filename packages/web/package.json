@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && yarn postbuild",
+    "postbuild": "next-sitemap --config next-sitemap.config.cjs",
     "start": "next start",
     "lint": "next lint"
   },
@@ -23,8 +24,10 @@
     "jsonwebtoken": "^9.0.0",
     "next": "latest",
     "next-auth": "^4.22.0",
+    "next-sitemap": "^4.0.9",
     "react": "latest",
     "react-dom": "latest",
+    "react-markdown": "^8.0.7",
     "react-social-login-buttons": "^3.6.1",
     "typescript": "5.0.2"
   },

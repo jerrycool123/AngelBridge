@@ -5,7 +5,6 @@
 
 .heroText {
   color: #3bb4ff;
-  font-family: 'Poppins', sans-serif;
 }
 
 .subText {
@@ -14,20 +13,31 @@
 
 .youTube {
   color: #ff0000;
-  font-weight: 600;
 }
 
 .discord {
   color: #5865f2;
-  font-weight: 600;
 }
 
 .heroImage {
   display: none;
 }
 
+.featuresSection {
+  background-color: #3a4149;
+  padding: 5rem 0;
+}
+
 @media (min-width: 992px) {
   .heroImage {
     display: flex;
   }
+}
+
+.introduction {
+  color: #dcdcdc;
+}
+
+.modeIntro {
+  height: 8rem;
 }

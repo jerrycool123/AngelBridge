@@ -6,6 +6,6 @@
     "jsx": "preserve"
   },
   "extends": "../../tsconfig.json",
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts", "*.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts", "*.js", "*.cjs"],
   "exclude": ["node_modules"]
 }
