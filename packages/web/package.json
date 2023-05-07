@@ -29,6 +29,7 @@
     "react-dom": "latest",
     "react-markdown": "^8.0.7",
     "react-social-login-buttons": "^3.6.1",
+    "sharp": "^0.32.1",
     "typescript": "5.0.2"
   },
   "devDependencies": {
