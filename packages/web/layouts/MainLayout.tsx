@@ -35,9 +35,14 @@ const MainLayout = ({ children }: { children: ReactElement }) => {
     <>
       <nav className={`navbar navbar-expand-lg bg-body-tertiary ${styles.navbar}`}>
         <div className="container">
-          <Link className={`fs-5 text-decoration-none fw-700 ${styles.brand}`} href="/">
-            Angel Bridge
-          </Link>
+          <div>
+            <Link className="navbar-brand" href="#">
+              <Image src="/logo.png" alt="logo" width="40" height="40" />
+            </Link>
+            <Link className={`fs-5 text-decoration-none fw-700 ${styles.brand}`} href="/">
+              Angel Bridge
+            </Link>
+          </div>
 
           {status === 'loading' ? (
             <></>

@@ -1,26 +1,27 @@
-.markdownRoot h1 {
+.documentRoot h1 {
   font-family: 'Poppins', sans-serif;
-  margin: 2.5rem 0 2rem;
+  margin: 3rem 0 2rem;
 }
 
-.markdownRoot h2 {
+.documentRoot h2 {
   font-family: 'Poppins', sans-serif;
-  margin: 2rem 0 1.5rem;
+  margin: 2.5rem 0 1.5rem;
 }
 
-.markdownRoot h3 {
+.documentRoot h3 {
   font-family: 'Poppins', sans-serif;
-  margin: 1.5rem 0 1rem;
+  margin: 2rem 0 1rem;
 }
 
-.markdownRoot h4 {
+.documentRoot h4 {
+  font-family: 'Poppins', sans-serif;
+  margin: 2rem 0 1rem;
+}
+
+.documentRoot h5 {
   font-family: 'Poppins', sans-serif;
 }
 
-.markdownRoot h5 {
-  font-family: 'Poppins', sans-serif;
-}
-
-.markdownRoot h6 {
+.documentRoot h6 {
   font-family: 'Poppins', sans-serif;
 }
