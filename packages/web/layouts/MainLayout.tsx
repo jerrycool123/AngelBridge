@@ -24,7 +24,7 @@ const MainLayout = ({ children }: { children: ReactElement }) => {
     {
       key: 'sign-out',
       label: (
-        <div role="button" className="text-danger" onClick={() => signOut({ redirect: false })}>
+        <div role="button" className="text-danger" onClick={() => signOut({ callbackUrl: '/' })}>
           Sign Out
         </div>
       ),
