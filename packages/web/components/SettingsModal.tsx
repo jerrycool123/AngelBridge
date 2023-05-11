@@ -1,0 +1,187 @@
+import { RevokeCurrentUserYouTubeRefreshTokenRequest } from '@angel-bridge/common';
+import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
+import Collapse from 'antd/lib/collapse';
+import message from 'antd/lib/message';
+import Modal from 'antd/lib/modal';
+import Spin from 'antd/lib/spin';
+import axios from 'axios';
+import { signOut } from 'next-auth/react';
+import Image from 'next/image';
+import { Dispatch, SetStateAction, useContext, useState } from 'react';
+
+import styles from '../styles/SettingsModal.module.css';
+
+import { UserContext } from '../contexts/UserContext';
+import useYouTubeAuthorize from '../hooks/youtube';
+import api from '../libs/server';
+import GoogleOAuthButton from './GoogleOAuthButton';
+
+const SettingsModal = ({
+  isModalOpen,
+  setIsModalOpen,
+}: {
+  isModalOpen: boolean;
+  setIsModalOpen: Dispatch<SetStateAction<boolean>>;
+}) => {
+  const { user } = useContext(UserContext);
+
+  const [linkingAccount, setLinkingAccount] = useState(false);
+
+  const [messageApi, contextHolder] = message.useMessage();
+  const authorize = useYouTubeAuthorize({
+    setLinkingAccount,
+    messageApi,
+  });
+
+  return (
+    <>
+      {contextHolder}
+      <Modal
+        className={styles.modal}
+        title={<div className="text-white">Settings</div>}
+        open={isModalOpen}
+        footer={null}
+        centered
+        onCancel={() => setIsModalOpen(false)}
+      >
+        <div className="fs-6 mt-3 mb-2 text-white fw-700 poppins">Discord Account</div>
+        {user !== null && (
+          <div className="mb-4">
+            <div className={`px-3 py-2 rounded d-flex align-items-center ${styles.accountWrapper}`}>
+              <div className="flex-grow-1 d-flex align-items-center">
+                <Image
+                  className="flex-shrink-0 rounded-circle"
+                  src={user.avatar}
+                  alt={`${user.username}'s icon`}
+                  width={56}
+                  height={56}
+                />
+                <div className="ms-3 fs-5 text-white">{user.username}</div>
+              </div>
+              <div
+                role="button"
+                className="btn btn-success btn-sm"
+                onClick={() => signOut({ callbackUrl: '/' })}
+              >
+                Sign out
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="fs-6 mt-3 mb-2 text-white fw-700 poppins">Linked YouTube Account</div>
+        {linkingAccount ? (
+          <div className={`d-flex justify-content-center ${styles.loadingBox}`}>
+            <Spin indicator={<LoadingOutlined className="text-white fs-4" spin />} />
+          </div>
+        ) : user?.youTube == null ? (
+          <>
+            <div className="mb-2 fw-500">You have not linked your YouTube account yet.</div>
+            <div className="my-3 d-flex justify-content-center">
+              <GoogleOAuthButton className="flex-grow-1" onClick={() => authorize()} />
+            </div>
+            <div className={`position-relative ${styles.youTubeBranding}`}>
+              <Image
+                className="object-fit-contain"
+                src="/developed-with-youtube-sentence-case-light.png"
+                alt="developed with YouTube"
+                fill
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="mb-4">
+              <div className={`px-3 py-2 rounded d-flex ${styles.accountWrapper}`}>
+                <Image
+                  className="flex-shrink-0 rounded-circle"
+                  src={user.youTube.thumbnail}
+                  alt={`${user.youTube.title}'s icon`}
+                  width={56}
+                  height={56}
+                />
+                <div className={`flex-grow-1 ps-3 ${styles.accountInfo}`}>
+                  <div
+                    role="button"
+                    className={`fs-5 text-truncate fw-500 ${styles.accountTitle}`}
+                    onClick={() =>
+                      user.youTube !== null &&
+                      window.open(`https://www.youtube.com/${user.youTube.customUrl}`, '_blank')
+                    }
+                  >
+                    {user.youTube.title}
+                  </div>
+                  <div className="fs-7 text-truncate">{user.youTube.customUrl}</div>
+                </div>
+              </div>
+            </div>
+            <Collapse bordered={false} className={styles.collapse}>
+              <Collapse.Panel header="Danger Zone" key="danger-zone">
+                <div className="mb-2">
+                  If you don&apos;t want to use OAuth mode anymore, you can{' '}
+                  <span className="text-white fw-500">Revoke OAuth Permissions</span> from Angel
+                  Bridge. We will remove your{' '}
+                  <span className="text-danger fw-700">linked YouTube account</span> and{' '}
+                  <span className="text-danger fw-700">every membership role</span> you acquired
+                  under OAuth mode .
+                </div>
+                <div className="mt-3 mb-4 d-flex justify-content-center">
+                  <div
+                    role="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={async () => {
+                      try {
+                        await api.post<RevokeCurrentUserYouTubeRefreshTokenRequest>(
+                          '/users/@me/revoke',
+                          {},
+                        );
+                        void messageApi.success('Successfully unlinked your YouTube channel');
+                      } catch (error) {
+                        console.error(error);
+                        if (axios.isAxiosError(error) && error.response !== undefined) {
+                          const data = error.response.data as unknown;
+                          if (
+                            typeof data === 'object' &&
+                            data !== null &&
+                            'message' in data &&
+                            typeof data.message === 'string'
+                          ) {
+                            void messageApi.error(
+                              `[Error ${error.response.status}]: ${data.message}`,
+                            );
+                          } else {
+                            void messageApi.error(
+                              `[Error ${error.response.status}]: ${error.response.statusText}}`,
+                            );
+                          }
+                        } else if (error instanceof Error) {
+                          void messageApi.error(`[${error.name}]: ${error.message}`);
+                        } else {
+                          void messageApi.error('An unknown error has occurred');
+                        }
+                      }
+                    }}
+                  >
+                    Revoke OAuth Permissions
+                  </div>
+                </div>
+                <div className="mb-2">
+                  If you don&apos;t want to use Angel Bridge anymore, you can{' '}
+                  <span className="text-white fw-500">Delete Your Account</span>. We will remove{' '}
+                  <span className="text-danger fw-700">all your data in our database</span> and{' '}
+                  <span className="text-danger fw-700">every membership role</span> you acquired.
+                </div>
+                <div className="mt-3 d-flex justify-content-center">
+                  <div role="button" className="btn btn-danger btn-sm">
+                    Delete Your Account
+                  </div>
+                </div>
+              </Collapse.Panel>
+            </Collapse>
+          </>
+        )}
+      </Modal>
+    </>
+  );
+};
+
+export default SettingsModal;

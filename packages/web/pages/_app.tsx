@@ -2,7 +2,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Session } from 'next-auth';
 import { SessionProvider } from 'next-auth/react';
 
-import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 import '../styles/globals.css';
 

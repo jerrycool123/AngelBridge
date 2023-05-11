@@ -16,7 +16,7 @@ import MembershipCollection, {
 import DiscordBotConfig from '../config.js';
 import { genericOption } from '../utils/common.js';
 import { useGuildOnly } from '../utils/middleware.js';
-import { requireMembershipRoleDocumentWithYouTubeChannel } from '../utils/validator.js';
+import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);
@@ -34,8 +34,7 @@ const list_members = new CustomBotCommand({
 
     // Get membership role
     const role = options.getRole('role', true);
-    const membershipRoleDoc = await requireMembershipRoleDocumentWithYouTubeChannel(
-      interaction,
+    const membershipRoleDoc = await botValidator.requireMembershipRoleDocumentWithYouTubeChannel(
       role.id,
     );
 

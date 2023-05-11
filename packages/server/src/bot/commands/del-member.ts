@@ -3,20 +3,13 @@ import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import utc from 'dayjs/plugin/utc.js';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
+import { CustomBotError } from '../../libs/error.js';
 import MembershipCollection from '../../models/membership.js';
 import DiscordBotConfig from '../config.js';
-import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
-import {
-  requireGuildDocument,
-  requireGuildDocumentHasLogChannel,
-  requireGuildHasLogChannel,
-  requireGuildMember,
-  requireMembershipDocumentWithGivenMembershipRole,
-  requireMembershipRoleDocumentWithYouTubeChannel,
-} from '../utils/validator.js';
+import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);
@@ -30,37 +23,41 @@ const del_member = new CustomBotCommand({
     .addUserOption(genericOption('member', 'The member to remove the role from', true))
     .addRoleOption(genericOption('role', 'The YouTube Membership role in this server', true)),
   execute: useGuildOnly(
-    useBotWithManageRolePermission(async (interaction) => {
+    useBotWithManageRolePermission(async (interaction, errorConfig) => {
       const { guild, user: moderator, options } = interaction;
 
       await interaction.deferReply({ ephemeral: true });
 
       // Guild and log channel checks
-      const guildDoc = await requireGuildDocument(interaction, guild);
-      const logChannelId = requireGuildDocumentHasLogChannel(interaction, guildDoc);
-      const logChannel = await requireGuildHasLogChannel(interaction, guild, logChannelId);
+      const guildDoc = await botValidator.requireGuildDocument(guild.id);
+      const logChannelId = botValidator.requireGuildDocumentHasLogChannel(guildDoc);
+      const logChannel = await botValidator.requireGuildHasLogChannel(guild, logChannelId);
 
       // Get membership role
       const role = options.getRole('role', true);
-      await requireMembershipRoleDocumentWithYouTubeChannel(interaction, role.id);
+      await botValidator.requireMembershipRoleDocumentWithYouTubeChannel(role.id);
 
       // Get guild member
       const user = options.getUser('member', true);
-      const member = await requireGuildMember(interaction, guild, user.id);
+      const member = await botValidator.requireGuildMember(guild, user.id);
 
       // Get the membership
-      const membershipDoc = await requireMembershipDocumentWithGivenMembershipRole(
-        interaction,
+      const membershipDoc = await botValidator.requireMembershipDocumentWithGivenMembershipRole(
         member.id,
         role.id,
       );
 
       // Ask for confirmation
-      const confirmButtonInteraction = await awaitConfirm(interaction, 'del-member', {
-        content:
-          `Are you sure you want to remove the membership role <@&${role.id}> from <@${member.id}>?\n` +
-          'Please note that this does not block the user from applying for the membership again.',
-      });
+      const confirmButtonInteraction = await awaitConfirm(
+        interaction,
+        'del-member',
+        {
+          content:
+            `Are you sure you want to remove the membership role <@&${role.id}> from <@${member.id}>?\n` +
+            'Please note that this does not block the user from applying for the membership again.',
+        },
+        errorConfig,
+      );
       await confirmButtonInteraction.deferReply({ ephemeral: true });
 
       // Remove role from member
@@ -69,9 +66,9 @@ const del_member = new CustomBotCommand({
         await member.roles.remove(role.id);
       } catch (error) {
         console.error(error);
+        errorConfig.activeInteraction = confirmButtonInteraction;
         throw new CustomBotError(
           `Due to the role hierarchy, the bot cannot remove the role <@&${role.id}> from users.\nI can only manage a role whose order is lower than that of my highest role <@&${botMember.roles.highest.id}>.`,
-          confirmButtonInteraction,
         );
       }
       await confirmButtonInteraction.editReply({

@@ -2,14 +2,20 @@ import { CacheType, ChatInputCommandInteraction, SlashCommandBuilder } from 'dis
 
 class CustomBotCommand {
   readonly data: Partial<SlashCommandBuilder>;
-  readonly execute: (interaction: ChatInputCommandInteraction<CacheType>) => Promise<void>;
+  readonly execute: (
+    interaction: ChatInputCommandInteraction<CacheType>,
+    errorConfig: CustomBotErrorConfig,
+  ) => Promise<void>;
 
   constructor({
     data,
     execute,
   }: {
     data: Partial<SlashCommandBuilder>;
-    execute: (interaction: ChatInputCommandInteraction<CacheType>) => Promise<void>;
+    execute: (
+      interaction: ChatInputCommandInteraction<CacheType>,
+      errorConfig: CustomBotErrorConfig,
+    ) => Promise<void>;
   }) {
     this.data = data;
     this.execute = execute;

@@ -37,6 +37,15 @@ export interface ReadCurrentUserRequest extends CustomHttpRequest<'res'> {
 }
 
 /**
+ * Route: `POST /server/users/@me/revoke`
+ */
+export interface RevokeCurrentUserYouTubeRefreshTokenRequest extends CustomHttpRequest<'res'> {
+  res: {
+    message: 'success';
+  };
+}
+
+/**
  * Route: `GET /server/guilds`
  */
 export interface ReadGuildRequest extends CustomHttpRequest<'res'> {

@@ -1,16 +1,22 @@
-import { CaretDownOutlined, GithubOutlined } from '@ant-design/icons';
+import CaretDownOutlined from '@ant-design/icons/CaretDownOutlined';
+import GithubOutlined from '@ant-design/icons/GithubOutlined';
 import Dropdown from 'antd/lib/dropdown';
 import { MenuProps } from 'antd/lib/menu';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ReactElement } from 'react';
+import { ReactElement, useState } from 'react';
 import { DiscordLoginButton } from 'react-social-login-buttons';
 
 import styles from '../styles/MainLayout.module.css';
 
+import SettingsModal from '../components/SettingsModal';
+import { UserProvider } from '../contexts/UserContext';
+
 const MainLayout = ({ children }: { children: ReactElement }) => {
   const { data: session, status } = useSession();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const items: MenuProps['items'] = [
     {
@@ -19,6 +25,14 @@ const MainLayout = ({ children }: { children: ReactElement }) => {
         <Link className="text-decoration-none" href="/dashboard">
           Dashboard
         </Link>
+      ),
+    },
+    {
+      key: 'settings',
+      label: (
+        <div role="button" onClick={() => setIsModalOpen(true)}>
+          Settings
+        </div>
       ),
     },
     {
@@ -32,8 +46,11 @@ const MainLayout = ({ children }: { children: ReactElement }) => {
   ];
 
   return (
-    <>
-      <nav className={`navbar navbar-expand-lg bg-body-tertiary ${styles.navbar}`}>
+    <UserProvider>
+      {status === 'authenticated' && (
+        <SettingsModal isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
+      )}
+      <nav className={`navbar navbar-expand-lg ${styles.navbar}`}>
         <div className="container">
           <div>
             <Link className="navbar-brand" href="/">
@@ -64,7 +81,6 @@ const MainLayout = ({ children }: { children: ReactElement }) => {
               <DiscordLoginButton
                 text="Sign in"
                 className={`${styles.signInButton} text-nowrap`}
-                iconSize="1.5rem"
                 onClick={() => signIn('discord', { callbackUrl: '/dashboard' })}
               />
             </div>
@@ -90,7 +106,7 @@ const MainLayout = ({ children }: { children: ReactElement }) => {
           </Link>
         </div>
       </div>
-    </>
+    </UserProvider>
   );
 };
 

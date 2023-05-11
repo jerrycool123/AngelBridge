@@ -1,32 +1,16 @@
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import utc from 'dayjs/plugin/utc.js';
-import {
-  ButtonInteraction,
-  CacheType,
-  ChatInputCommandInteraction,
-  EmbedBuilder,
-  Guild,
-  GuildChannel,
-  SlashCommandBuilder,
-} from 'discord.js';
+import { EmbedBuilder, RepliableInteraction, SlashCommandBuilder } from 'discord.js';
 
+import { CustomBotError } from '../../libs/error.js';
 import MembershipCollection from '../../models/membership.js';
 import DiscordBotConfig from '../config.js';
-import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { upsertMembershipCollection } from '../utils/db.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
-import {
-  requireGivenDateNotTooFarInFuture,
-  requireGuildDocument,
-  requireGuildDocumentHasLogChannel,
-  requireGuildHasLogChannel,
-  requireGuildMember,
-  requireManageableRole,
-  requireMembershipRoleDocumentWithYouTubeChannel,
-} from '../utils/validator.js';
+import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);
@@ -48,26 +32,20 @@ const add_member = new CustomBotCommand({
       ),
     ),
   execute: useGuildOnly(
-    useBotWithManageRolePermission(async (interaction) => {
+    useBotWithManageRolePermission(async (interaction, errorConfig) => {
       const { guild, user: moderator, options } = interaction;
 
-      let prevInteraction:
-        | (ChatInputCommandInteraction<CacheType> & {
-            guild: Guild;
-            channel: GuildChannel;
-          })
-        | ButtonInteraction<CacheType> = interaction;
-      await prevInteraction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ ephemeral: true });
 
       // Guild and log channel checks
-      const guildDoc = await requireGuildDocument(prevInteraction, guild);
-      const logChannelId = requireGuildDocumentHasLogChannel(prevInteraction, guildDoc);
-      const logChannel = await requireGuildHasLogChannel(prevInteraction, guild, logChannelId);
+      const guildDoc = await botValidator.requireGuildDocument(guild.id);
+      const logChannelId = botValidator.requireGuildDocumentHasLogChannel(guildDoc);
+      const logChannel = await botValidator.requireGuildHasLogChannel(guild, logChannelId);
 
       // Get membership role and check if it's manageable
       const role = options.getRole('role', true);
-      await requireMembershipRoleDocumentWithYouTubeChannel(prevInteraction, role.id);
-      await requireManageableRole(prevInteraction, guild, role.id);
+      await botValidator.requireMembershipRoleDocumentWithYouTubeChannel(role.id);
+      await botValidator.requireManageableRole(guild, role.id);
 
       // Get the next billing date
       let expireAt: dayjs.Dayjs;
@@ -77,7 +55,6 @@ const add_member = new CustomBotCommand({
         if (!expireAt.isValid()) {
           throw new CustomBotError(
             `The billing date \`${billing_date}\` is not a valid date in YYYY/MM/DD format.`,
-            prevInteraction,
           );
         }
         expireAt = expireAt.startOf('date');
@@ -86,11 +63,11 @@ const add_member = new CustomBotCommand({
       }
 
       // Check if the recognized date is too far in the future
-      requireGivenDateNotTooFarInFuture(prevInteraction, expireAt);
+      botValidator.requireGivenDateNotTooFarInFuture(expireAt);
 
       // Get guild member
       const user = options.getUser('member', true);
-      const member = await requireGuildMember(prevInteraction, guild, user.id);
+      const member = await botValidator.requireGuildMember(guild, user.id);
 
       // Check if the user already has OAuth membership
       const oauthMembershipDoc = await MembershipCollection.findOne({
@@ -98,19 +75,31 @@ const add_member = new CustomBotCommand({
         user: user.id,
         membershipRole: role.id,
       });
+      let activeInteraction: RepliableInteraction = interaction;
       if (oauthMembershipDoc !== null) {
-        prevInteraction = await awaitConfirm(prevInteraction, 'add-member-detected-oauth', {
-          content: `The user <@${user.id}> already has an OAuth membership. Do you want to overwrite it?`,
-        });
-        await prevInteraction.deferReply({ ephemeral: true });
+        activeInteraction = await awaitConfirm(
+          activeInteraction,
+          'add-member-detected-oauth',
+          {
+            content: `The user <@${user.id}> already has an OAuth membership. Do you want to overwrite it?`,
+          },
+          errorConfig,
+        );
+        await activeInteraction.deferReply({ ephemeral: true });
+        errorConfig.activeInteraction = activeInteraction;
       }
 
       // Ask for confirmation
-      const confirmButtonInteraction = await awaitConfirm(prevInteraction, 'add-member', {
-        content: `Are you sure you want to assign the membership role <@&${role.id}> to <@${
-          member.id
-        }>?\nTheir membership will expire on \`${expireAt.format('YYYY/MM/DD')}\`.`,
-      });
+      const confirmButtonInteraction = await awaitConfirm(
+        activeInteraction,
+        'add-member',
+        {
+          content: `Are you sure you want to assign the membership role <@&${role.id}> to <@${
+            member.id
+          }>?\nTheir membership will expire on \`${expireAt.format('YYYY/MM/DD')}\`.`,
+        },
+        errorConfig,
+      );
       await confirmButtonInteraction.deferReply({ ephemeral: true });
 
       // Add role to member
@@ -118,7 +107,7 @@ const add_member = new CustomBotCommand({
         await member.roles.add(role.id);
       } catch (error) {
         console.error(error);
-        throw new CustomBotError('Failed to add the role to the member.', prevInteraction);
+        throw new CustomBotError('Failed to add the role to the member.');
       }
       await confirmButtonInteraction.editReply({
         content: `Successfully assigned the membership role <@&${role.id}> to <@${

@@ -5,6 +5,7 @@
   background-color: #3a4149;
   color: white;
   border-bottom: 1px solid #23282c;
+  z-index: 100;
 }
 
 .brand {

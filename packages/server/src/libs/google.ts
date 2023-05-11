@@ -8,13 +8,15 @@ namespace GoogleUtility {
   export const apiKey = Env.GOOGLE_API_KEY;
   const apiQueue = new PQueue({ autoStart: true, intervalCap: 1, interval: 100 });
 
-  export const addJobToQueue = (job: () => Promise<unknown>) =>
-    apiQueue.add(() =>
-      job().catch((err) =>
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-        console.error(`An error occurred while executing a Google API job:\n${err}`),
-      ),
-    );
+  export const addAsyncAPIJob = (job: () => Promise<unknown>) =>
+    apiQueue.add(async () => {
+      try {
+        await job();
+      } catch (error) {
+        console.error('An error occurred while executing a Google API job:');
+        console.error(error);
+      }
+    });
 
   export const createOAuth2Client = () =>
     new OAuth2Client({
@@ -75,6 +77,20 @@ namespace GoogleUtility {
     }
 
     return { success: true, accessToken };
+  };
+
+  export const revokeRefreshToken = async (
+    oauth2Client: OAuth2Client,
+    refreshToken: string,
+  ): Promise<{ success: true } | { success: false; error: string }> => {
+    try {
+      await oauth2Client.revokeToken(refreshToken);
+    } catch (err) {
+      console.error(err);
+      return { success: false, error: 'Failed to revoke refresh token' };
+    }
+
+    return { success: true };
   };
 }
 

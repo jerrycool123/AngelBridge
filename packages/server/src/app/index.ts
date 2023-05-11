@@ -4,7 +4,7 @@ import express from 'express';
 import 'express-async-errors';
 
 import Env from '../libs/env.js';
-import { NotFoundError } from '../libs/request-error.js';
+import { NotFoundError } from '../libs/error.js';
 import { useAuth } from './middlewares/auth.js';
 import errorHandler from './middlewares/error-handler.js';
 import router from './route.js';

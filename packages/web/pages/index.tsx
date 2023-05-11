@@ -1,5 +1,7 @@
+import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { DiscordLoginButton } from 'react-social-login-buttons';
 
 import styles from '../styles/Home.module.css';
 
@@ -13,7 +15,7 @@ const HomePage: NextPageWithLayout = () => {
           <div className="row h-100">
             <div className="col-xl-8 col-lg-9 h-100 d-flex flex-column justify-content-center">
               <h1 className={`mb-4 fw-700 poppins ${styles.heroText}`}>Angel Bridge</h1>
-              <h2 className={`fs-5 ${styles.subText}`}>
+              <h2 className={`mb-4 fs-5 ${styles.subText}`}>
                 <span className="d-inline-block">A bridge between&nbsp;</span>
                 <span className={`d-inline-block fw-600 ${styles.youTube}`}>
                   YouTube Channel Membership
@@ -21,6 +23,13 @@ const HomePage: NextPageWithLayout = () => {
                 <span className="d-inline-block">&nbsp;and&nbsp;</span>
                 <span className={`d-inline-block fw-600 ${styles.discord}`}>Discord Role</span>.
               </h2>
+              <div>
+                <DiscordLoginButton
+                  text="Sign in with Discord"
+                  className={`${styles.C2AButton} text-nowrap`}
+                  onClick={() => signIn('discord', { callbackUrl: '/dashboard' })}
+                />
+              </div>
             </div>
             <div
               className={`col-xl-4 col-lg-3 h-100 flex-column justify-content-center align-items-center ${styles.heroImage}`}
@@ -63,13 +72,11 @@ const HomePage: NextPageWithLayout = () => {
                 </p>
               </div>
               <Image
+                className="object-fit-contain"
                 src="/oauth.png"
                 width={240}
                 height={240}
                 alt=""
-                style={{
-                  objectFit: 'contain',
-                }}
               />
             </div>
             <div className="col-lg-5 d-flex flex-column align-items-center">
@@ -85,13 +92,11 @@ const HomePage: NextPageWithLayout = () => {
                 </p>
               </div>
               <Image
+                className="object-fit-contain"
                 src="/ocr.png"
                 width={240}
                 height={240}
                 alt=""
-                style={{
-                  objectFit: 'contain',
-                }}
               />
             </div>
           </div>

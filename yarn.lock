@@ -2173,12 +2173,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bootstrap@npm:^5.2.3":
-  version: 5.2.3
-  resolution: "bootstrap@npm:5.2.3"
+"bootstrap@npm:5.3.0-alpha3":
+  version: 5.3.0-alpha3
+  resolution: "bootstrap@npm:5.3.0-alpha3"
   peerDependencies:
-    "@popperjs/core": ^2.11.6
-  checksum: 0211805dec6a190c0911d142966df30fdb4b4139a04cc6c23dd83c6045ea3cb0a966b360ab2e701e7b3ad96ff01e05fdc0914be97b41bd876b11e457a8bdc6a3
+    "@popperjs/core": ^2.11.7
+  checksum: 1739c40e4033c134e9dc51235e8018f267a9fc8114feba6a5b402f2ab0c68e67c363e2f243c79f252d1cf8fcde82262b04bbaaf6ea1695c37537c02f34ae4f79
   languageName: node
   linkType: hard
 
@@ -2785,6 +2785,13 @@ __metadata:
   version: 0.37.38
   resolution: "discord-api-types@npm:0.37.38"
   checksum: 58972778639234307ae6c0ce5b841a8a3a29c38116aa9f96051e65a88f6bbc4f1df671c5a985712d816764507308f8ebc97b1c98dad8de7bf756e05819db84ca
+  languageName: node
+  linkType: hard
+
+"discord-api-types@npm:^0.37.41":
+  version: 0.37.41
+  resolution: "discord-api-types@npm:0.37.41"
+  checksum: e8a2dd28afefe30e20652aa8eac3e15b596e7274740ea54088b3713c2a22f9bc883138d8501fa4defe3c45e895aa87fc580b0ef110a9c9ab8609c67e870948ed
   languageName: node
   linkType: hard
 
@@ -8437,8 +8444,9 @@ __metadata:
     "@types/react-dom": 18.0.11
     antd: ^5.4.2
     axios: ^1.3.5
-    bootstrap: ^5.2.3
+    bootstrap: 5.3.0-alpha3
     dayjs: ^1.11.7
+    discord-api-types: ^0.37.41
     eslint: 8.37.0
     eslint-config-next: latest
     jsonwebtoken: ^9.0.0

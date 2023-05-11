@@ -3,7 +3,10 @@ import type { ButtonBuilder, ButtonInteraction, CacheType } from 'discord.js';
 class CustomButton {
   readonly customId: string;
   readonly data: ButtonBuilder;
-  readonly execute: (interaction: ButtonInteraction<CacheType>) => Promise<void>;
+  readonly execute: (
+    interaction: ButtonInteraction<CacheType>,
+    errorConfig: CustomBotErrorConfig,
+  ) => Promise<void>;
 
   constructor({
     customId,
@@ -12,7 +15,10 @@ class CustomButton {
   }: {
     customId: string;
     data: ButtonBuilder;
-    execute: (interaction: ButtonInteraction<CacheType>) => Promise<void>;
+    execute: (
+      interaction: ButtonInteraction<CacheType>,
+      errorConfig: CustomBotErrorConfig,
+    ) => Promise<void>;
   }) {
     this.customId = customId;
     this.data = data.setCustomId(customId);

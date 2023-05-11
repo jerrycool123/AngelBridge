@@ -1,13 +1,13 @@
 import { SlashCommandBuilder } from 'discord.js';
 
+import { CustomBotError } from '../../libs/error.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import YouTubeChannelCollection, { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
-import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirmButtonInteraction from '../utils/confirm.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
-import { requireManageableRole } from '../utils/validator.js';
+import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const add_role = new CustomBotCommand({
@@ -20,14 +20,14 @@ const add_role = new CustomBotCommand({
       genericOption('keyword', "The YouTube channel's ID, name or custom URL", true),
     ),
   execute: useGuildOnly(
-    useBotWithManageRolePermission(async (interaction) => {
+    useBotWithManageRolePermission(async (interaction, errorConfig) => {
       const { guild, options } = interaction;
 
       await interaction.deferReply({ ephemeral: true });
 
       // Check if the role is manageable
       const role = options.getRole('role', true);
-      await requireManageableRole(interaction, guild, role.id);
+      await botValidator.requireManageableRole(guild, role.id);
 
       // Search registered YouTube channel by keyword
       const keyword = options.getString('keyword', true);
@@ -42,7 +42,6 @@ const add_role = new CustomBotCommand({
         throw new CustomBotError(
           `Could not find any registered YouTube channel for the keyword: \`${keyword}\`.\n` +
             'Please try again or use `/add-yt-channel` to register the channel first.',
-          interaction,
         );
       } else if (youTubeChannelDocs.length > 1) {
         throw new CustomBotError(
@@ -54,7 +53,6 @@ const add_role = new CustomBotCommand({
                 (channel) => `\`${channel.title}\`: \`${channel._id}\` (\`${channel.customUrl}\`)`,
               )
               .join('\n'),
-          interaction,
         );
       }
       const youTubeChannel = youTubeChannelDocs[0];
@@ -72,7 +70,6 @@ const add_role = new CustomBotCommand({
           }> is already assigned to the YouTube channel \`${
             oldMembershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'
           }\`.`,
-          interaction,
         );
       }
 
@@ -83,6 +80,7 @@ const add_role = new CustomBotCommand({
         {
           content: `Are you sure you want to add the membership role <@&${role.id}> for the YouTube channel \`${youTubeChannel.title}\`?`,
         },
+        errorConfig,
       );
       await confirmButtonInteraction.deferReply({ ephemeral: true });
 

@@ -1,15 +1,15 @@
 import { SlashCommandBuilder, User } from 'discord.js';
 
 import DiscordUtility from '../../libs/discord.js';
+import { CustomBotError } from '../../libs/error.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import MembershipCollection from '../../models/membership.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
-import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
-import { requireManageableRole } from '../utils/validator.js';
+import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const delete_role = new CustomBotCommand({
@@ -19,14 +19,14 @@ const delete_role = new CustomBotCommand({
     .setDefaultMemberPermissions(DiscordBotConfig.moderatorPermissions)
     .addRoleOption(genericOption('role', 'The YouTube Membership role in this server', true)),
   execute: useGuildOnly(
-    useBotWithManageRolePermission(async (interaction) => {
+    useBotWithManageRolePermission(async (interaction, errorConfig) => {
       const { guild, options, client } = interaction;
 
       await interaction.deferReply({ ephemeral: true });
 
       // Check if the role is manageable
       const role = options.getRole('role', true);
-      await requireManageableRole(interaction, guild, role.id);
+      await botValidator.requireManageableRole(guild, role.id);
 
       // Find membership role and members with the role in DB
       const [membershipRoleDoc, membershipDocs] = await Promise.all([
@@ -38,7 +38,6 @@ const delete_role = new CustomBotCommand({
             new CustomBotError(
               `The role <@&${role.id}> is not a membership role in this server.\n` +
                 'You can use `/settings` to see the list of membership roles in this server.',
-              interaction,
             ),
           ),
         MembershipCollection.find({
@@ -47,16 +46,21 @@ const delete_role = new CustomBotCommand({
       ]);
 
       // Ask for confirmation
-      const confirmButtonInteraction = await awaitConfirm(interaction, 'delete-role', {
-        content:
-          `Are you sure you want to delete the membership role <@&${
-            role.id
-          }> for the YouTube channel \`${
-            membershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'
-          }\`?\n` +
-          `This action will remove the membership role from ${membershipDocs.length} members.\n\n` +
-          `Note that we won't delete the role in Discord. Instead, we just delete the membership role in the database, and remove the role from registered members.`,
-      });
+      const confirmButtonInteraction = await awaitConfirm(
+        interaction,
+        'delete-role',
+        {
+          content:
+            `Are you sure you want to delete the membership role <@&${
+              role.id
+            }> for the YouTube channel \`${
+              membershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'
+            }\`?\n` +
+            `This action will remove the membership role from ${membershipDocs.length} members.\n\n` +
+            `Note that we won't delete the role in Discord. Instead, we just delete the membership role in the database, and remove the role from registered members.`,
+        },
+        errorConfig,
+      );
       await confirmButtonInteraction.deferReply({ ephemeral: true });
 
       // Remove user membership record in DB
@@ -76,7 +80,7 @@ const delete_role = new CustomBotCommand({
 
       // DM user about the removal
       membershipDocs.forEach((membershipDoc) =>
-        DiscordUtility.addJobToQueue(async () => {
+        DiscordUtility.addAsyncAPIJob(async () => {
           let user: User | null = null;
           try {
             const member = await guild.members.fetch(membershipDoc.user);

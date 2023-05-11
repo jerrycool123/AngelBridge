@@ -4,7 +4,7 @@ import { REST } from '@discordjs/rest';
 
 import { symmetricDecrypt, symmetricEncrypt } from '../../libs/crypto.js';
 import DiscordUtility from '../../libs/discord.js';
-import { BadRequestError, InternalServerError } from '../../libs/request-error.js';
+import { BadRequestError, InternalServerError } from '../../libs/error.js';
 import GuildCollection from '../../models/guild.js';
 import { MembershipRoleDoc } from '../../models/membership-role.js';
 import { MembershipDoc } from '../../models/membership.js';

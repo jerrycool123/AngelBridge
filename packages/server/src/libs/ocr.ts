@@ -88,8 +88,15 @@ class OCRWorker {
     return null;
   }
 
-  addJob(func: (...args: unknown[]) => void) {
-    void this.jobQueue.add(func);
+  addJob(promise: Promise<unknown>) {
+    void this.jobQueue.add(async () => {
+      try {
+        await promise;
+      } catch (error) {
+        console.error('An error occurred while executing a OCR job:');
+        console.log(error);
+      }
+    });
   }
 }
 

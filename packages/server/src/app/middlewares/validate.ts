@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import { validationResult } from 'express-validator';
 
-import { BadRequestError } from '../../libs/request-error.js';
+import { BadRequestError } from '../../libs/error.js';
 
 const validateRequest: RequestHandler = (req, res, next) => {
   const errors = validationResult(req);

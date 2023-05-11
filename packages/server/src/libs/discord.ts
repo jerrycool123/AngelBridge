@@ -7,13 +7,15 @@ import Env from './env.js';
 namespace DiscordUtility {
   const apiQueue = new PQueue({ autoStart: true, intervalCap: 1, interval: 100 });
 
-  export const addJobToQueue = (job: () => Promise<unknown>) =>
-    apiQueue.add(() =>
-      job().catch((err) =>
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-        console.error(`An error occurred while executing a Discord API job:\n${err}`),
-      ),
-    );
+  export const addAsyncAPIJob = (job: () => Promise<unknown>) =>
+    apiQueue.add(async () => {
+      try {
+        await job();
+      } catch (error) {
+        console.error('An error occurred while executing a Google API job:');
+        console.error(error);
+      }
+    });
 
   export const getAccessToken = async (
     refreshToken: string,

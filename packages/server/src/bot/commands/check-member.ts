@@ -9,7 +9,7 @@ import MembershipCollection, {
 import DiscordBotConfig from '../config.js';
 import { genericOption } from '../utils/common.js';
 import { useGuildOnly } from '../utils/middleware.js';
-import { requireGuildMember } from '../utils/validator.js';
+import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);
@@ -27,7 +27,7 @@ const check_member = new CustomBotCommand({
 
     // Get guild member
     const user = options.getUser('member', true);
-    const member = await requireGuildMember(interaction, guild, user.id);
+    const member = await botValidator.requireGuildMember(guild, user.id);
 
     // Get membership status from database
     const membershipDocs = await MembershipCollection.find({

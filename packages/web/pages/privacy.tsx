@@ -334,14 +334,15 @@ const PrivacyPage: NextPageWithLayout = () => (
         Use of Your Google User Data
       </h3>
       <p>
-        We will follow{' '}
+        Our use and transfer to any other app of information received from Google APIs will adhere
+        to{' '}
         <Link
           className="link fw-500"
           href="https://developers.google.com/terms/api-services-user-data-policy"
         >
           Google API Services User Data Policy
         </Link>{' '}
-        when accessing, using, storing, or sharing your Google user data.
+        , including the Limited Use requirements.
       </p>
       <ul>
         <li>
@@ -358,7 +359,14 @@ const PrivacyPage: NextPageWithLayout = () => (
             refresh tokens will be further used in our application, to provide integrated services
             involved with Google. The access to the database will be encrypted. We DO NOT permit any
             unnecessary access except for the developing purpose. You can remove our access to your
-            account by following Google&apos;s Guide.
+            account by following{' '}
+            <Link
+              className="link fw-500"
+              href="https://support.google.com/accounts/answer/3466521?hl=en"
+            >
+              Google&apos;s Guide
+            </Link>
+            .
           </p>
         </li>
         <li>

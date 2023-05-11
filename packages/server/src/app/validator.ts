@@ -2,7 +2,7 @@ import { body, param } from 'express-validator';
 
 import validateRequest from './middlewares/validate.js';
 
-namespace Validator {
+namespace RequestValidator {
   export const discordAuth = [
     body('token')
       .notEmpty()
@@ -22,4 +22,4 @@ namespace Validator {
   ];
 }
 
-export default Validator;
+export default RequestValidator;

@@ -1,9 +1,9 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { google, youtube_v3 } from 'googleapis';
 
+import { CustomBotError } from '../../libs/error.js';
 import GoogleUtility from '../../libs/google.js';
 import DiscordBotConfig from '../config.js';
-import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { upsertYouTubeChannelCollection } from '../utils/db.js';
@@ -16,7 +16,7 @@ const add_yt_channel = new CustomBotCommand({
     .setDescription("Add a YouTube channel to the bot's supported list.")
     .setDefaultMemberPermissions(DiscordBotConfig.moderatorPermissions)
     .addStringOption(genericOption('id', 'YouTube channel ID or video ID', true)),
-  execute: useGuildOnly(async (interaction) => {
+  execute: useGuildOnly(async (interaction, errorConfig) => {
     const { user, options } = interaction;
 
     await interaction.deferReply({ ephemeral: true });
@@ -42,7 +42,6 @@ const add_yt_channel = new CustomBotCommand({
           `Could not find a YouTube video for the video ID: \`${id}\`. Please try again. Here are some examples:\n\n` +
             `The channel ID of <https://www.youtube.com/channel/UCZlDXzGoo7d44bwdNObFacg> is \`UCZlDXzGoo7d44bwdNObFacg\`. It must begins with 'UC...'. Currently we don't support custom channel ID search (e.g. \`@AmaneKanata\`). If you cannot find a valid channel ID, please provide a video ID instead.\n\n` +
             `The video ID of <https://www.youtube.com/watch?v=Dji-ehIz5_k> is \`Dji-ehIz5_k\`.`,
-          interaction,
         );
       } else {
         channelId = videoChannelId;
@@ -73,42 +72,46 @@ const add_yt_channel = new CustomBotCommand({
     ) {
       throw new CustomBotError(
         `Could not find a YouTube channel for the channel ID: \`${channelId}\`. Please try again.`,
-        interaction,
       );
     }
     const channelInfo = { id: youTubeChannelId, title, description, customUrl, thumbnail };
 
     // Ask for confirmation
-    const confirmButtonInteraction = await awaitConfirm(interaction, 'add-yt-channel', {
-      content:
-        "Are you sure you want to add the following YouTube channel to the bot's supported list?",
-      embeds: [
-        new EmbedBuilder()
-          .setAuthor({
-            name: `${user.username}#${user.discriminator}`,
-            iconURL: user.displayAvatarURL(),
-          })
-          .setTitle(channelInfo.title)
-          .setDescription(channelInfo.description)
-          .setURL(`https://www.youtube.com/channel/${channelInfo.id}`)
-          .setThumbnail(channelInfo.thumbnail)
-          .addFields([
-            {
-              name: 'Channel ID',
-              value: channelInfo.id,
-              inline: true,
-            },
-            {
-              name: 'Custom URL',
-              value: `[${channelInfo.customUrl}](https://www.youtube.com/${channelInfo.customUrl})`,
-              inline: true,
-            },
-          ])
-          .setTimestamp()
-          .setColor('Random')
-          .setFooter({ text: `ID: ${user.id}` }),
-      ],
-    });
+    const confirmButtonInteraction = await awaitConfirm(
+      interaction,
+      'add-yt-channel',
+      {
+        content:
+          "Are you sure you want to add the following YouTube channel to the bot's supported list?",
+        embeds: [
+          new EmbedBuilder()
+            .setAuthor({
+              name: `${user.username}#${user.discriminator}`,
+              iconURL: user.displayAvatarURL(),
+            })
+            .setTitle(channelInfo.title)
+            .setDescription(channelInfo.description)
+            .setURL(`https://www.youtube.com/channel/${channelInfo.id}`)
+            .setThumbnail(channelInfo.thumbnail)
+            .addFields([
+              {
+                name: 'Channel ID',
+                value: channelInfo.id,
+                inline: true,
+              },
+              {
+                name: 'Custom URL',
+                value: `[${channelInfo.customUrl}](https://www.youtube.com/${channelInfo.customUrl})`,
+                inline: true,
+              },
+            ])
+            .setTimestamp()
+            .setColor('Random')
+            .setFooter({ text: `ID: ${user.id}` }),
+        ],
+      },
+      errorConfig,
+    );
     await confirmButtonInteraction.deferReply({ ephemeral: true });
 
     // Fetch member only video IDs
@@ -129,9 +132,9 @@ const add_yt_channel = new CustomBotCommand({
       console.error(error);
     }
     if (memberOnlyVideoIds.length === 0) {
+      errorConfig.activeInteraction = confirmButtonInteraction;
       throw new CustomBotError(
         `Could not find any member only videos for the YouTube channel: \`${channelInfo.title}\`. Please try again.`,
-        confirmButtonInteraction,
       );
     }
 

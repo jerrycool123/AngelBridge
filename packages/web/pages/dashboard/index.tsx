@@ -1,91 +1,50 @@
 import {
-  GoogleAuthRequest,
-  ReadCurrentUserRequest,
-  ReadGuildRequest,
+  ReadGuildRequest, // RevokeCurrentUserYouTubeRefreshTokenRequest,
   VerifyMembershipRequest,
 } from '@angel-bridge/common';
-import { CheckCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useGoogleLogin } from '@react-oauth/google';
+import CheckCircleOutlined from '@ant-design/icons/CheckCircleOutlined';
+import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
 import message from 'antd/lib/message';
 import Modal from 'antd/lib/modal';
 import Spin from 'antd/lib/spin';
+import Switch from 'antd/lib/switch';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { PermissionFlagsBits } from 'discord-api-types/v10';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import { DiscordLoginButton } from 'react-social-login-buttons';
 
 import styles from '../../styles/MainApp.module.css';
 
 import GoogleOAuthButton from '../../components/GoogleOAuthButton';
+import { UserContext } from '../../contexts/UserContext';
+import useYouTubeAuthorize from '../../hooks/youtube';
 import MainLayout from '../../layouts/MainLayout';
+import publicEnv from '../../libs/public-env';
 import api from '../../libs/server';
 
 dayjs.extend(utc);
 
 const AppPage: NextPageWithLayout = () => {
+  const { user, guilds, setGuilds } = useContext(UserContext);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMembershipRole, setSelectedMembershipRole] = useState<
     ReadGuildRequest['res'][0]['membershipRoles'][0] | null
   >(null);
-  const [user, setUser] = useState<ReadCurrentUserRequest['res'] | null>(null);
-  const [guilds, setGuilds] = useState<ReadGuildRequest['res'] | null>(null);
+
   const [hoveredRoleId, setHoveredRoleId] = useState<string | null>(null);
   const [linkingAccount, setLinkingAccount] = useState(false);
   const [verifyingMembership, setVerifyingMembership] = useState(false);
+  const [showOnlyAcquiredMemberships, setShowOnlyAcquiredMemberships] = useState(false);
 
   const [messageApi, contextHolder] = message.useMessage();
-  const authorize = useGoogleLogin({
-    onSuccess: async ({ code }) => {
-      setLinkingAccount(true);
-      try {
-        const { data } = await api.post<GoogleAuthRequest>('/auth/google', { code });
-        setUser((oldUser) =>
-          oldUser !== null
-            ? {
-                ...oldUser,
-                youTube: data,
-              }
-            : null,
-        );
-        void messageApi.success('Successfully linked your YouTube channel');
-      } catch (error) {
-        console.error(error);
-        if (axios.isAxiosError(error) && error.response !== undefined) {
-          const data = error.response.data as unknown;
-          if (
-            typeof data === 'object' &&
-            data !== null &&
-            'message' in data &&
-            typeof data.message === 'string'
-          ) {
-            void messageApi.error(data.message);
-          }
-        }
-      } finally {
-        setLinkingAccount(false);
-      }
-    },
-    onError: ({ error, error_description }) => {
-      console.error(error);
-      void messageApi.error(`${error ?? ''}: ${error_description ?? '[Unknown Error]'}`);
-    },
-    flow: 'auth-code',
-    scope: 'https://www.googleapis.com/auth/youtube.force-ssl',
-    select_account: true,
+  const authorize = useYouTubeAuthorize({
+    setLinkingAccount,
+    messageApi,
   });
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await api.get<ReadCurrentUserRequest>('/users/@me');
-      setUser(data);
-    })().catch(console.error);
-    (async () => {
-      const { data } = await api.get<ReadGuildRequest>('/guilds');
-      setGuilds(data);
-    })().catch(console.error);
-  }, []);
 
   if (guilds === null) {
     return (
@@ -114,7 +73,7 @@ const AppPage: NextPageWithLayout = () => {
           <>
             <div className="mt-3 mb-4">
               <div className="fs-6 mb-2 text-white fw-700 poppins">OAuth Mode</div>
-              <div className="mb-3">
+              <div className="mb-2">
                 <div className="mb-1">
                   You can link your YouTube channel and authorize Angel Bridge to verify your
                   membership for{' '}
@@ -140,16 +99,11 @@ const AppPage: NextPageWithLayout = () => {
               </div>
               <div className="my-3 d-flex justify-content-center align-items-center">
                 {linkingAccount ? (
-                  <div
-                    className="flex-grow-1 d-flex justify-content-center"
-                    style={{ height: '40px' }}
-                  >
+                  <div className={`flex-grow-1 d-flex justify-content-center ${styles.loadingBox}`}>
                     <Spin indicator={<LoadingOutlined className="text-white fs-4" spin />} />
                   </div>
                 ) : user?.youTube == null ? (
-                  <>
-                    <GoogleOAuthButton className="flex-grow-1" onClick={() => authorize()} />
-                  </>
+                  <GoogleOAuthButton className="flex-grow-1" onClick={() => authorize()} />
                 ) : (
                   <div className={`px-3 py-2 rounded d-flex flex-column ${styles.channelWrapper}`}>
                     <div className="mb-2 text-white fw-500 poppins">
@@ -274,7 +228,7 @@ const AppPage: NextPageWithLayout = () => {
             </div>
             <div>
               <div className={`fs-6 mb-2 text-white fw-700 ${styles.modalSubTitle}`}>OCR Mode</div>
-              <div className="mb-3">
+              <div className="mb-2">
                 <div className="mb-1">
                   Alternatively, You can to go to the Discord server{' '}
                   <span className={`fw-700 ${styles.modalGuildName}`}>
@@ -305,144 +259,182 @@ const AppPage: NextPageWithLayout = () => {
       </Modal>
       <div className="my-5">
         <div className={`container ${styles.container}`}>
-          <div className="row">
-            <div className="fs-5 ms-2 mt-4 mb-3 poppins fw-700 text-white">
+          <div className="row pt-4 mb-2">
+            <div className="fs-5 ms-2 poppins fw-700 text-white">
               Membership Roles in your servers
             </div>
           </div>
+          <div className="row mb-3">
+            <div className="d-flex align-items-center">
+              <div className="mx-2 text-white fs-7">Show only acquired memberships</div>
+              <Switch
+                className="flex-shrink-0"
+                checked={showOnlyAcquiredMemberships}
+                size="small"
+                onChange={() => setShowOnlyAcquiredMemberships((show) => !show)}
+              />
+            </div>
+          </div>
           <div className="row">
-            {guilds.map((guild) => {
-              return (
-                <div key={guild.id} className="my-2">
-                  <div className={styles.card}>
-                    <div className="mb-4 mx-2 d-flex justify-content-between align-items-center">
-                      <div
-                        role="button"
-                        className={`flex-grow-1 d-flex align-items-center ${styles.cardHeader}`}
-                        onClick={() =>
-                          window.open(`https://discord.com/channels/${guild.id}`, '_blank')
-                        }
-                      >
-                        {guild.icon !== null && (
-                          <Image
-                            className="flex-shrink-0 rounded-circle"
-                            src={guild.icon}
-                            alt={`${guild.name}'s icon`}
-                            width={40}
-                            height={40}
-                          />
-                        )}
-                        <div className="flex-grow-1 text-truncate fw-700 fs-4 mx-3">
-                          {guild.name}
+            {guilds
+              .filter((guild) =>
+                showOnlyAcquiredMemberships
+                  ? guild.membershipRoles.some(({ membership }) => membership !== null)
+                  : true,
+              )
+              .map((guild) => {
+                return (
+                  <div key={guild.id} className="my-2">
+                    <div className={styles.card}>
+                      <div className="mb-4 mx-2 d-flex justify-content-between align-items-center">
+                        <div
+                          role="button"
+                          className={`flex-grow-1 d-flex align-items-center ${styles.cardHeader}`}
+                          onClick={() =>
+                            window.open(`https://discord.com/channels/${guild.id}`, '_blank')
+                          }
+                        >
+                          {guild.icon !== null && (
+                            <Image
+                              className="flex-shrink-0 rounded-circle"
+                              src={guild.icon}
+                              alt={`${guild.name}'s icon`}
+                              width={40}
+                              height={40}
+                            />
+                          )}
+                          <div className="flex-grow-1 text-truncate fw-700 fs-4 mx-3">
+                            {guild.name}
+                          </div>
                         </div>
+                        <div
+                          className={`flex-shrink-0 fw-600 ${styles.membershipRoleCount}`}
+                        >{`Roles: ${guild.membershipRoles.length}`}</div>
                       </div>
-                      <div
-                        className={`flex-shrink-0 fw-600 ${styles.membershipRoleCount}`}
-                      >{`Roles: ${guild.membershipRoles.length}`}</div>
-                    </div>
-                    <div className={`pb-1 d-flex overflow-auto ${styles.cardBody}`}>
-                      {guild.membershipRoles.slice(0).map((membershipRole) => {
-                        return (
-                          <div
-                            key={membershipRole.id}
-                            className={`flex-shrink-0 mx-2 p-3 ${styles.membershipRole} ${
-                              membershipRole.membership !== null
-                                ? styles.verifiedMembershipRole
-                                : ''
-                            } d-flex flex-column`}
-                          >
-                            <div className="flex-shrink-0 mb-3 d-flex">
-                              <Image
-                                className="flex-shrink-0 rounded-circle"
-                                src={membershipRole.youTubeChannel.thumbnail}
-                                alt={`${guild.name}'s icon`}
-                                width={64}
-                                height={64}
-                              />
-                              <div className={`flex-grow-1 ps-3 ${styles.channelInfo}`}>
-                                <div className="d-flex align-items-center">
-                                  {membershipRole.membership !== null && (
-                                    <CheckCircleOutlined
-                                      className={`fs-5 me-2 ${styles.checked}`}
-                                    />
-                                  )}
-                                  <div
-                                    role="button"
-                                    className={`fs-5 text-truncate ${styles.channelTitle}`}
-                                    onClick={() =>
-                                      window.open(
-                                        `https://www.youtube.com/${membershipRole.youTubeChannel.customUrl}`,
-                                        '_blank',
-                                      )
-                                    }
-                                  >
-                                    {membershipRole.youTubeChannel.title}
+                      <div className={`pb-1 d-flex overflow-auto ${styles.cardBody}`}>
+                        {guild.membershipRoles
+                          .filter(({ membership }) =>
+                            showOnlyAcquiredMemberships ? membership !== null : true,
+                          )
+                          .map((membershipRole) => {
+                            return (
+                              <div
+                                key={membershipRole.id}
+                                className={`flex-shrink-0 mx-2 p-3 ${styles.membershipRole} ${
+                                  membershipRole.membership !== null
+                                    ? styles.verifiedMembershipRole
+                                    : ''
+                                } d-flex flex-column`}
+                              >
+                                <div className="flex-shrink-0 mb-3 d-flex">
+                                  <Image
+                                    className="flex-shrink-0 rounded-circle"
+                                    src={membershipRole.youTubeChannel.thumbnail}
+                                    alt={`${guild.name}'s icon`}
+                                    width={64}
+                                    height={64}
+                                  />
+                                  <div className={`flex-grow-1 ps-3 ${styles.channelInfo}`}>
+                                    <div className="d-flex align-items-center">
+                                      {membershipRole.membership !== null && (
+                                        <CheckCircleOutlined
+                                          className={`fs-5 me-2 ${styles.checked}`}
+                                        />
+                                      )}
+                                      <div
+                                        role="button"
+                                        className={`fs-5 text-truncate ${styles.channelTitle}`}
+                                        onClick={() =>
+                                          window.open(
+                                            `https://www.youtube.com/${membershipRole.youTubeChannel.customUrl}`,
+                                            '_blank',
+                                          )
+                                        }
+                                      >
+                                        {membershipRole.youTubeChannel.title}
+                                      </div>
+                                    </div>
+                                    <div>{membershipRole.youTubeChannel.customUrl}</div>
                                   </div>
                                 </div>
-                                <div>{membershipRole.youTubeChannel.customUrl}</div>
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0 mb-1 d-flex align-items-center">
-                              Membership Role:
-                              <div
-                                className={`ms-2 fw-500 ${styles.membershipRolePill}`}
-                                onMouseEnter={() => setHoveredRoleId(membershipRole.id)}
-                                onMouseLeave={() => setHoveredRoleId(null)}
-                                style={{
-                                  color: `#${
-                                    membershipRole.color === 0
-                                      ? 'c9cdfb'
-                                      : membershipRole.color.toString(16).padStart(6, '0')
-                                  }`,
-                                  backgroundColor: `#${
-                                    membershipRole.color === 0
-                                      ? '5865f24c'
-                                      : membershipRole.color.toString(16).padStart(6, '0') +
-                                        (membershipRole.id === hoveredRoleId ? '4D' : '1A')
-                                  }`,
-                                }}
-                              >
-                                @{membershipRole.name}
-                              </div>
-                            </div>
-                            {membershipRole.membership === null ? (
-                              <div className="flex-grow-1 d-flex align-items-end">
-                                <div
-                                  role="button"
-                                  className={`rounded-1 btn-custom ${styles.verify}`}
-                                  onClick={() => {
-                                    setSelectedMembershipRole(membershipRole);
-                                    setIsModalOpen(true);
-                                  }}
-                                >
-                                  Apply
+                                <div className="flex-shrink-0 mb-1 d-flex align-items-center">
+                                  Membership Role:
+                                  <div
+                                    className={`ms-2 fw-500 ${styles.membershipRolePill}`}
+                                    onMouseEnter={() => setHoveredRoleId(membershipRole.id)}
+                                    onMouseLeave={() => setHoveredRoleId(null)}
+                                    style={{
+                                      color: `#${
+                                        membershipRole.color === 0
+                                          ? 'c9cdfb'
+                                          : membershipRole.color.toString(16).padStart(6, '0')
+                                      }`,
+                                      backgroundColor: `#${
+                                        membershipRole.color === 0
+                                          ? '5865f24c'
+                                          : membershipRole.color.toString(16).padStart(6, '0') +
+                                            (membershipRole.id === hoveredRoleId ? '4D' : '1A')
+                                      }`,
+                                    }}
+                                  >
+                                    @{membershipRole.name}
+                                  </div>
                                 </div>
+                                {membershipRole.membership === null ? (
+                                  <div className="flex-grow-1 d-flex align-items-end">
+                                    <div
+                                      role="button"
+                                      className={`rounded-1 btn-custom ${styles.verify}`}
+                                      onClick={() => {
+                                        setSelectedMembershipRole(membershipRole);
+                                        setIsModalOpen(true);
+                                      }}
+                                    >
+                                      Apply
+                                    </div>
+                                  </div>
+                                ) : membershipRole.membership.type === 'oauth' ? (
+                                  <>
+                                    <div className="flex-shrink-0 mb-1">
+                                      Verification Mode: OAuth
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="flex-shrink-0 mb-1">Verification Mode: OCR</div>
+                                    <div className="flex-shrink-0">
+                                      Next Billing Date:{' '}
+                                      <span className={`fw-700 ${styles.billingDate}`}>
+                                        {dayjs
+                                          .utc(membershipRole.membership.billingDate)
+                                          .format('YYYY-MM-DD')}
+                                      </span>
+                                    </div>
+                                  </>
+                                )}
                               </div>
-                            ) : membershipRole.membership.type === 'oauth' ? (
-                              <>
-                                <div className="flex-shrink-0 mb-1">Verification Mode: OAuth</div>
-                              </>
-                            ) : (
-                              <>
-                                <div className="flex-shrink-0 mb-1">Verification Mode: OCR</div>
-                                <div className="flex-shrink-0">
-                                  Next Billing Date:{' '}
-                                  <span className={`fw-700 ${styles.billingDate}`}>
-                                    {dayjs
-                                      .utc(membershipRole.membership.billingDate)
-                                      .format('YYYY-MM-DD')}
-                                  </span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        );
-                      })}
+                            );
+                          })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            <div className="my-2">
+              <div
+                role="button"
+                className={`d-flex justify-content-center align-items-center ${styles.cardPlaceholder}`}
+                onClick={() => {
+                  const url = new URL('https://discord.com/api/oauth2/authorize');
+                  url.searchParams.set('client_id', publicEnv.NEXT_PUBLIC_DISCORD_CLIENT_ID);
+                  url.searchParams.set('permissions', PermissionFlagsBits.ManageRoles.toString());
+                  url.searchParams.set('scope', 'applications.commands bot');
+                  window.location.href = url.toString();
+                }}
+              >
+                <div className="poppins fs-5">+ Invite Angel Bridge bot to a new server</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

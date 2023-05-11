@@ -10,16 +10,16 @@ import {
   StringSelectMenuBuilder,
 } from 'discord.js';
 
+import { CustomBotError } from '../../libs/error.js';
 import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
 import MembershipRoleCollection, { MembershipRoleDoc } from '../../models/membership-role.js';
 import MembershipCollection from '../../models/membership.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
-import { CustomBotError } from '../utils/bot-error.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { upsertGuildCollection, upsertUserCollection } from '../utils/db.js';
 import { recognizeMembership } from '../utils/membership.js';
-import { requireGuildDocumentHasLogChannel } from '../utils/validator.js';
+import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const verify = new CustomBotCommand({
@@ -30,13 +30,12 @@ const verify = new CustomBotCommand({
     )
     .setDMPermission(true)
     .addAttachmentOption(genericOption('picture', 'Picture to OCR', true)),
-  async execute(interaction) {
+  async execute(interaction, errorConfig) {
     const { guild, user, options } = interaction;
     if (guild === null) {
       throw new CustomBotError(
         'This command can only be used in a server.\n' +
           'However, we are developing a DM version of this command. Stay tuned!',
-        interaction,
       );
     }
 
@@ -45,7 +44,7 @@ const verify = new CustomBotCommand({
     // Get user attachment
     const picture = options.getAttachment('picture', true);
     if (!(picture.contentType?.startsWith('image/') ?? false)) {
-      throw new CustomBotError('Please provide an image file.', interaction);
+      throw new CustomBotError('Please provide an image file.');
     }
 
     // Upsert guild and user config, get membership roles
@@ -58,12 +57,11 @@ const verify = new CustomBotCommand({
     ]);
 
     // Log channel and membership role checks
-    requireGuildDocumentHasLogChannel(interaction, guildDoc);
+    botValidator.requireGuildDocumentHasLogChannel(guildDoc);
     if (membershipRoleDocs.length === 0) {
       throw new CustomBotError(
         'There is no membership role in this server.\n' +
           'A server moderator can set one up with `/add-role` first.',
-        interaction,
       );
     }
 
@@ -177,13 +175,14 @@ const verify = new CustomBotCommand({
       await interaction.editReply({
         components: [],
       });
-      throw new CustomBotError('Timed out. Please try again.', interaction);
+      throw new CustomBotError('Timed out. Please try again.');
     }
     let prevInteraction = buttonInteraction;
     await prevInteraction.deferReply({ ephemeral: true });
     const role = membershipRoleDocs.find((role) => role._id === selectedRoleId);
     if (role === undefined) {
-      throw new CustomBotError('Please select a membership role.', prevInteraction);
+      errorConfig.activeInteraction = prevInteraction;
+      throw new CustomBotError('Please select a membership role.');
     }
 
     // Disable verify button
@@ -201,11 +200,16 @@ const verify = new CustomBotCommand({
       membershipRole: selectedRoleId,
     });
     if (oauthMembershipDoc !== null) {
-      prevInteraction = await awaitConfirm(prevInteraction, 'verify-detected-oauth', {
-        content:
-          'You already have an OAuth membership with this membership role.\n' +
-          'If your OCR request is accepted, your OAuth membership will be overwritten. Do you want to continue?',
-      });
+      prevInteraction = await awaitConfirm(
+        prevInteraction,
+        'verify-detected-oauth',
+        {
+          content:
+            'You already have an OAuth membership with this membership role.\n' +
+            'If your OCR request is accepted, your OAuth membership will be overwritten. Do you want to continue?',
+        },
+        errorConfig,
+      );
       await prevInteraction.deferReply({ ephemeral: true });
     }
 

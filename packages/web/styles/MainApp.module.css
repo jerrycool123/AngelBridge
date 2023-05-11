@@ -10,6 +10,17 @@
   color: white;
 }
 
+.cardPlaceholder {
+  background-color: rgb(65, 79, 103);
+  border-radius: 0.25rem;
+  color: white;
+  height: 10rem;
+}
+
+.cardPlaceholder:hover {
+  filter: brightness(1.1);
+}
+
 .cardHeader {
   min-width: 0;
   color: rgb(255, 183, 74);
@@ -81,6 +92,10 @@
 
 .modalChannelTitle:hover {
   text-decoration: underline;
+}
+
+.loadingBox {
+  height: 2.5rem;
 }
 
 .modal :global(.ant-modal-content) {
