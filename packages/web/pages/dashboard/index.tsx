@@ -103,7 +103,19 @@ const AppPage: NextPageWithLayout = () => {
                     <Spin indicator={<LoadingOutlined className="text-white fs-4" spin />} />
                   </div>
                 ) : user?.youTube == null ? (
-                  <GoogleOAuthButton className="flex-grow-1" onClick={() => authorize()} />
+                  <div className="flex-grow-1">
+                    <div className="w-100 mb-2 d-flex justify-content-center">
+                      <GoogleOAuthButton className="flex-grow-1" onClick={() => authorize()} />
+                    </div>
+                    <div className={`flex-grow-1 position-relative ${styles.youTubeBranding}`}>
+                      <Image
+                        className="object-fit-contain"
+                        src="/developed-with-youtube-sentence-case-light.png"
+                        alt="developed with YouTube"
+                        fill
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <div className={`px-3 py-2 rounded d-flex flex-column ${styles.channelWrapper}`}>
                     <div className="mb-2 text-white fw-500 poppins">

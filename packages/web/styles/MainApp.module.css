@@ -98,6 +98,10 @@
   height: 2.5rem;
 }
 
+.youTubeBranding {
+  height: 2rem;
+}
+
 .modal :global(.ant-modal-content) {
   background-color: #3a4149;
   color: #dcdcdc;
