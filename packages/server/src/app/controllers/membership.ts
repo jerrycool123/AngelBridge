@@ -2,13 +2,12 @@ import { CustomRequestHandler, VerifyMembershipRequest } from '@angel-bridge/com
 import { UsersAPI } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
 import { EmbedBuilder, Guild, TextChannel } from 'discord.js';
-import { google } from 'googleapis';
 
 import { upsertMembershipCollection } from '../../bot/utils/db.js';
 import BotChecker from '../../checkers/bot.js';
 import { symmetricDecrypt, symmetricEncrypt } from '../../libs/crypto.js';
 import DiscordAPI from '../../libs/discord.js';
-import { BadRequestError, InternalServerError } from '../../libs/error.js';
+import { BadRequestError, ForbiddenError, InternalServerError } from '../../libs/error.js';
 import GoogleAPI from '../../libs/google.js';
 import { GuildDoc } from '../../models/guild.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
@@ -117,21 +116,37 @@ namespace MembershipController {
     if (youTubeRefreshToken === null) {
       throw new InternalServerError('Failed to decrypt YouTube refresh token');
     }
-    const oauth2Client = GoogleAPI.createOAuth2Client();
-    oauth2Client.setCredentials({ refresh_token: youTubeRefreshToken });
-    const youTubeApi = google.youtube({ version: 'v3', auth: oauth2Client });
-    try {
-      await youTubeApi.commentThreads.list({
-        part: ['id'],
-        videoId:
-          membershipRoleDoc.youTubeChannel.memberOnlyVideoIds[
-            Math.floor(Math.random() * membershipRoleDoc.youTubeChannel.memberOnlyVideoIds.length)
-          ],
-        maxResults: 1,
-      });
-    } catch (error) {
-      // We assume that user does not have the YouTube channel membership if the API call fails
-      throw new BadRequestError('Failed to verify your YouTube membership of this channel');
+    const randomVideoId =
+      membershipRoleDoc.youTubeChannel.memberOnlyVideoIds[
+        Math.floor(Math.random() * membershipRoleDoc.youTubeChannel.memberOnlyVideoIds.length)
+      ];
+    console.log(youTubeRefreshToken);
+    const verifyResult = await GoogleAPI.verifyYouTubeMembership(
+      youTubeRefreshToken,
+      randomVideoId,
+    );
+    if (verifyResult.success === false) {
+      if (verifyResult.error === 'token_expired_or_revoked') {
+        throw new BadRequestError(
+          'Your YouTube authorization token has been expired or revoked.\n' +
+            'Please link your YouTube channel again.',
+        );
+      } else if (verifyResult.error === 'forbidden') {
+        throw new ForbiddenError('You do not have the YouTube channel membership of this channel');
+      } else if (
+        verifyResult.error === 'comment_disabled' ||
+        verifyResult.error === 'video_not_found'
+      ) {
+        throw new InternalServerError(
+          'Failed to retrieve the members-only video of the YouTube channel.\n' +
+            'Please try again. If the problem persists, please contact the bot owner.',
+        );
+      } else if (verifyResult.error === 'unknown_error') {
+        throw new InternalServerError(
+          'An unknown error occurred when trying to verify your YouTube membership.\n' +
+            'Please try again. If the problem persists, please contact the bot owner.',
+        );
+      }
     }
 
     // Add role to member

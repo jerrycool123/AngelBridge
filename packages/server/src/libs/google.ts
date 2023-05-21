@@ -96,7 +96,23 @@ namespace GoogleAPI {
 
   // Ref1: https://github.com/member-gentei/member-gentei/blob/main/gentei/membership/membership.go'
   // Ref2: https://github.com/konnokai/Discord-Stream-Notify-Bot/blob/master/Discord%20Stream%20Notify%20Bot/SharedService/YoutubeMember/CheckMemberShip.cs
-  export const verifyYouTubeMembership = async (refreshToken: string, videoId: string) => {
+  export const verifyYouTubeMembership = async (
+    refreshToken: string,
+    videoId: string,
+  ): Promise<
+    | {
+        success: true;
+      }
+    | {
+        success: false;
+        error:
+          | 'token_expired_or_revoked'
+          | 'forbidden'
+          | 'comment_disabled'
+          | 'video_not_found'
+          | 'unknown_error';
+      }
+  > => {
     const oauth2Client = GoogleAPI.createOAuth2Client();
 
     oauth2Client.setCredentials({
@@ -109,13 +125,64 @@ namespace GoogleAPI {
         videoId,
         maxResults: 1,
       });
-      return true;
+      return {
+        success: true,
+      };
     } catch (error) {
-      // ! TODO: distinguish different videos
-      // We assume that user does not have the YouTube channel membership if the API call fails
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'errors' in error &&
+        Array.isArray(error.errors) &&
+        error.errors.length > 0
+      ) {
+        const errorObject = error.errors[0] as unknown;
+        if (
+          typeof errorObject === 'object' &&
+          errorObject !== null &&
+          'reason' in errorObject &&
+          typeof errorObject.reason === 'string'
+        ) {
+          if (errorObject.reason === 'forbidden') {
+            return {
+              success: false,
+              error: 'forbidden',
+            };
+          } else if (errorObject.reason === 'commentsDisabled') {
+            console.error(error);
+            return {
+              success: false,
+              error: 'comment_disabled',
+            };
+          } else if (errorObject.reason === 'videoNotFound') {
+            console.error(error);
+            return {
+              success: false,
+              error: 'video_not_found',
+            };
+          }
+        }
+      } else if (error instanceof GaxiosError && error.response !== undefined) {
+        const data = error.response.data as unknown;
+        if (
+          typeof data === 'object' &&
+          data !== null &&
+          'error_description' in data &&
+          typeof data.error_description === 'string' &&
+          data.error_description.toLowerCase().includes('token has been expired or revoked')
+        ) {
+          return {
+            success: false,
+            error: 'token_expired_or_revoked',
+          };
+        }
+      }
       console.error(error);
     }
-    return false;
+    return {
+      success: false,
+      error: 'unknown_error',
+    };
   };
 }
 

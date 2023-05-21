@@ -167,14 +167,28 @@ export const checkOAuthMembership = async ({
   if (userDoc?.youTube != null) {
     refreshToken = symmetricDecrypt(userDoc.youTube.refreshToken);
   }
-  const randomVideoId =
-    youTubeChannelDoc.memberOnlyVideoIds[
-      Math.floor(Math.random() * youTubeChannelDoc.memberOnlyVideoIds.length)
-    ];
+
   let verifySuccess = false;
   await GoogleAPI.addJob(async () => {
     if (refreshToken !== null) {
-      verifySuccess = await GoogleAPI.verifyYouTubeMembership(refreshToken, randomVideoId);
+      for (let retry = 0; retry < 3; retry++) {
+        const randomVideoId =
+          youTubeChannelDoc.memberOnlyVideoIds[
+            Math.floor(Math.random() * youTubeChannelDoc.memberOnlyVideoIds.length)
+          ];
+        const result = await GoogleAPI.verifyYouTubeMembership(refreshToken, randomVideoId);
+        if (result.success === true) break;
+        else if (result.error === 'forbidden' || result.error === 'token_expired_or_revoked') {
+          verifySuccess = false;
+          break;
+        } else if (result.error === 'video_not_found' || result.error === 'comment_disabled') {
+          // Try again for another random members-only video
+          continue;
+        } else {
+          // Unknown error, currently we do not retry
+          break;
+        }
+      }
     }
   });
 
