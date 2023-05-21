@@ -1,11 +1,11 @@
 import { ErrorRequestHandler } from 'express';
 
-import { CustomRequestError } from '../../libs/error.js';
+import { CustomError } from '../../libs/error.js';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   let statusCode: number, message: string;
-  if (err instanceof CustomRequestError) {
+  if (err instanceof CustomError) {
     console.error(`[${err.statusCode} ${err.name}]: ${err.message}`);
     statusCode = err.statusCode;
     message = err.message;

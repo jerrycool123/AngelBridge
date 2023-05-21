@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import { CustomBotError } from '../../libs/error.js';
+import BotChecker from '../../checkers/bot.js';
+import { InternalServerError } from '../../libs/error.js';
 import DiscordBotConfig from '../config.js';
 import { genericOption } from '../utils/common.js';
 import { upsertGuildCollection } from '../utils/db.js';
 import { useGuildOnly } from '../utils/middleware.js';
-import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const set_log_channel = new CustomBotCommand({
@@ -21,7 +21,7 @@ const set_log_channel = new CustomBotCommand({
 
     // Get log channel
     const channel = options.getChannel('channel', true);
-    const logChannel = await botValidator.requireGuildHasLogChannel(guild, channel.id);
+    const logChannel = await BotChecker.requireGuildHasLogChannel(guild, channel.id);
 
     // Check if the bot can send messages in the log channel
     try {
@@ -30,7 +30,7 @@ const set_log_channel = new CustomBotCommand({
       });
     } catch (error) {
       console.error(error);
-      throw new CustomBotError(`Failed to send messages in <#${logChannel.id}>.`);
+      throw new InternalServerError(`Failed to send messages in <#${logChannel.id}>.`);
     }
 
     // Add the log channel to DB

@@ -6,10 +6,10 @@ import jwt from 'jsonwebtoken';
 
 import { upsertUserCollection } from '../../bot/utils/db.js';
 import { symmetricEncrypt } from '../../libs/crypto.js';
-import DiscordUtility from '../../libs/discord.js';
+import DiscordAPI from '../../libs/discord.js';
 import Env from '../../libs/env.js';
 import { BadRequestError, InternalServerError } from '../../libs/error.js';
-import GoogleUtility from '../../libs/google.js';
+import GoogleAPI from '../../libs/google.js';
 import UserCollection from '../../models/user.js';
 import { getSession } from '../middlewares/auth.js';
 
@@ -25,7 +25,7 @@ namespace AuthController {
     const { refresh_token } = payload;
 
     // Refresh access token
-    const result = await DiscordUtility.getAccessToken(refresh_token);
+    const result = await DiscordAPI.getAccessToken(refresh_token);
     if (!result.success) {
       throw new BadRequestError(result.error);
     }
@@ -71,8 +71,8 @@ namespace AuthController {
     }
 
     // Get refresh token from authorization code
-    const oauth2Client = GoogleUtility.createOAuth2Client();
-    const result = await GoogleUtility.getTokensFromCode(oauth2Client, code, 'postmessage');
+    const oauth2Client = GoogleAPI.createOAuth2Client();
+    const result = await GoogleAPI.getTokensFromCode(oauth2Client, code, 'postmessage');
     if (!result.success) {
       throw new BadRequestError(result.error);
     }

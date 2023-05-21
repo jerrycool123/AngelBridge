@@ -1,7 +1,4 @@
-import OAuthMembershipCheckRoutine from './oauth-membership.js';
-import OCRMembershipCheckRoutine from './ocr-membership.js';
-
-const cronJobs: CustomCronJob[] = [OCRMembershipCheckRoutine, OAuthMembershipCheckRoutine];
+import cronJobs from './jobs/index.js';
 
 const startCronjobs = () => {
   for (const job of cronJobs) {

@@ -52,7 +52,7 @@ type Intersect<T, U> = {
   [K in Extract<keyof T, keyof U>]: T[K] & U[K];
 };
 
-interface CustomBotErrorConfig {
+interface BotErrorConfig {
   activeInteraction: import('discord.js').RepliableInteraction;
   followUp: boolean;
 }

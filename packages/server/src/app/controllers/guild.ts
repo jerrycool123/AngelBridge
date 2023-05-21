@@ -3,7 +3,7 @@ import { UsersAPI } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
 
 import { symmetricDecrypt, symmetricEncrypt } from '../../libs/crypto.js';
-import DiscordUtility from '../../libs/discord.js';
+import DiscordAPI from '../../libs/discord.js';
 import { BadRequestError, InternalServerError } from '../../libs/error.js';
 import GuildCollection from '../../models/guild.js';
 import { MembershipRoleDoc } from '../../models/membership-role.js';
@@ -32,7 +32,7 @@ namespace GuildController {
     );
 
     // Get guilds from Discord API
-    const result = await DiscordUtility.getAccessToken(refreshToken);
+    const result = await DiscordAPI.getAccessToken(refreshToken);
     if (!result.success) {
       throw new BadRequestError(result.error);
     }

@@ -4,7 +4,7 @@ class CustomBotCommand {
   readonly data: Partial<SlashCommandBuilder>;
   readonly execute: (
     interaction: ChatInputCommandInteraction<CacheType>,
-    errorConfig: CustomBotErrorConfig,
+    errorConfig: BotErrorConfig,
   ) => Promise<void>;
 
   constructor({
@@ -14,7 +14,7 @@ class CustomBotCommand {
     data: Partial<SlashCommandBuilder>;
     execute: (
       interaction: ChatInputCommandInteraction<CacheType>,
-      errorConfig: CustomBotErrorConfig,
+      errorConfig: BotErrorConfig,
     ) => Promise<void>;
   }) {
     this.data = data;

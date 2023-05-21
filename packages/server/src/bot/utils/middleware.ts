@@ -1,6 +1,6 @@
 import { Guild, GuildChannel, PermissionFlagsBits, RepliableInteraction } from 'discord.js';
 
-import { CustomBotError } from '../../libs/error.js';
+import { ForbiddenError, MethodNotAllowedError } from '../../libs/error.js';
 
 export const useGuildOnly =
   <T extends RepliableInteraction>(
@@ -9,13 +9,13 @@ export const useGuildOnly =
         guild: Guild;
         channel: GuildChannel;
       },
-      errorConfig: CustomBotErrorConfig,
+      errorConfig: BotErrorConfig,
     ) => Promise<void>,
   ) =>
-  async (interaction: T, errorConfig: CustomBotErrorConfig) => {
+  async (interaction: T, errorConfig: BotErrorConfig) => {
     const { guild, channel } = interaction;
     if (guild === null || channel === null || !(channel instanceof GuildChannel)) {
-      throw new CustomBotError('This interaction is unavailable in DM channels!');
+      throw new MethodNotAllowedError('This interaction is unavailable in DM channels!');
     }
     await execute(
       interaction as T & {
@@ -30,16 +30,13 @@ export const useBotWithManageRolePermission =
   <T extends RepliableInteraction>(
     execute: (
       interaction: T & { guild: Guild; channel: GuildChannel },
-      errorConfig: CustomBotErrorConfig,
+      errorConfig: BotErrorConfig,
     ) => Promise<void>,
   ) =>
-  async (
-    interaction: T & { guild: Guild; channel: GuildChannel },
-    errorConfig: CustomBotErrorConfig,
-  ) => {
+  async (interaction: T & { guild: Guild; channel: GuildChannel }, errorConfig: BotErrorConfig) => {
     const { channel, client } = interaction;
     if (!(channel.permissionsFor(client.user)?.has(PermissionFlagsBits.ManageRoles) ?? false)) {
-      throw new CustomBotError(
+      throw new ForbiddenError(
         'The bot does not have the `Manage Roles` permission in this server.\n' +
           'Please try again after giving the bot this permission.',
       );
@@ -51,16 +48,13 @@ export const useUserWithManageRolePermission =
   <T extends RepliableInteraction>(
     execute: (
       interaction: T & { guild: Guild; channel: GuildChannel },
-      errorConfig: CustomBotErrorConfig,
+      errorConfig: BotErrorConfig,
     ) => Promise<void>,
   ) =>
-  async (
-    interaction: T & { guild: Guild; channel: GuildChannel },
-    errorConfig: CustomBotErrorConfig,
-  ) => {
+  async (interaction: T & { guild: Guild; channel: GuildChannel }, errorConfig: BotErrorConfig) => {
     const { channel, user } = interaction;
     if (!(channel.permissionsFor(user)?.has(PermissionFlagsBits.ManageRoles) ?? false)) {
-      throw new CustomBotError(
+      throw new ForbiddenError(
         'You do not have the `Manage Roles` permission in this server to use this interaction.',
       );
     }

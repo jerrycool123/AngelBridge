@@ -1,13 +1,13 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import { CustomBotError } from '../../libs/error.js';
+import BotChecker from '../../checkers/bot.js';
+import { BadRequestError, ConflictError, NotFoundError } from '../../libs/error.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import YouTubeChannelCollection, { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirmButtonInteraction from '../utils/confirm.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
-import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const add_role = new CustomBotCommand({
@@ -27,7 +27,7 @@ const add_role = new CustomBotCommand({
 
       // Check if the role is manageable
       const role = options.getRole('role', true);
-      await botValidator.requireManageableRole(guild, role.id);
+      await BotChecker.requireManageableRole(guild, role.id);
 
       // Search registered YouTube channel by keyword
       const keyword = options.getString('keyword', true);
@@ -39,12 +39,12 @@ const add_role = new CustomBotCommand({
         ],
       });
       if (youTubeChannelDocs.length === 0) {
-        throw new CustomBotError(
+        throw new NotFoundError(
           `Could not find any registered YouTube channel for the keyword: \`${keyword}\`.\n` +
             'Please try again or use `/add-yt-channel` to register the channel first.',
         );
       } else if (youTubeChannelDocs.length > 1) {
-        throw new CustomBotError(
+        throw new BadRequestError(
           `Found multiple registered YouTube channels for the keyword: \`${keyword}\`.\n` +
             'Please try again with a more specific keyword.\n\n' +
             'Found channels:\n' +
@@ -64,7 +64,7 @@ const add_role = new CustomBotCommand({
         youTubeChannel: YouTubeChannelDoc | null;
       }>('youTubeChannel');
       if (oldMembershipRoleDoc !== null) {
-        throw new CustomBotError(
+        throw new ConflictError(
           `The membership role <@&${
             oldMembershipRoleDoc._id
           }> is already assigned to the YouTube channel \`${

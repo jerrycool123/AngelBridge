@@ -1,20 +1,4 @@
-export class CustomError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = this.constructor.name;
-  }
-}
-
-// Discord Bot Error
-export class CustomBotError extends CustomError {
-  constructor(message: string) {
-    super(message);
-    this.name = this.constructor.name;
-  }
-}
-
-// HTTP Request Error
-export abstract class CustomRequestError extends CustomError {
+export abstract class CustomError extends Error {
   abstract statusCode: number;
 
   constructor(message: string) {
@@ -23,7 +7,7 @@ export abstract class CustomRequestError extends CustomError {
   }
 }
 
-export class BadRequestError extends CustomRequestError {
+export class BadRequestError extends CustomError {
   statusCode = 400;
 
   constructor(message = 'Bad Request') {
@@ -32,7 +16,7 @@ export class BadRequestError extends CustomRequestError {
   }
 }
 
-export class UnauthorizedError extends CustomRequestError {
+export class UnauthorizedError extends CustomError {
   statusCode = 401;
 
   constructor(message = 'Unauthorized') {
@@ -41,7 +25,7 @@ export class UnauthorizedError extends CustomRequestError {
   }
 }
 
-export class ForbiddenError extends CustomRequestError {
+export class ForbiddenError extends CustomError {
   statusCode = 403;
 
   constructor(message = 'Forbidden') {
@@ -50,7 +34,7 @@ export class ForbiddenError extends CustomRequestError {
   }
 }
 
-export class NotFoundError extends CustomRequestError {
+export class NotFoundError extends CustomError {
   statusCode = 404;
 
   constructor(message = 'Not Found') {
@@ -59,10 +43,46 @@ export class NotFoundError extends CustomRequestError {
   }
 }
 
-export class InternalServerError extends CustomRequestError {
+export class MethodNotAllowedError extends CustomError {
+  statusCode = 405;
+
+  constructor(message = 'Method Not Allowed') {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+export class RequestTimeoutError extends CustomError {
+  statusCode = 408;
+
+  constructor(message = 'Request Timeout') {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+export class ConflictError extends CustomError {
+  statusCode = 409;
+
+  constructor(message = 'Conflict') {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+export class InternalServerError extends CustomError {
   statusCode = 500;
 
   constructor(message = 'Internal Server Error') {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+export class NotImplementedError extends CustomError {
+  statusCode = 501;
+
+  constructor(message = 'Not Implemented') {
     super(message);
     this.name = this.constructor.name;
   }

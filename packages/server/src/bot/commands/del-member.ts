@@ -3,13 +3,14 @@ import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import utc from 'dayjs/plugin/utc.js';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
-import { CustomBotError } from '../../libs/error.js';
+import BotChecker from '../../checkers/bot.js';
+import DBChecker from '../../checkers/db.js';
+import { ForbiddenError } from '../../libs/error.js';
 import MembershipCollection from '../../models/membership.js';
 import DiscordBotConfig from '../config.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
-import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);
@@ -29,20 +30,19 @@ const del_member = new CustomBotCommand({
       await interaction.deferReply({ ephemeral: true });
 
       // Guild and log channel checks
-      const guildDoc = await botValidator.requireGuildDocument(guild.id);
-      const logChannelId = botValidator.requireGuildDocumentHasLogChannel(guildDoc);
-      const logChannel = await botValidator.requireGuildHasLogChannel(guild, logChannelId);
+      const { logChannel: logChannelId } = await DBChecker.requireGuildWithLogChannel(guild.id);
+      const logChannel = await BotChecker.requireGuildHasLogChannel(guild, logChannelId);
 
       // Get membership role
       const role = options.getRole('role', true);
-      await botValidator.requireMembershipRoleDocumentWithYouTubeChannel(role.id);
+      await DBChecker.requireMembershipRoleWithYouTubeChannel(role.id);
 
       // Get guild member
       const user = options.getUser('member', true);
-      const member = await botValidator.requireGuildMember(guild, user.id);
+      const member = await BotChecker.requireGuildMember(guild, user.id);
 
       // Get the membership
-      const membershipDoc = await botValidator.requireMembershipDocumentWithGivenMembershipRole(
+      const membershipDoc = await DBChecker.requireMembershipWithGivenMembershipRole(
         member.id,
         role.id,
       );
@@ -61,13 +61,13 @@ const del_member = new CustomBotCommand({
       await confirmButtonInteraction.deferReply({ ephemeral: true });
 
       // Remove role from member
-      const botMember = await guild.members.fetchMe({ force: true });
+      const botMember = await BotChecker.requireSelfMember(guild);
       try {
         await member.roles.remove(role.id);
       } catch (error) {
         console.error(error);
         errorConfig.activeInteraction = confirmButtonInteraction;
-        throw new CustomBotError(
+        throw new ForbiddenError(
           `Due to the role hierarchy, the bot cannot remove the role <@&${role.id}> from users.\nI can only manage a role whose order is lower than that of my highest role <@&${botMember.roles.highest.id}>.`,
         );
       }

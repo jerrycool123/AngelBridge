@@ -8,9 +8,9 @@ import {
 // import client from '../../bot/index.js';
 // import { badRequestValidator } from '../../bot/utils/validator.js';
 import { symmetricDecrypt } from '../../libs/crypto.js';
-// import DiscordUtility from '../../libs/discord.js';
+// import DiscordAPI from '../../libs/discord.js';
 import { BadRequestError } from '../../libs/error.js';
-import GoogleUtility from '../../libs/google.js';
+import GoogleAPI from '../../libs/google.js';
 // import { MembershipRoleDoc } from '../../models/membership-role.js';
 // import MembershipCollection from '../../models/membership.js';
 import UserCollection from '../../models/user.js';
@@ -58,8 +58,8 @@ namespace UserController {
     }
 
     // Revoke YouTube refresh token
-    const oauth2Client = GoogleUtility.createOAuth2Client();
-    const result = await GoogleUtility.revokeRefreshToken(oauth2Client, refreshToken);
+    const oauth2Client = GoogleAPI.createOAuth2Client();
+    const result = await GoogleAPI.revokeRefreshToken(oauth2Client, refreshToken);
     if (!result.success) {
       throw new BadRequestError(result.error);
     }
@@ -74,7 +74,7 @@ namespace UserController {
     //   membershipRole: MembershipRoleDoc;
     // }>('membershipRole');
     // oauthMembershipDocs.map(({ guild: guildId }) =>
-    //   DiscordUtility.addAsyncAPIJob(async () => {
+    //   DiscordAPI.addJob(async () => {
     //     const guild = await badRequestValidator.requireGuild(guildId);
     //   }),
     // );

@@ -1,6 +1,8 @@
 import { ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 
-import { CustomBotError } from '../../libs/error.js';
+import BotChecker from '../../checkers/bot.js';
+import CommonChecker from '../../checkers/common.js';
+import { InternalServerError } from '../../libs/error.js';
 import { createDisabledAcceptedActionRow } from '../utils/common.js';
 import { upsertMembershipCollection } from '../utils/db.js';
 import { parseMembershipVerificationRequestEmbed } from '../utils/membership.js';
@@ -9,7 +11,6 @@ import {
   useGuildOnly,
   useUserWithManageRolePermission,
 } from '../utils/middleware.js';
-import { botValidator } from '../utils/validator.js';
 import CustomButton from './index.js';
 
 const membershipAcceptButton = new CustomButton({
@@ -37,14 +38,14 @@ const membershipAcceptButton = new CustomButton({
         );
 
         // Check if the recognized date is too far in the future
-        const expireAt = botValidator.requireGivenDateNotTooFarInFuture(rawExpireAt, createdAt);
+        const expireAt = CommonChecker.requireGivenDateNotTooFarInFuture(rawExpireAt, createdAt);
 
         // Fetch role and check if it's manageable
-        const role = await botValidator.requireRole(guild, roleId);
-        await botValidator.requireManageableRole(guild, roleId);
+        const role = await BotChecker.requireRole(guild, roleId);
+        await BotChecker.requireManageableRole(guild, roleId);
 
         // Fetch guild member
-        const member = await botValidator.requireGuildMember(guild, userId);
+        const member = await BotChecker.requireGuildMember(guild, userId);
 
         // Update membership in DB
         await upsertMembershipCollection({
@@ -59,7 +60,7 @@ const membershipAcceptButton = new CustomButton({
           await member.roles.add(role);
         } catch (error) {
           console.error(error);
-          throw new CustomBotError('Failed to add the role to the member.');
+          throw new InternalServerError('Failed to add the role to the member.');
         }
 
         // DM the user

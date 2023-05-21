@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
+import BotChecker from '../../checkers/bot.js';
 import MembershipCollection, {
   OAuthMembershipDoc,
   OCRMembershipDoc,
@@ -9,7 +10,6 @@ import MembershipCollection, {
 import DiscordBotConfig from '../config.js';
 import { genericOption } from '../utils/common.js';
 import { useGuildOnly } from '../utils/middleware.js';
-import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);
@@ -27,7 +27,7 @@ const check_member = new CustomBotCommand({
 
     // Get guild member
     const user = options.getUser('member', true);
-    const member = await botValidator.requireGuildMember(guild, user.id);
+    const member = await BotChecker.requireGuildMember(guild, user.id);
 
     // Get membership status from database
     const membershipDocs = await MembershipCollection.find({

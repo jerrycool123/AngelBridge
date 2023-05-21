@@ -156,6 +156,7 @@ const AppPage: NextPageWithLayout = () => {
                             key: 'verify-membership',
                             type: 'loading',
                             content: 'Verifying your membership...',
+                            duration: 10,
                           });
                           try {
                             const { data } = await api.post<VerifyMembershipRequest>(

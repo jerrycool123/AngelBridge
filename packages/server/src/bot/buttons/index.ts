@@ -5,7 +5,7 @@ class CustomButton {
   readonly data: ButtonBuilder;
   readonly execute: (
     interaction: ButtonInteraction<CacheType>,
-    errorConfig: CustomBotErrorConfig,
+    errorConfig: BotErrorConfig,
   ) => Promise<void>;
 
   constructor({
@@ -17,7 +17,7 @@ class CustomButton {
     data: ButtonBuilder;
     execute: (
       interaction: ButtonInteraction<CacheType>,
-      errorConfig: CustomBotErrorConfig,
+      errorConfig: BotErrorConfig,
     ) => Promise<void>;
   }) {
     this.customId = customId;

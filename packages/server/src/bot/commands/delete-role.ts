@@ -1,7 +1,8 @@
 import { SlashCommandBuilder, User } from 'discord.js';
 
-import DiscordUtility from '../../libs/discord.js';
-import { CustomBotError } from '../../libs/error.js';
+import BotChecker from '../../checkers/bot.js';
+import DiscordAPI from '../../libs/discord.js';
+import { NotFoundError } from '../../libs/error.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import MembershipCollection from '../../models/membership.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
@@ -9,7 +10,6 @@ import DiscordBotConfig from '../config.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
-import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const delete_role = new CustomBotCommand({
@@ -20,13 +20,13 @@ const delete_role = new CustomBotCommand({
     .addRoleOption(genericOption('role', 'The YouTube Membership role in this server', true)),
   execute: useGuildOnly(
     useBotWithManageRolePermission(async (interaction, errorConfig) => {
-      const { guild, options, client } = interaction;
+      const { guild, options } = interaction;
 
       await interaction.deferReply({ ephemeral: true });
 
       // Check if the role is manageable
       const role = options.getRole('role', true);
-      await botValidator.requireManageableRole(guild, role.id);
+      await BotChecker.requireManageableRole(guild, role.id);
 
       // Find membership role and members with the role in DB
       const [membershipRoleDoc, membershipDocs] = await Promise.all([
@@ -35,7 +35,7 @@ const delete_role = new CustomBotCommand({
             youTubeChannel: YouTubeChannelDoc | null;
           }>('youTubeChannel')
           .orFail(
-            new CustomBotError(
+            new NotFoundError(
               `The role <@&${role.id}> is not a membership role in this server.\n` +
                 'You can use `/settings` to see the list of membership roles in this server.',
             ),
@@ -80,10 +80,10 @@ const delete_role = new CustomBotCommand({
 
       // DM user about the removal
       membershipDocs.forEach((membershipDoc) =>
-        DiscordUtility.addAsyncAPIJob(async () => {
+        DiscordAPI.addJob(async () => {
           let user: User | null = null;
           try {
-            const member = await guild.members.fetch(membershipDoc.user);
+            const member = await BotChecker.requireGuildMember(guild, membershipDoc.user);
             user = member.user;
             await member.roles.remove(membershipRoleDoc._id);
           } catch (error) {
@@ -94,7 +94,7 @@ const delete_role = new CustomBotCommand({
           }
 
           try {
-            if (user === null) user = await client.users.fetch(membershipDoc.user);
+            if (user === null) user = await BotChecker.requireUser(membershipDoc.user);
             await user.send(
               `Your membership role **@${membershipRoleDoc.name}** has been removed, since it has been deleted by a moderator in the server \`${guild.name}\`.`,
             );

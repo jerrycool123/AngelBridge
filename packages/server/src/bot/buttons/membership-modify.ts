@@ -14,10 +14,10 @@ import {
   TextInputStyle,
 } from 'discord.js';
 
-import { CustomBotError } from '../../libs/error.js';
+import CommonChecker from '../../checkers/common.js';
+import { BadRequestError, RequestTimeoutError } from '../../libs/error.js';
 import { parseMembershipVerificationRequestEmbed } from '../utils/membership.js';
 import { useGuildOnly, useUserWithManageRolePermission } from '../utils/middleware.js';
-import { botValidator } from '../utils/validator.js';
 import CustomButton from './index.js';
 
 dayjs.extend(utc);
@@ -67,7 +67,7 @@ const membershipModifyButton = new CustomButton({
         // Timeout
       }
       if (modalSubmitInteraction === null) {
-        throw new CustomBotError('Timed out. Please try again.');
+        throw new RequestTimeoutError('Timed out. Please try again.');
       }
 
       // Acknowledge the modal
@@ -79,13 +79,13 @@ const membershipModifyButton = new CustomButton({
       );
       const newExpireAt = dayjs.utc(expireAtString, 'YYYY/MM/DD', true);
       if (!newExpireAt.isValid()) {
-        throw new CustomBotError(
+        throw new BadRequestError(
           'Invalid date. The date must be in YYYY/MM/DD format. Please try again.',
         );
       }
 
       // Check if the modified date is too far in the future
-      botValidator.requireGivenDateNotTooFarInFuture(newExpireAt, createdAt);
+      CommonChecker.requireGivenDateNotTooFarInFuture(newExpireAt, createdAt);
 
       // Modify the date
       let apiEmbedFields = infoEmbed.data.fields ?? [];

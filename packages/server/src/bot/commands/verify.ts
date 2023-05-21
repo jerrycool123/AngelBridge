@@ -10,7 +10,11 @@ import {
   StringSelectMenuBuilder,
 } from 'discord.js';
 
-import { CustomBotError } from '../../libs/error.js';
+import DBChecker from '../../checkers/db.js';
+import { MethodNotAllowedError } from '../../libs/error.js';
+import { BadRequestError } from '../../libs/error.js';
+import { NotFoundError } from '../../libs/error.js';
+import { RequestTimeoutError } from '../../libs/error.js';
 import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
 import MembershipRoleCollection, { MembershipRoleDoc } from '../../models/membership-role.js';
 import MembershipCollection from '../../models/membership.js';
@@ -19,7 +23,6 @@ import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { upsertGuildCollection, upsertUserCollection } from '../utils/db.js';
 import { recognizeMembership } from '../utils/membership.js';
-import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 const verify = new CustomBotCommand({
@@ -33,7 +36,7 @@ const verify = new CustomBotCommand({
   async execute(interaction, errorConfig) {
     const { guild, user, options } = interaction;
     if (guild === null) {
-      throw new CustomBotError(
+      throw new MethodNotAllowedError(
         'This command can only be used in a server.\n' +
           'However, we are developing a DM version of this command. Stay tuned!',
       );
@@ -44,7 +47,7 @@ const verify = new CustomBotCommand({
     // Get user attachment
     const picture = options.getAttachment('picture', true);
     if (!(picture.contentType?.startsWith('image/') ?? false)) {
-      throw new CustomBotError('Please provide an image file.');
+      throw new BadRequestError('Please provide an image file.');
     }
 
     // Upsert guild and user config, get membership roles
@@ -57,9 +60,9 @@ const verify = new CustomBotCommand({
     ]);
 
     // Log channel and membership role checks
-    botValidator.requireGuildDocumentHasLogChannel(guildDoc);
+    await DBChecker.requireGuildWithLogChannel(guildDoc);
     if (membershipRoleDocs.length === 0) {
-      throw new CustomBotError(
+      throw new NotFoundError(
         'There is no membership role in this server.\n' +
           'A server moderator can set one up with `/add-role` first.',
       );
@@ -175,14 +178,14 @@ const verify = new CustomBotCommand({
       await interaction.editReply({
         components: [],
       });
-      throw new CustomBotError('Timed out. Please try again.');
+      throw new RequestTimeoutError('Timed out. Please try again.');
     }
     let prevInteraction = buttonInteraction;
     await prevInteraction.deferReply({ ephemeral: true });
     const role = membershipRoleDocs.find((role) => role._id === selectedRoleId);
     if (role === undefined) {
       errorConfig.activeInteraction = prevInteraction;
-      throw new CustomBotError('Please select a membership role.');
+      throw new BadRequestError('Please select a membership role.');
     }
 
     // Disable verify button

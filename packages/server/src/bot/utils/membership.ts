@@ -10,15 +10,15 @@ import {
   RepliableInteraction,
 } from 'discord.js';
 
-import { CustomBotError } from '../../libs/error.js';
+import BotChecker from '../../checkers/bot.js';
+import DBChecker from '../../checkers/db.js';
+import { BadRequestError } from '../../libs/error.js';
 import { extractDate } from '../../libs/i18n.js';
 import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
 import membershipAcceptButton from '../buttons/membership-accept.js';
 import membershipModifyButton from '../buttons/membership-modify.js';
 import membershipRejectButton from '../buttons/membership-reject.js';
-import client from '../index.js';
 import { createDisabledInvalidActionRow } from './common.js';
-import { botValidator } from './validator.js';
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -34,10 +34,9 @@ export const recognizeMembership = async (
   url: string,
   roleId: string,
 ) => {
-  const guild = await client.guilds.fetch(guildId);
-  const guildDoc = await botValidator.requireGuildDocument(guild.id);
-  const logChannelId = botValidator.requireGuildDocumentHasLogChannel(guildDoc);
-  const logChannel = await botValidator.requireGuildHasLogChannel(guild, logChannelId);
+  const guild = await BotChecker.requireGuild(guildId);
+  const { logChannel: logChannelId } = await DBChecker.requireGuildWithLogChannel(guild.id);
+  const logChannel = await BotChecker.requireGuildHasLogChannel(guild, logChannelId);
 
   let text = await ocrWorker.recognize(languageCode, url);
   if (text === null) {
@@ -103,7 +102,7 @@ export const parseMembershipVerificationRequestEmbed = async (
     message: Message;
   },
   infoEmbed: Embed | null,
-  errorConfig: CustomBotErrorConfig,
+  errorConfig: BotErrorConfig,
 ): Promise<{
   infoEmbed: Embed;
   userId: string;
@@ -116,7 +115,7 @@ export const parseMembershipVerificationRequestEmbed = async (
       components: [createDisabledInvalidActionRow()],
     });
     errorConfig.followUp = true;
-    throw new CustomBotError('Failed to retrieve membership verification request embed.');
+    throw new BadRequestError('Failed to retrieve membership verification request embed.');
   };
 
   if (infoEmbed === null) return await throwParseError();

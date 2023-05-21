@@ -4,10 +4,10 @@ import PQueue from 'p-queue';
 
 import Env from './env.js';
 
-namespace DiscordUtility {
+namespace DiscordAPI {
   const apiQueue = new PQueue({ autoStart: true, intervalCap: 1, interval: 100 });
 
-  export const addAsyncAPIJob = (job: () => Promise<unknown>) =>
+  export const addJob = (job: () => Promise<unknown>) =>
     apiQueue.add(async () => {
       try {
         await job();
@@ -47,4 +47,4 @@ namespace DiscordUtility {
   };
 }
 
-export default DiscordUtility;
+export default DiscordAPI;

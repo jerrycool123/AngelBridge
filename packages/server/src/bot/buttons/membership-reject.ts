@@ -5,17 +5,18 @@ import {
   EmbedBuilder,
   ModalActionRowComponentBuilder,
   ModalBuilder,
+  Role,
   TextInputBuilder,
   TextInputStyle,
 } from 'discord.js';
 import { ModalSubmitInteraction } from 'discord.js';
 import { CacheType } from 'discord.js';
 
-import { CustomBotError } from '../../libs/error.js';
+import BotChecker from '../../checkers/bot.js';
+import { RequestTimeoutError } from '../../libs/error.js';
 import { createDisabledRejectedActionRow } from '../utils/common.js';
 import { parseMembershipVerificationRequestEmbed } from '../utils/membership.js';
 import { useGuildOnly, useUserWithManageRolePermission } from '../utils/middleware.js';
-import { botValidator } from '../utils/validator.js';
 import CustomButton from './index.js';
 
 const membershipRejectButton = new CustomButton({
@@ -50,10 +51,15 @@ const membershipRejectButton = new CustomButton({
       );
 
       // We don't check if the role is valid because it's a reject action
-      const role = await guild.roles.fetch(roleId, { force: true });
+      let role: Role | null = null;
+      try {
+        role = await BotChecker.requireRole(guild, roleId);
+      } catch (error) {
+        // Role does not exist
+      }
 
       // Fetch guild member
-      const member = await botValidator.requireGuildMember(guild, userId);
+      const member = await BotChecker.requireGuildMember(guild, userId);
 
       // Receive rejection reason from the modal
       let modalSubmitInteraction: ModalSubmitInteraction<CacheType> | null = null;
@@ -68,7 +74,7 @@ const membershipRejectButton = new CustomButton({
         // Timeout
       }
       if (modalSubmitInteraction === null) {
-        throw new CustomBotError('Timed out. Please try again.');
+        throw new RequestTimeoutError('Timed out. Please try again.');
       }
       const reason = modalSubmitInteraction.fields.getTextInputValue(
         'membership-reject-reason-input',

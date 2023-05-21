@@ -3,14 +3,16 @@ import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import utc from 'dayjs/plugin/utc.js';
 import { EmbedBuilder, RepliableInteraction, SlashCommandBuilder } from 'discord.js';
 
-import { CustomBotError } from '../../libs/error.js';
+import BotChecker from '../../checkers/bot.js';
+import CommonChecker from '../../checkers/common.js';
+import DBChecker from '../../checkers/db.js';
+import { BadRequestError, InternalServerError } from '../../libs/error.js';
 import MembershipCollection from '../../models/membership.js';
 import DiscordBotConfig from '../config.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
-import { upsertMembershipCollection } from '../utils/db.js';
+import { upsertMembershipCollection, upsertUserCollection } from '../utils/db.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
-import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);
@@ -38,14 +40,13 @@ const add_member = new CustomBotCommand({
       await interaction.deferReply({ ephemeral: true });
 
       // Guild and log channel checks
-      const guildDoc = await botValidator.requireGuildDocument(guild.id);
-      const logChannelId = botValidator.requireGuildDocumentHasLogChannel(guildDoc);
-      const logChannel = await botValidator.requireGuildHasLogChannel(guild, logChannelId);
+      const { logChannel: logChannelId } = await DBChecker.requireGuildWithLogChannel(guild.id);
+      const logChannel = await BotChecker.requireGuildHasLogChannel(guild, logChannelId);
 
       // Get membership role and check if it's manageable
       const role = options.getRole('role', true);
-      await botValidator.requireMembershipRoleDocumentWithYouTubeChannel(role.id);
-      await botValidator.requireManageableRole(guild, role.id);
+      await DBChecker.requireMembershipRoleWithYouTubeChannel(role.id);
+      await BotChecker.requireManageableRole(guild, role.id);
 
       // Get the next billing date
       let expireAt: dayjs.Dayjs;
@@ -53,7 +54,7 @@ const add_member = new CustomBotCommand({
       if (billing_date !== null) {
         expireAt = dayjs.utc(billing_date, 'YYYY/MM/DD', true);
         if (!expireAt.isValid()) {
-          throw new CustomBotError(
+          throw new BadRequestError(
             `The billing date \`${billing_date}\` is not a valid date in YYYY/MM/DD format.`,
           );
         }
@@ -63,11 +64,14 @@ const add_member = new CustomBotCommand({
       }
 
       // Check if the recognized date is too far in the future
-      botValidator.requireGivenDateNotTooFarInFuture(expireAt);
+      CommonChecker.requireGivenDateNotTooFarInFuture(expireAt);
+
+      // Upsert user
+      const user = options.getUser('member', true);
+      await upsertUserCollection(user, user.displayAvatarURL());
 
       // Get guild member
-      const user = options.getUser('member', true);
-      const member = await botValidator.requireGuildMember(guild, user.id);
+      const member = await BotChecker.requireGuildMember(guild, user.id);
 
       // Check if the user already has OAuth membership
       const oauthMembershipDoc = await MembershipCollection.findOne({
@@ -107,7 +111,7 @@ const add_member = new CustomBotCommand({
         await member.roles.add(role.id);
       } catch (error) {
         console.error(error);
-        throw new CustomBotError('Failed to add the role to the member.');
+        throw new InternalServerError('Failed to add the role to the member.');
       }
       await confirmButtonInteraction.editReply({
         content: `Successfully assigned the membership role <@&${role.id}> to <@${

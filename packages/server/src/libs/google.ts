@@ -1,14 +1,15 @@
 import { GaxiosError } from 'gaxios';
 import { OAuth2Client } from 'google-auth-library';
+import { google } from 'googleapis';
 import PQueue from 'p-queue';
 
 import Env from './env.js';
 
-namespace GoogleUtility {
+namespace GoogleAPI {
   export const apiKey = Env.GOOGLE_API_KEY;
   const apiQueue = new PQueue({ autoStart: true, intervalCap: 1, interval: 100 });
 
-  export const addAsyncAPIJob = (job: () => Promise<unknown>) =>
+  export const addJob = (job: () => Promise<unknown>) =>
     apiQueue.add(async () => {
       try {
         await job();
@@ -92,6 +93,30 @@ namespace GoogleUtility {
 
     return { success: true };
   };
+
+  // Ref1: https://github.com/member-gentei/member-gentei/blob/main/gentei/membership/membership.go'
+  // Ref2: https://github.com/konnokai/Discord-Stream-Notify-Bot/blob/master/Discord%20Stream%20Notify%20Bot/SharedService/YoutubeMember/CheckMemberShip.cs
+  export const verifyYouTubeMembership = async (refreshToken: string, videoId: string) => {
+    const oauth2Client = GoogleAPI.createOAuth2Client();
+
+    oauth2Client.setCredentials({
+      refresh_token: refreshToken,
+    });
+    const youTubeApi = google.youtube({ version: 'v3', auth: oauth2Client });
+    try {
+      await youTubeApi.commentThreads.list({
+        part: ['id'],
+        videoId,
+        maxResults: 1,
+      });
+      return true;
+    } catch (error) {
+      // ! TODO: distinguish different videos
+      // We assume that user does not have the YouTube channel membership if the API call fails
+      console.error(error);
+    }
+    return false;
+  };
 }
 
-export default GoogleUtility;
+export default GoogleAPI;

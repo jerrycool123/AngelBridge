@@ -1,8 +1,8 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { google, youtube_v3 } from 'googleapis';
 
-import { CustomBotError } from '../../libs/error.js';
-import GoogleUtility from '../../libs/google.js';
+import { NotFoundError } from '../../libs/error.js';
+import GoogleAPI from '../../libs/google.js';
 import DiscordBotConfig from '../config.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
@@ -24,7 +24,7 @@ const add_yt_channel = new CustomBotCommand({
     // Search YouTube channel by ID via YouTube API
     let channelId: string;
     const id = options.getString('id', true);
-    const youtubeApi = google.youtube({ version: 'v3', auth: GoogleUtility.apiKey });
+    const youtubeApi = google.youtube({ version: 'v3', auth: GoogleAPI.apiKey });
     if (id.startsWith('UC') && id.length === 24) {
       // Channel ID
       channelId = id;
@@ -38,7 +38,7 @@ const add_yt_channel = new CustomBotCommand({
         console.error(error);
       }
       if (videoChannelId == null) {
-        throw new CustomBotError(
+        throw new NotFoundError(
           `Could not find a YouTube video for the video ID: \`${id}\`. Please try again. Here are some examples:\n\n` +
             `The channel ID of <https://www.youtube.com/channel/UCZlDXzGoo7d44bwdNObFacg> is \`UCZlDXzGoo7d44bwdNObFacg\`. It must begins with 'UC...'. Currently we don't support custom channel ID search (e.g. \`@AmaneKanata\`). If you cannot find a valid channel ID, please provide a video ID instead.\n\n` +
             `The video ID of <https://www.youtube.com/watch?v=Dji-ehIz5_k> is \`Dji-ehIz5_k\`.`,
@@ -70,7 +70,7 @@ const add_yt_channel = new CustomBotCommand({
       customUrl == null ||
       thumbnail == null
     ) {
-      throw new CustomBotError(
+      throw new NotFoundError(
         `Could not find a YouTube channel for the channel ID: \`${channelId}\`. Please try again.`,
       );
     }
@@ -133,7 +133,7 @@ const add_yt_channel = new CustomBotCommand({
     }
     if (memberOnlyVideoIds.length === 0) {
       errorConfig.activeInteraction = confirmButtonInteraction;
-      throw new CustomBotError(
+      throw new NotFoundError(
         `Could not find any member only videos for the YouTube channel: \`${channelInfo.title}\`. Please try again.`,
       );
     }

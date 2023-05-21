@@ -9,16 +9,12 @@ import startCronjobs from './routines/index.js';
 const main = async () => {
   // Initialize OCR worker
 
-  ocrWorker
-    .init()
-    .then(() => console.log('OCR worker initialized'))
-    .catch(console.error);
+  await ocrWorker.init();
+  console.log('OCR worker initialized');
 
   // Connect to MongoDB
-  mongoose
-    .connect(Env.MONGO_URL)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(console.error);
+  await mongoose.connect(Env.MONGO_URL);
+  console.log('Connected to MongoDB');
 
   // Start the server
   app.listen(Env.PORT, () => {

@@ -9,6 +9,7 @@ import {
   SlashCommandBuilder,
 } from 'discord.js';
 
+import CommonChecker from '../../checkers/common.js';
 import MembershipCollection, {
   OAuthMembershipDoc,
   OCRMembershipDoc,
@@ -16,7 +17,6 @@ import MembershipCollection, {
 import DiscordBotConfig from '../config.js';
 import { genericOption } from '../utils/common.js';
 import { useGuildOnly } from '../utils/middleware.js';
-import { botValidator } from '../utils/validator.js';
 import CustomBotCommand from './index.js';
 
 dayjs.extend(utc);
@@ -34,9 +34,7 @@ const list_members = new CustomBotCommand({
 
     // Get membership role
     const role = options.getRole('role', true);
-    const membershipRoleDoc = await botValidator.requireMembershipRoleDocumentWithYouTubeChannel(
-      role.id,
-    );
+    const membershipRoleDoc = await CommonChecker.requireMembershipRoleWithYouTubeChannel(role.id);
 
     // Get all members with the membership role
     const membershipDocs = await MembershipCollection.find({

@@ -1,15 +1,15 @@
 import { CustomRequestHandler, VerifyMembershipRequest } from '@angel-bridge/common';
 import { UsersAPI } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
-import { EmbedBuilder, Guild, GuildMember, PermissionFlagsBits, TextChannel } from 'discord.js';
+import { EmbedBuilder, Guild, TextChannel } from 'discord.js';
 import { google } from 'googleapis';
 
-import client from '../../bot/index.js';
 import { upsertMembershipCollection } from '../../bot/utils/db.js';
+import BotChecker from '../../checkers/bot.js';
 import { symmetricDecrypt, symmetricEncrypt } from '../../libs/crypto.js';
-import DiscordUtility from '../../libs/discord.js';
+import DiscordAPI from '../../libs/discord.js';
 import { BadRequestError, InternalServerError } from '../../libs/error.js';
-import GoogleUtility from '../../libs/google.js';
+import GoogleAPI from '../../libs/google.js';
 import { GuildDoc } from '../../models/guild.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import UserCollection from '../../models/user.js';
@@ -35,7 +35,7 @@ namespace MembershipController {
     if (discordRefreshToken === null) {
       throw new InternalServerError('Failed to decrypt Discord refresh token');
     }
-    const result = await DiscordUtility.getAccessToken(discordRefreshToken);
+    const result = await DiscordAPI.getAccessToken(discordRefreshToken);
     if (!result.success) {
       throw new BadRequestError(
         `An error occurred when trying to refresh your Discord access token: ${result.error}\n` +
@@ -79,35 +79,19 @@ namespace MembershipController {
     const guildDoc = membershipRoleDoc.guild;
 
     // Check if the guild exists the bot is in the guild
-    let guild: Guild | null = null,
-      botUser: GuildMember | null = null;
+    let guild: Guild | null = null;
     try {
-      guild = await client.guilds.fetch(guildDoc._id);
-      botUser = await guild.members.fetchMe();
-      if (botUser === null) {
-        throw new Error('Bot user not found');
-      }
+      guild = await BotChecker.requireGuild(guildDoc._id);
     } catch (error) {
       throw new BadRequestError(
         `The bot is not in the server '${guildDoc.name}'.\n` +
           'Please contact the server moderators to fix this issue.',
       );
     }
-    let member: GuildMember | null = null;
-    try {
-      member = await guild.members.fetch(userDoc._id);
-    } catch (error) {
-      throw new BadRequestError('You are not a member of the server');
-    }
+    const member = await BotChecker.requireGuildMember(guild, userDoc._id);
 
     // Check if the membership role exists
-    const membershipRole = await guild.roles.fetch(membershipRoleDoc._id);
-    if (membershipRole === null) {
-      throw new BadRequestError(
-        'Cannot retrieve the membership role from the server.\n' +
-          'Please contact the bot owner to fix this issue.',
-      );
-    }
+    const membershipRole = await BotChecker.requireRole(guild, membershipRoleDoc._id);
 
     // Check if the log channel exists and the bot has the required permissions
     if (guildDoc.logChannel === null) {
@@ -117,19 +101,13 @@ namespace MembershipController {
       );
     }
     const logChannelId = guildDoc.logChannel;
-    const logChannel = await guild.channels.fetch(logChannelId, { force: true });
-    if (logChannel === null) {
+    let logChannel: TextChannel | null = null;
+    try {
+      logChannel = await BotChecker.requireGuildHasLogChannel(guild, logChannelId);
+    } catch (error) {
+      console.error(error);
       throw new BadRequestError(
-        `Cannot retrieve the log channel in the server '${guildDoc.name}'.\n` +
-          'Please contact the server moderators to fix this issue.',
-      );
-    } else if (
-      !(logChannel instanceof TextChannel) ||
-      !(logChannel.permissionsFor(botUser)?.has(PermissionFlagsBits.ViewChannel) ?? false) ||
-      !(logChannel.permissionsFor(botUser)?.has(PermissionFlagsBits.SendMessages) ?? false)
-    ) {
-      throw new BadRequestError(
-        `The log channel in the server is invalid.\n` +
+        'The log channel in this server is not accessible by the bot.\n' +
           'Please contact the server moderators to fix this issue.',
       );
     }
@@ -139,7 +117,7 @@ namespace MembershipController {
     if (youTubeRefreshToken === null) {
       throw new InternalServerError('Failed to decrypt YouTube refresh token');
     }
-    const oauth2Client = GoogleUtility.createOAuth2Client();
+    const oauth2Client = GoogleAPI.createOAuth2Client();
     oauth2Client.setCredentials({ refresh_token: youTubeRefreshToken });
     const youTubeApi = google.youtube({ version: 'v3', auth: oauth2Client });
     try {

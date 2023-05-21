@@ -1,4 +1,4 @@
-import { CustomBotError } from '../../libs/error.js';
+import { CustomError } from '../../libs/error.js';
 import DiscordBotConfig from '../config.js';
 import { genericReply } from '../utils/common.js';
 import CustomBotEventHandler from './index.js';
@@ -8,7 +8,7 @@ const interactionCreate = new CustomBotEventHandler<'interactionCreate'>({
   execute: async (interaction) => {
     if (!interaction.isRepliable()) return;
 
-    const errorConfig: CustomBotErrorConfig = {
+    const errorConfig: BotErrorConfig = {
       activeInteraction: interaction,
       followUp: false,
     };
@@ -36,7 +36,7 @@ const interactionCreate = new CustomBotEventHandler<'interactionCreate'>({
       console.error(error);
       const { activeInteraction, followUp } = errorConfig;
       let errorMessage = 'There was an error while handling this interaction!';
-      if (error instanceof CustomBotError) {
+      if (error instanceof CustomError) {
         errorMessage = error.message;
       }
       const reply = genericReply(activeInteraction);
