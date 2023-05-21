@@ -120,7 +120,6 @@ namespace MembershipController {
       membershipRoleDoc.youTubeChannel.memberOnlyVideoIds[
         Math.floor(Math.random() * membershipRoleDoc.youTubeChannel.memberOnlyVideoIds.length)
       ];
-    console.log(youTubeRefreshToken);
     const verifyResult = await GoogleAPI.verifyYouTubeMembership(
       youTubeRefreshToken,
       randomVideoId,
