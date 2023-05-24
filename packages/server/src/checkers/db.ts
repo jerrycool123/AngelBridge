@@ -1,7 +1,7 @@
 import { NotFoundError } from '../libs/error.js';
 import GuildCollection, { GuildDoc } from '../models/guild.js';
 import MembershipRoleCollection from '../models/membership-role.js';
-import MembershipCollection from '../models/membership.js';
+import MembershipCollection, { MembershipDoc } from '../models/membership.js';
 import { YouTubeChannelDoc } from '../models/youtube-channel.js';
 
 namespace DBChecker {
@@ -27,7 +27,7 @@ namespace DBChecker {
     userId: string,
     membershipRoleId: string,
   ) => {
-    return await MembershipCollection.findOne({
+    return await MembershipCollection.findOne<MembershipDoc>({
       user: userId,
       membershipRole: membershipRoleId,
     }).orFail(

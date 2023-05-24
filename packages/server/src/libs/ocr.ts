@@ -1,7 +1,7 @@
-import PQueue from 'p-queue';
 import { Worker, createWorker } from 'tesseract.js';
 
 import Env from './env.js';
+import Queue from './queue.js';
 
 export const supportedOCRLanguages: SupportedOCRLanguage[] = [
   {
@@ -52,51 +52,41 @@ export const supportedOCRLanguages: SupportedOCRLanguage[] = [
 
 const supportedOCRLanguageString = supportedOCRLanguages.map((lang) => lang.code).join('+');
 class OCRWorker {
-  private worker: Worker | null = null;
-  private languageCode: SupportedOCRLanguage['code'] = 'eng';
-  private jobQueue: PQueue = new PQueue({ autoStart: true, concurrency: 1 });
+  private _worker: Worker | null = null;
+  private _languageCode: SupportedOCRLanguage['code'] = 'eng';
+
+  public queue = new Queue('OCR Worker', { autoStart: true, concurrency: 1 });
 
   async init() {
-    this.worker = await createWorker({
+    this._worker = await createWorker({
       langPath: Env.TESSDATA_PATH,
       cachePath: `${Env.TESSDATA_CACHE_PATH}`,
       // logger: (m) => console.log(m),
     });
-    await this.worker.loadLanguage(supportedOCRLanguageString);
-    await this.worker.initialize(this.languageCode);
+    await this._worker.loadLanguage(supportedOCRLanguageString);
+    await this._worker.initialize(this._languageCode);
   }
 
   async recognize(languageCode: SupportedOCRLanguage['code'], imageUrl: string) {
-    if (this.worker === null) {
+    if (this._worker === null) {
       throw new Error('Worker not initialized');
     }
 
-    if (this.languageCode !== languageCode) {
-      this.languageCode = languageCode;
+    if (this._languageCode !== languageCode) {
+      this._languageCode = languageCode;
       // ! This is a workaround since japanese date isn't correctly recognized
       const actualLanguageCode = languageCode === 'jpn' ? supportedOCRLanguageString : languageCode;
-      await this.worker.initialize(actualLanguageCode);
+      await this._worker.initialize(actualLanguageCode);
     }
     try {
       const {
         data: { text },
-      } = await this.worker.recognize(imageUrl);
+      } = await this._worker.recognize(imageUrl);
       return text;
     } catch (error) {
       console.log(error);
     }
     return null;
-  }
-
-  addJob(promise: Promise<unknown>) {
-    void this.jobQueue.add(async () => {
-      try {
-        await promise;
-      } catch (error) {
-        console.error('An error occurred while executing a OCR job:');
-        console.log(error);
-      }
-    });
   }
 }
 

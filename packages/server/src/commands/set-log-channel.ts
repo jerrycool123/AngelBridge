@@ -1,8 +1,8 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import BotChecker from '../../checkers/bot.js';
-import { InternalServerError } from '../../libs/error.js';
+import BotChecker from '../checkers/bot.js';
 import DiscordBotConfig from '../config.js';
+import { InternalServerError } from '../libs/error.js';
 import { genericOption } from '../utils/common.js';
 import { upsertGuildCollection } from '../utils/db.js';
 import { useGuildOnly } from '../utils/middleware.js';

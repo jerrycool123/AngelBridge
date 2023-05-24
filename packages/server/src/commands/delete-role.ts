@@ -1,12 +1,13 @@
-import { SlashCommandBuilder, User } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 
-import BotChecker from '../../checkers/bot.js';
-import DiscordAPI from '../../libs/discord.js';
-import { NotFoundError } from '../../libs/error.js';
-import MembershipRoleCollection from '../../models/membership-role.js';
-import MembershipCollection from '../../models/membership.js';
-import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import BotChecker from '../checkers/bot.js';
+import DBChecker from '../checkers/db.js';
 import DiscordBotConfig from '../config.js';
+import { NotFoundError } from '../libs/error.js';
+import { fetchGuildOwner, removeMembershipRole } from '../libs/membership.js';
+import MembershipRoleCollection from '../models/membership-role.js';
+import MembershipCollection, { MembershipDoc } from '../models/membership.js';
+import { YouTubeChannelDoc } from '../models/youtube-channel.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
@@ -24,6 +25,10 @@ const delete_role = new CustomBotCommand({
 
       await interaction.deferReply({ ephemeral: true });
 
+      // Guild and log channel checks
+      const { logChannel: logChannelId } = await DBChecker.requireGuildWithLogChannel(guild.id);
+      const logChannel = await BotChecker.requireGuildHasLogChannel(guild, logChannelId);
+
       // Check if the role is manageable
       const role = options.getRole('role', true);
       await BotChecker.requireManageableRole(guild, role.id);
@@ -40,7 +45,7 @@ const delete_role = new CustomBotCommand({
                 'You can use `/settings` to see the list of membership roles in this server.',
             ),
           ),
-        MembershipCollection.find({
+        MembershipCollection.find<MembershipDoc>({
           membershipRole: role.id,
         }),
       ]);
@@ -63,13 +68,19 @@ const delete_role = new CustomBotCommand({
       );
       await confirmButtonInteraction.deferReply({ ephemeral: true });
 
-      // Remove user membership record in DB
-      await MembershipCollection.deleteMany({
-        membershipRole: membershipRoleDoc._id,
+      // Get guild owner and log channel
+      const guildOwner = await fetchGuildOwner(guild, false);
+
+      // Remove membership role from DB
+      await removeMembershipRole({
+        membershipDocGroup: membershipDocs,
+        membershipRoleId: membershipRoleDoc._id,
+        removeReason: `the membership role has been deleted by a moderator in the server \`${guild.name}\``,
+        guild,
+        guildOwner,
+        logChannel,
       });
 
-      // Remove membership role in DB
-      await MembershipRoleCollection.findByIdAndDelete(membershipRoleDoc._id);
       await confirmButtonInteraction.editReply({
         content: `Successfully deleted the membership role <@&${
           role.id
@@ -77,33 +88,6 @@ const delete_role = new CustomBotCommand({
           membershipRoleDoc.youTubeChannel?.title ?? '[Unknown Channel]'
         }\`.`,
       });
-
-      // DM user about the removal
-      membershipDocs.forEach((membershipDoc) =>
-        DiscordAPI.addJob(async () => {
-          let user: User | null = null;
-          try {
-            const member = await BotChecker.requireGuildMember(guild, membershipDoc.user);
-            user = member.user;
-            await member.roles.remove(membershipRoleDoc._id);
-          } catch (error) {
-            console.error(error);
-            console.error(
-              `Failed to remove role ${membershipRoleDoc.name}(ID: ${membershipRoleDoc._id}) from user with ID ${membershipDoc.user} in guild ${guild.name}(ID: ${guild.id}).`,
-            );
-          }
-
-          try {
-            if (user === null) user = await BotChecker.requireUser(membershipDoc.user);
-            await user.send(
-              `Your membership role **@${membershipRoleDoc.name}** has been removed, since it has been deleted by a moderator in the server \`${guild.name}\`.`,
-            );
-          } catch (error) {
-            // We cannot DM the user, so we just ignore it
-            console.error(error);
-          }
-        }),
-      );
     }),
   ),
 });

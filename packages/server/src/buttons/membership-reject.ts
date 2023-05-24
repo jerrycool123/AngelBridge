@@ -12,8 +12,8 @@ import {
 import { ModalSubmitInteraction } from 'discord.js';
 import { CacheType } from 'discord.js';
 
-import BotChecker from '../../checkers/bot.js';
-import { RequestTimeoutError } from '../../libs/error.js';
+import BotChecker from '../checkers/bot.js';
+import { RequestTimeoutError } from '../libs/error.js';
 import { createDisabledRejectedActionRow } from '../utils/common.js';
 import { parseMembershipVerificationRequestEmbed } from '../utils/membership.js';
 import { useGuildOnly, useUserWithManageRolePermission } from '../utils/middleware.js';
@@ -59,7 +59,7 @@ const membershipRejectButton = new CustomButton({
       }
 
       // Fetch guild member
-      const member = await BotChecker.requireGuildMember(guild, userId);
+      const member = await BotChecker.requireGuildMember(guild, userId, false);
 
       // Receive rejection reason from the modal
       let modalSubmitInteraction: ModalSubmitInteraction<CacheType> | null = null;

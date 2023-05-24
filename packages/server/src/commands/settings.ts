@@ -1,8 +1,8 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
-import MembershipRoleCollection from '../../models/membership-role.js';
-import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
 import DiscordBotConfig from '../config.js';
+import MembershipRoleCollection from '../models/membership-role.js';
+import { YouTubeChannelDoc } from '../models/youtube-channel.js';
 import { upsertGuildCollection } from '../utils/db.js';
 import { useGuildOnly } from '../utils/middleware.js';
 import CustomBotCommand from './index.js';

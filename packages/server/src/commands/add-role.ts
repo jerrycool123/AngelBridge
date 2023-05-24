@@ -1,10 +1,10 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import BotChecker from '../../checkers/bot.js';
-import { BadRequestError, ConflictError, NotFoundError } from '../../libs/error.js';
-import MembershipRoleCollection from '../../models/membership-role.js';
-import YouTubeChannelCollection, { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import BotChecker from '../checkers/bot.js';
 import DiscordBotConfig from '../config.js';
+import { BadRequestError, ConflictError, NotFoundError } from '../libs/error.js';
+import MembershipRoleCollection from '../models/membership-role.js';
+import YouTubeChannelCollection, { YouTubeChannelDoc } from '../models/youtube-channel.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirmButtonInteraction from '../utils/confirm.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';

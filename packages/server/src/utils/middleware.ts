@@ -1,6 +1,6 @@
 import { Guild, GuildChannel, PermissionFlagsBits, RepliableInteraction } from 'discord.js';
 
-import { ForbiddenError, MethodNotAllowedError } from '../../libs/error.js';
+import { ForbiddenError, MethodNotAllowedError } from '../libs/error.js';
 
 export const useGuildOnly =
   <T extends RepliableInteraction>(

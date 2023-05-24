@@ -9,7 +9,7 @@ import {
   RepliableInteraction,
 } from 'discord.js';
 
-import { BadRequestError, RequestTimeoutError } from '../../libs/error.js';
+import { BadRequestError, RequestTimeoutError } from '../libs/error.js';
 
 const awaitConfirm = async (
   originalInteraction: RepliableInteraction<CacheType>,

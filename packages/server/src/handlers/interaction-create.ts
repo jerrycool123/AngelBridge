@@ -1,5 +1,5 @@
-import { CustomError } from '../../libs/error.js';
 import DiscordBotConfig from '../config.js';
+import { CustomError } from '../libs/error.js';
 import { genericReply } from '../utils/common.js';
 import CustomBotEventHandler from './index.js';
 

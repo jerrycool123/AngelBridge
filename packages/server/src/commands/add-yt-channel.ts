@@ -1,9 +1,9 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { google, youtube_v3 } from 'googleapis';
 
-import { NotFoundError } from '../../libs/error.js';
-import GoogleAPI from '../../libs/google.js';
 import DiscordBotConfig from '../config.js';
+import { NotFoundError } from '../libs/error.js';
+import GoogleAPI from '../libs/google.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { upsertYouTubeChannelCollection } from '../utils/db.js';
@@ -24,7 +24,7 @@ const add_yt_channel = new CustomBotCommand({
     // Search YouTube channel by ID via YouTube API
     let channelId: string;
     const id = options.getString('id', true);
-    const youtubeApi = google.youtube({ version: 'v3', auth: GoogleAPI.apiKey });
+    const youtubeApi = google.youtube({ version: 'v3', auth: GoogleAPI.key });
     if (id.startsWith('UC') && id.length === 24) {
       // Channel ID
       channelId = id;

@@ -1,21 +1,21 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
-import { GuildMember, TextChannel } from 'discord.js';
+import { Guild } from 'discord.js';
 
 import BotChecker from '../../checkers/bot.js';
 import DiscordAPI from '../../libs/discord.js';
-import GuildCollection from '../../models/guild.js';
-import MembershipRoleCollection, { MembershipRoleDoc } from '../../models/membership-role.js';
-import MembershipCollection, { OCRMembershipDoc } from '../../models/membership.js';
 import {
-  GuildInfo,
-  cleanUpMissingMembershipRole,
+  MembershipHandlingConfig,
   fetchGuild,
   fetchGuildOwner,
   fetchLogChannel,
   groupMembershipDocsByMembershipRole,
+  removeMembershipRole,
   removeUserMembership,
-} from '../utils.js';
+} from '../../libs/membership.js';
+import GuildCollection from '../../models/guild.js';
+import MembershipRoleCollection, { MembershipRoleDoc } from '../../models/membership-role.js';
+import MembershipCollection, { OCRMembershipDoc } from '../../models/membership.js';
 
 dayjs.extend(utc);
 
@@ -34,10 +34,9 @@ const checkOCRMembershipJob = async () => {
 
   // Check memberships by group
   const promises: Promise<unknown>[] = [];
-  for (const membershipDocGroup of Object.values(membershipDocRecord)) {
+  for (const [membershipRoleId, membershipDocGroup] of Object.entries(membershipDocRecord)) {
     if (membershipDocGroup.length === 0) continue;
-    const firstMembershipDoc = membershipDocGroup[0];
-    const membershipRoleId = firstMembershipDoc.membershipRole;
+    const common = { membershipDocGroup, membershipRoleId };
 
     console.log(`Checking membership role with ID: ${membershipRoleId}...`);
 
@@ -49,11 +48,10 @@ const checkOCRMembershipJob = async () => {
           'The corresponding membership records will be removed.',
       );
       promises.push(
-        ...(await cleanUpMissingMembershipRole(
-          membershipRoleId,
-          membershipDocGroup,
-          'it is removed from our database',
-        )),
+        ...(await removeMembershipRole({
+          ...common,
+          removeReason: 'it is removed from our database',
+        })),
       );
       continue;
     }
@@ -64,7 +62,7 @@ const checkOCRMembershipJob = async () => {
     const guildString = guild !== null ? `\`${guild.name}\`` : `with ID: ${guildId}`;
 
     // Fetch guild owner from Discord bot
-    const guildOwner = await fetchGuildOwner(guild);
+    const guildOwner = await fetchGuildOwner(guild, false);
 
     // Get guild from DB
     const guildDoc = await GuildCollection.findById(guildId);
@@ -74,12 +72,12 @@ const checkOCRMembershipJob = async () => {
           'The corresponding membership records will be removed.',
       );
       promises.push(
-        ...(await cleanUpMissingMembershipRole(
-          membershipRoleId,
-          membershipDocGroup,
-          `its parent server ${guildString} has been removed from our database`,
+        ...(await removeMembershipRole({
+          ...common,
+          removeReason: `its parent server ${guildString} has been removed from our database`,
+          guild,
           guildOwner,
-        )),
+        })),
       );
       continue;
     }
@@ -88,19 +86,15 @@ const checkOCRMembershipJob = async () => {
     const logChannel = await fetchLogChannel(guild, guildDoc, guildOwner);
 
     // Check membership
-    let guildInfo: GuildInfo;
-    if (guild !== null) {
-      guildInfo = { type: 'guild', data: guild };
-    } else {
-      guildInfo = { type: 'partialGuild', data: { id: guildId, name: guildDoc.name } };
-    }
     promises.push(
       ...membershipDocGroup.map((membershipDoc) =>
         checkOCRMembership({
-          membershipRoleDoc,
+          guild: guild ?? {
+            name: guildDoc.name,
+          },
           membershipDoc,
+          membershipRoleDoc,
           currentDate,
-          guildInfo,
           guildOwner,
           logChannel,
         }),
@@ -112,32 +106,29 @@ const checkOCRMembershipJob = async () => {
 };
 
 export const checkOCRMembership = async ({
+  guild,
   membershipDoc,
   membershipRoleDoc,
   currentDate,
-  guildInfo,
-  guildOwner,
-  logChannel,
+  ...config
 }: {
+  guild: Guild | Pick<Guild, 'name'>;
   membershipDoc: OCRMembershipDoc;
   membershipRoleDoc: MembershipRoleDoc;
   currentDate: dayjs.Dayjs;
-  guildInfo: GuildInfo;
-  guildOwner: GuildMember | null;
-  logChannel: TextChannel | null;
-}) => {
+} & Omit<MembershipHandlingConfig, 'guild'>) => {
   const billingDate = dayjs.utc(membershipDoc.billingDate).startOf('day');
   const userId = membershipDoc.user;
   const membershipRoleName = membershipRoleDoc.name;
-  const guildName = guildInfo.data.name;
+  const guildName = guild.name;
 
-  await DiscordAPI.addJob(async () => {
+  await DiscordAPI.queue.add(async () => {
     if (billingDate.isSame(currentDate, 'date')) {
       // When the billing date is today, we remind the user to renew their membership
 
       // Remind user to renew membership
       try {
-        const user = await BotChecker.requireUser(userId);
+        const user = await BotChecker.requireUser(userId, false);
         await user.send(
           `Your membership role **@${membershipRoleName}** will expire tomorrow.\n` +
             `Please use \`/verify\` command to renew your membership in the server \`${guildName}\`.`,
@@ -151,10 +142,12 @@ export const checkOCRMembership = async ({
 
       await removeUserMembership({
         membershipDoc,
-        membershipRoleDoc,
-        guildInfo,
-        guildOwner,
-        logChannel,
+        membershipRoleData: membershipRoleDoc,
+        removeReason:
+          'has expired.\n' +
+          `Please use \`/verify\` command to renew your membership in the server \`${guildName}\``,
+        guild: guild instanceof Guild ? guild : null,
+        ...config,
       });
     } else {
       // This should not happen

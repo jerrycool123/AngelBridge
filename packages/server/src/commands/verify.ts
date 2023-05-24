@@ -10,15 +10,15 @@ import {
   StringSelectMenuBuilder,
 } from 'discord.js';
 
-import DBChecker from '../../checkers/db.js';
-import { MethodNotAllowedError } from '../../libs/error.js';
-import { BadRequestError } from '../../libs/error.js';
-import { NotFoundError } from '../../libs/error.js';
-import { RequestTimeoutError } from '../../libs/error.js';
-import ocrWorker, { supportedOCRLanguages } from '../../libs/ocr.js';
-import MembershipRoleCollection, { MembershipRoleDoc } from '../../models/membership-role.js';
-import MembershipCollection from '../../models/membership.js';
-import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import DBChecker from '../checkers/db.js';
+import { MethodNotAllowedError } from '../libs/error.js';
+import { BadRequestError } from '../libs/error.js';
+import { NotFoundError } from '../libs/error.js';
+import { RequestTimeoutError } from '../libs/error.js';
+import ocrWorker, { supportedOCRLanguages } from '../libs/ocr.js';
+import MembershipRoleCollection, { MembershipRoleDoc } from '../models/membership-role.js';
+import MembershipCollection from '../models/membership.js';
+import { YouTubeChannelDoc } from '../models/youtube-channel.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { upsertGuildCollection, upsertUserCollection } from '../utils/db.js';
@@ -222,7 +222,7 @@ const verify = new CustomBotCommand({
     await userDoc.save();
 
     // Send picture to OCR worker
-    ocrWorker.addJob(
+    void ocrWorker.queue.add(async () =>
       recognizeMembership(
         guild.id,
         selectedLanguage.code,

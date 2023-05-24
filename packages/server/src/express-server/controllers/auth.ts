@@ -4,13 +4,13 @@ import { REST } from '@discordjs/rest';
 import { google, youtube_v3 } from 'googleapis';
 import jwt from 'jsonwebtoken';
 
-import { upsertUserCollection } from '../../bot/utils/db.js';
 import { symmetricEncrypt } from '../../libs/crypto.js';
 import DiscordAPI from '../../libs/discord.js';
 import Env from '../../libs/env.js';
 import { BadRequestError, InternalServerError } from '../../libs/error.js';
 import GoogleAPI from '../../libs/google.js';
 import UserCollection from '../../models/user.js';
+import { upsertUserCollection } from '../../utils/db.js';
 import { getSession } from '../middlewares/auth.js';
 
 namespace AuthController {

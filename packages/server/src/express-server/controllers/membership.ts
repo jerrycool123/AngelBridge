@@ -3,7 +3,6 @@ import { UsersAPI } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
 import { EmbedBuilder, Guild, TextChannel } from 'discord.js';
 
-import { upsertMembershipCollection } from '../../bot/utils/db.js';
 import BotChecker from '../../checkers/bot.js';
 import { symmetricDecrypt, symmetricEncrypt } from '../../libs/crypto.js';
 import DiscordAPI from '../../libs/discord.js';
@@ -13,6 +12,7 @@ import { GuildDoc } from '../../models/guild.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import UserCollection from '../../models/user.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import { upsertMembershipCollection } from '../../utils/db.js';
 import { getSession } from '../middlewares/auth.js';
 
 namespace MembershipController {
@@ -87,7 +87,7 @@ namespace MembershipController {
           'Please contact the server moderators to fix this issue.',
       );
     }
-    const member = await BotChecker.requireGuildMember(guild, userDoc._id);
+    const member = await BotChecker.requireGuildMember(guild, userDoc._id, false);
 
     // Check if the membership role exists
     const membershipRole = await BotChecker.requireRole(guild, membershipRoleDoc._id);

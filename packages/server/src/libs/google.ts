@@ -1,23 +1,17 @@
 import { GaxiosError } from 'gaxios';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
-import PQueue from 'p-queue';
 
 import Env from './env.js';
+import Queue from './queue.js';
 
 namespace GoogleAPI {
-  export const apiKey = Env.GOOGLE_API_KEY;
-  const apiQueue = new PQueue({ autoStart: true, intervalCap: 1, interval: 100 });
-
-  export const addJob = (job: () => Promise<unknown>) =>
-    apiQueue.add(async () => {
-      try {
-        await job();
-      } catch (error) {
-        console.error('An error occurred while executing a Google API job:');
-        console.error(error);
-      }
-    });
+  export const key = Env.GOOGLE_API_KEY;
+  export const queue = new Queue('Google API', {
+    autoStart: true,
+    intervalCap: 1,
+    interval: 100,
+  });
 
   export const createOAuth2Client = () =>
     new OAuth2Client({

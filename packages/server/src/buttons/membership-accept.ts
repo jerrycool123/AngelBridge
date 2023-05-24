@@ -1,8 +1,8 @@
 import { ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 
-import BotChecker from '../../checkers/bot.js';
-import CommonChecker from '../../checkers/common.js';
-import { InternalServerError } from '../../libs/error.js';
+import BotChecker from '../checkers/bot.js';
+import CommonChecker from '../checkers/common.js';
+import { InternalServerError } from '../libs/error.js';
 import { createDisabledAcceptedActionRow } from '../utils/common.js';
 import { upsertMembershipCollection } from '../utils/db.js';
 import { parseMembershipVerificationRequestEmbed } from '../utils/membership.js';
@@ -45,7 +45,7 @@ const membershipAcceptButton = new CustomButton({
         await BotChecker.requireManageableRole(guild, roleId);
 
         // Fetch guild member
-        const member = await BotChecker.requireGuildMember(guild, userId);
+        const member = await BotChecker.requireGuildMember(guild, userId, false);
 
         // Update membership in DB
         await upsertMembershipCollection({

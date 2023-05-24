@@ -14,8 +14,8 @@ import {
   TextInputStyle,
 } from 'discord.js';
 
-import CommonChecker from '../../checkers/common.js';
-import { BadRequestError, RequestTimeoutError } from '../../libs/error.js';
+import CommonChecker from '../checkers/common.js';
+import { BadRequestError, RequestTimeoutError } from '../libs/error.js';
 import { parseMembershipVerificationRequestEmbed } from '../utils/membership.js';
 import { useGuildOnly, useUserWithManageRolePermission } from '../utils/middleware.js';
 import CustomButton from './index.js';

@@ -3,11 +3,10 @@ import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import utc from 'dayjs/plugin/utc.js';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
-import BotChecker from '../../checkers/bot.js';
-import DBChecker from '../../checkers/db.js';
-import { ForbiddenError } from '../../libs/error.js';
-import MembershipCollection from '../../models/membership.js';
+import BotChecker from '../checkers/bot.js';
+import DBChecker from '../checkers/db.js';
 import DiscordBotConfig from '../config.js';
+import { fetchGuildOwner, removeUserMembership } from '../libs/membership.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { useBotWithManageRolePermission, useGuildOnly } from '../utils/middleware.js';
@@ -37,9 +36,10 @@ const del_member = new CustomBotCommand({
       const role = options.getRole('role', true);
       await DBChecker.requireMembershipRoleWithYouTubeChannel(role.id);
 
-      // Get guild member
+      // Get guild member and owner
       const user = options.getUser('member', true);
-      const member = await BotChecker.requireGuildMember(guild, user.id);
+      const member = await BotChecker.requireGuildMember(guild, user.id, false);
+      const guildOwner = await fetchGuildOwner(guild, false);
 
       // Get the membership
       const membershipDoc = await DBChecker.requireMembershipWithGivenMembershipRole(
@@ -61,33 +61,17 @@ const del_member = new CustomBotCommand({
       await confirmButtonInteraction.deferReply({ ephemeral: true });
 
       // Remove role from member
-      const botMember = await BotChecker.requireSelfMember(guild);
-      try {
-        await member.roles.remove(role.id);
-      } catch (error) {
-        console.error(error);
-        errorConfig.activeInteraction = confirmButtonInteraction;
-        throw new ForbiddenError(
-          `Due to the role hierarchy, the bot cannot remove the role <@&${role.id}> from users.\nI can only manage a role whose order is lower than that of my highest role <@&${botMember.roles.highest.id}>.`,
-        );
-      }
+      const notified = await removeUserMembership({
+        membershipDoc,
+        membershipRoleData: membershipDoc.membershipRole,
+        removeReason: 'it has been manually removed from the server by a moderator',
+        guild,
+        guildOwner,
+        logChannel,
+      });
       await confirmButtonInteraction.editReply({
         content: `Successfully removed the membership role <@&${role.id}> from <@${member.id}>.`,
       });
-
-      // Remove membership
-      await MembershipCollection.findByIdAndDelete(membershipDoc._id);
-
-      // DM the user
-      let notified = false;
-      try {
-        await member.send({
-          content: `Your membership role **@${role.name}** has been manually removed from the server \`${guild.name}\`.`,
-        });
-        notified = true;
-      } catch (error) {
-        // User does not allow DMs
-      }
 
       // Send log message
       await logChannel.send({

@@ -1,17 +1,17 @@
 import dayjs from 'dayjs';
 import { Guild, Role, User } from 'discord.js';
 
-import GuildCollection from '../../models/guild.js';
-import MembershipRoleCollection from '../../models/membership-role.js';
+import GuildCollection from '../models/guild.js';
+import MembershipRoleCollection from '../models/membership-role.js';
 import {
   MembershipDoc,
   OAuthMembershipCollection,
   OAuthMembershipDoc,
   OCRMembershipCollection,
   OCRMembershipDoc,
-} from '../../models/membership.js';
-import UserCollection from '../../models/user.js';
-import YouTubeChannelCollection from '../../models/youtube-channel.js';
+} from '../models/membership.js';
+import UserCollection from '../models/user.js';
+import YouTubeChannelCollection from '../models/youtube-channel.js';
 
 export const upsertGuildCollection = async (guild: Guild) => {
   return await GuildCollection.findByIdAndUpdate(

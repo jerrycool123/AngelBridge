@@ -2,12 +2,12 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
-import BotChecker from '../../checkers/bot.js';
+import BotChecker from '../checkers/bot.js';
+import DiscordBotConfig from '../config.js';
 import MembershipCollection, {
   OAuthMembershipDoc,
   OCRMembershipDoc,
-} from '../../models/membership.js';
-import DiscordBotConfig from '../config.js';
+} from '../models/membership.js';
 import { genericOption } from '../utils/common.js';
 import { useGuildOnly } from '../utils/middleware.js';
 import CustomBotCommand from './index.js';

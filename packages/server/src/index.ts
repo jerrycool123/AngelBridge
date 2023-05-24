@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
-import app from './app/index.js';
-import client from './bot/index.js';
+import client from './bot.js';
+import app from './express-server/index.js';
 import Env from './libs/env.js';
 import ocrWorker from './libs/ocr.js';
 import startCronjobs from './routines/index.js';

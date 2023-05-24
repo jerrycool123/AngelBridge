@@ -3,12 +3,12 @@ import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import utc from 'dayjs/plugin/utc.js';
 import { EmbedBuilder, RepliableInteraction, SlashCommandBuilder } from 'discord.js';
 
-import BotChecker from '../../checkers/bot.js';
-import CommonChecker from '../../checkers/common.js';
-import DBChecker from '../../checkers/db.js';
-import { BadRequestError, InternalServerError } from '../../libs/error.js';
-import MembershipCollection from '../../models/membership.js';
+import BotChecker from '../checkers/bot.js';
+import CommonChecker from '../checkers/common.js';
+import DBChecker from '../checkers/db.js';
 import DiscordBotConfig from '../config.js';
+import { BadRequestError, InternalServerError } from '../libs/error.js';
+import MembershipCollection from '../models/membership.js';
 import { genericOption } from '../utils/common.js';
 import awaitConfirm from '../utils/confirm.js';
 import { upsertMembershipCollection, upsertUserCollection } from '../utils/db.js';
@@ -71,7 +71,7 @@ const add_member = new CustomBotCommand({
       await upsertUserCollection(user, user.displayAvatarURL());
 
       // Get guild member
-      const member = await BotChecker.requireGuildMember(guild, user.id);
+      const member = await BotChecker.requireGuildMember(guild, user.id, false);
 
       // Check if the user already has OAuth membership
       const oauthMembershipDoc = await MembershipCollection.findOne({

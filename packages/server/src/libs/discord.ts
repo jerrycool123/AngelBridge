@@ -1,21 +1,15 @@
 import { OAuth2API } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
-import PQueue from 'p-queue';
 
 import Env from './env.js';
+import Queue from './queue.js';
 
 namespace DiscordAPI {
-  const apiQueue = new PQueue({ autoStart: true, intervalCap: 1, interval: 100 });
-
-  export const addJob = (job: () => Promise<unknown>) =>
-    apiQueue.add(async () => {
-      try {
-        await job();
-      } catch (error) {
-        console.error('An error occurred while executing a Google API job:');
-        console.error(error);
-      }
-    });
+  export const queue = new Queue('Discord API', {
+    autoStart: true,
+    intervalCap: 1,
+    interval: 100,
+  });
 
   export const getAccessToken = async (
     refreshToken: string,
