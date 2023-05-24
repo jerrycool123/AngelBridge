@@ -115,14 +115,14 @@ const SettingsModal = ({
               </div>
             </div>
             <Collapse bordered={false} className={styles.collapse}>
-              <Collapse.Panel header="Danger Zone" key="danger-zone">
+              <Collapse.Panel header="Advanced" key="advanced">
                 <div className="mb-2">
                   If you don&apos;t want to use OAuth mode anymore, you can{' '}
-                  <span className="text-white fw-500">Revoke OAuth Permissions</span> from Angel
+                  <span className="text-danger fw-700">Revoke OAuth Authorization</span> from Angel
                   Bridge. We will remove your{' '}
-                  <span className="text-danger fw-700">linked YouTube account</span> and{' '}
-                  <span className="text-danger fw-700">every membership role</span> you acquired
-                  under OAuth mode .
+                  <span className="text-warning fw-500">linked YouTube account</span> and{' '}
+                  <span className="text-warning fw-500">membership roles under OAuth mode</span> you
+                  acquired.
                 </div>
                 <div className="mt-3 mb-4 d-flex justify-content-center">
                   <div
@@ -161,14 +161,14 @@ const SettingsModal = ({
                       }
                     }}
                   >
-                    Revoke OAuth Permissions
+                    Revoke OAuth Authorization
                   </div>
                 </div>
                 <div className="mb-2">
                   If you don&apos;t want to use Angel Bridge anymore, you can{' '}
-                  <span className="text-white fw-500">Delete Your Account</span>. We will remove{' '}
-                  <span className="text-danger fw-700">all your data in our database</span> and{' '}
-                  <span className="text-danger fw-700">every membership role</span> you acquired.
+                  <span className="text-danger fw-700">Delete Your Account</span>. We will remove{' '}
+                  <span className="text-warning fw-500">all your data</span> in our database and{' '}
+                  <span className="text-warning fw-500">every membership role</span> you acquired.
                 </div>
                 <div className="mt-3 d-flex justify-content-center">
                   <div role="button" className="btn btn-danger btn-sm">
