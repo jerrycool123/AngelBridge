@@ -19,12 +19,21 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js 18
-        uses: actions/setup-node@v2
+      - name: Check out code
+        uses: actions/checkout@v3
         with:
-          node-version: 18.x
+          fetch-depth: 2
       - run: echo "${SERVER_PROD_ENV}" | base64 --decode > "./packages/server/.env"
       - run: echo "${WEB_PROD_ENV}" | base64 --decode > "./packages/web/.env.production.local"
-      - run: pnpm install
-      - run: pnpm build
+      - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: 8.5.1
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build
+        run: pnpm build
