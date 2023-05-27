@@ -23,8 +23,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 2
-      - run: echo "${SERVER_PROD_ENV}" | base64 --decode > "./packages/server/.env"
-      - run: echo "${WEB_PROD_ENV}" | base64 --decode > "./packages/web/.env.production.local"
+      - run: echo "${SERVER_PROD_ENV}" | base64 --decode > "./apps/server/.env"
+      - run: echo "${WEB_PROD_ENV}" | base64 --decode > "./apps/web/.env.production.local"
       - uses: pnpm/action-setup@v2.2.4
         with:
           version: 8.5.1
