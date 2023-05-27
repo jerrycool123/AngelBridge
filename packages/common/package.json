@@ -2,6 +2,7 @@
   "name": "@angel-bridge/common",
   "version": "0.0.1",
   "types": "dist/index.ts",
+  "main": "dist/index.mjs",
   "scripts": {
     "dev": "tsup ./src/index.ts --format esm --dts --sourcemap --watch",
     "build": "tsup ./src/index.ts --format esm --dts --sourcemap",
@@ -23,5 +24,6 @@
   },
   "devDependencies": {
     "tsup": "^6.7.0"
-  }
+  },
+  "type": "module"
 }

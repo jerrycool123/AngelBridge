@@ -4,10 +4,10 @@
       "path": ".."
     },
     {
-      "path": "../packages/server"
+      "path": "../apps/web"
     },
     {
-      "path": "../packages/web"
+      "path": "../apps/server"
     },
     {
       "path": "../packages/common"
@@ -23,7 +23,7 @@
     },
     "files.exclude": {
       "**/node_modules": true,
-      // "**/build": true,
+      "**/build": true,
       // "**/dist": true,
       "**/tessdata": true,
       "**/cache": true
