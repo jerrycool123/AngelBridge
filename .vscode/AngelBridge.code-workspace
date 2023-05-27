@@ -20,6 +20,13 @@
     "search.exclude": {
       "**/node_modules": true,
       "**/build": true
+    },
+    "files.exclude": {
+      "**/node_modules": true,
+      // "**/build": true,
+      // "**/dist": true,
+      "**/tessdata": true,
+      "**/cache": true
     }
   }
 }

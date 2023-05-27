@@ -1,10 +1,10 @@
 {
   "name": "@angel-bridge/common",
   "version": "0.0.1",
-  "types": "src/index.ts",
+  "types": "dist/index.ts",
   "scripts": {
-    "dev": "tsup src/index.ts --format esm --dts --sourcemap --watch",
-    "build": "tsup src/index.ts --format esm --dts --sourcemap",
+    "dev": "tsup ./src/index.ts --format esm --dts --sourcemap --watch",
+    "build": "tsup ./src/index.ts --format esm --dts --sourcemap",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
