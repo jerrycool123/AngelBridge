@@ -24,7 +24,6 @@
     "files.exclude": {
       "**/node_modules": true,
       "**/build": true,
-      "**/dist": true,
       "**/.turbo": true,
       "**/tessdata": true,
       "**/cache": true
