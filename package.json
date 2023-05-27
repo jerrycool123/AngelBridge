@@ -10,5 +10,8 @@
     "lint": "turbo run lint",
     "format": "turbo run format"
   },
-  "packageManager": "pnpm@8.5.1"
+  "packageManager": "pnpm@8.5.1",
+  "devDependencies": {
+    "turbo": "^1.9.9"
+  }
 }
