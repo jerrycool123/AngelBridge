@@ -2,17 +2,15 @@
   "name": "angel-bridge",
   "version": "0.0.1",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
-    "web": "yarn workspace web dev",
-    "server": "yarn workspace server dev",
-    "dev": "yarn workspaces foreach -vip run dev",
-    "build": "yarn workspaces foreach -vit run build",
-    "start": "yarn workspaces foreach -vip run start",
-    "format": "yarn workspaces foreach -vi run format",
-    "lint": "yarn workspaces foreach -vi run lint"
+    "web": "pnpm --filter web dev",
+    "server": "pnpm --filter server dev",
+    "dev": "pnpm --stream --parallel -r dev",
+    "build": "pnpm --stream -r build",
+    "start": "pnpm --stream -r start",
+    "preinstall": "npx only-allow pnpm",
+    "format": "pnpm -r format",
+    "lint": "pnpm -r lint"
   },
-  "packageManager": "yarn@3.2.3"
+  "packageManager": "pnpm@8.5.1"
 }

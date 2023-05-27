@@ -3,9 +3,19 @@
     "allowJs": true,
     "noEmit": true,
     "strict": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "incremental": true
   },
   "extends": "../../tsconfig.json",
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts", "*.js", "*.cjs"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.d.ts",
+    "*.js",
+    "*.cjs"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

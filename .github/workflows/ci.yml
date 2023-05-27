@@ -26,5 +26,5 @@ jobs:
           node-version: 18.x
       - run: echo "${SERVER_PROD_ENV}" | base64 --decode > "./packages/server/.env"
       - run: echo "${WEB_PROD_ENV}" | base64 --decode > "./packages/web/.env.production.local"
-      - run: yarn
-      - run: yarn build
+      - run: pnpm install
+      - run: pnpm build

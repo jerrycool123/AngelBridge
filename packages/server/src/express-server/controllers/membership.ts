@@ -12,7 +12,7 @@ import { GuildDoc } from '../../models/guild.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
 import UserCollection from '../../models/user.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
-import { upsertMembershipCollection } from '../../utils/db.js';
+import { upsertMembershipCollection } from '../../bot/utils/db.js';
 import { getSession } from '../middlewares/auth.js';
 
 namespace MembershipController {
