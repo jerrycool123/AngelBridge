@@ -1,7 +1,7 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { decode } from 'next-auth/jwt';
 
-import Env from '../../libs/env.js';
+import { Env } from '../../libs/env.js';
 import { UnauthorizedError } from '../../libs/error.js';
 
 export interface Session {

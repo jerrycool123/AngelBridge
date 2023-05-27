@@ -1,5 +1,7 @@
 import { Document, Model, Schema, model } from 'mongoose';
 
+import { SupportedOCRLanguage } from '../types/common.js';
+
 export interface UserAttrs {
   _id: string; // Discord ID
   username: string;

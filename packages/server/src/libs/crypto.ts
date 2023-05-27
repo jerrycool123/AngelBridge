@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-import Env from './env.js';
+import { Env } from './env.js';
 
 const algorithm = 'aes-256-cbc';
 const key = Buffer.from(Env.DATA_ENCRYPTION_SECRET, 'base64');

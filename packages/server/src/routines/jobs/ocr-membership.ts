@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import { Guild } from 'discord.js';
 
-import BotChecker from '../../checkers/bot.js';
+import { BotChecker } from '../../checkers/bot.js';
 import DiscordAPI from '../../libs/discord.js';
 import {
   MembershipHandlingConfig,

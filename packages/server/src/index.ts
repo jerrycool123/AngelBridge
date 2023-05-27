@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 
-import client from './bot.js';
+import { bot } from './bot/index.js';
 import app from './express-server/index.js';
-import Env from './libs/env.js';
+import { Env } from './libs/env.js';
 import ocrWorker from './libs/ocr.js';
 import startCronjobs from './routines/index.js';
 
@@ -21,8 +21,8 @@ const main = async () => {
     console.log(`Server is listening on port ${Env.PORT}!`);
   });
 
-  // Login to Discord
-  await client.login(Env.DISCORD_BOT_TOKEN);
+  // Start Discord Bot
+  await bot.start();
 
   // Start cron jobs
   startCronjobs();

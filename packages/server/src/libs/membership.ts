@@ -1,6 +1,6 @@
 import { Guild, GuildMember, TextChannel, User } from 'discord.js';
 
-import BotChecker from '../checkers/bot.js';
+import { BotChecker } from '../checkers/bot.js';
 import { GuildDoc } from '../models/guild.js';
 import MembershipRoleCollection, { MembershipRoleDoc } from '../models/membership-role.js';
 import MembershipCollection, { MembershipDoc } from '../models/membership.js';

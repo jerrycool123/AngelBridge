@@ -2,7 +2,7 @@ import { GaxiosError } from 'gaxios';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 
-import Env from './env.js';
+import { Env } from './env.js';
 import Queue from './queue.js';
 
 namespace GoogleAPI {
@@ -19,7 +19,7 @@ namespace GoogleAPI {
       clientSecret: Env.GOOGLE_CLIENT_SECRET,
     });
 
-  export const getTokensFromCode = async (
+  export const requestAccessToken = async (
     oauth2Client: OAuth2Client,
     code: string,
     redirectUrl: string,

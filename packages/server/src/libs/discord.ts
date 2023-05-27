@@ -1,7 +1,7 @@
 import { OAuth2API } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
 
-import Env from './env.js';
+import { Env } from './env.js';
 import Queue from './queue.js';
 
 namespace DiscordAPI {

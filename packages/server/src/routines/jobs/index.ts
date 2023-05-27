@@ -1,5 +1,6 @@
 import { CronJob } from 'cron';
 
+import { CustomCronJob } from '../../types/common.js';
 import checkOAuthMembershipJob from './oauth-membership.js';
 import checkOCRMembershipJob from './ocr-membership.js';
 

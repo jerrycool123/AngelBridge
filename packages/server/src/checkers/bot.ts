@@ -1,55 +1,59 @@
-import { Guild, PermissionFlagsBits, TextChannel } from 'discord.js';
+import { Guild, GuildChannel, PermissionFlagsBits, TextChannel, User } from 'discord.js';
 
-import client from '../bot.js';
+import { bot } from '../bot/index.js';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../libs/error.js';
 
-namespace BotChecker {
-  export const requireSelfMember = async (guild: Guild, force = true) => {
+export class BotChecker {
+  public static isUserHasManageRolePermissionInChannel(user: User, channel: GuildChannel): boolean {
+    return channel.permissionsFor(user)?.has(PermissionFlagsBits.ManageRoles) ?? false;
+  }
+
+  public static async requireSelfMember(guild: Guild, force = true) {
     try {
       return await guild.members.fetchMe({ force });
     } catch (error) {
       console.error(error);
     }
     throw new NotFoundError(`The bot is not a member of the server.`);
-  };
+  }
 
-  export const requireUser = async (userId: string, force = true) => {
+  public static async requireUser(userId: string, force = true) {
     try {
-      return await client.users.fetch(userId, { force });
+      return await bot.client.users.fetch(userId, { force });
     } catch (error) {
       console.error(error);
     }
     throw new NotFoundError(`The user with ID: ${userId} does not exist.`);
-  };
+  }
 
-  export const requireGuild = async (guildId: string, force = true) => {
+  public static async requireGuild(guildId: string, force = true) {
     try {
-      return await client.guilds.fetch({ guild: guildId, force });
+      return await bot.client.guilds.fetch({ guild: guildId, force });
     } catch (error) {
       console.error(error);
     }
     throw new NotFoundError(`The server with ID: ${guildId} does not exist.`);
-  };
+  }
 
-  export const requireGuildOwner = async (guild: Guild, force = true) => {
+  public static async requireGuildOwner(guild: Guild, force = true) {
     try {
       return await guild.fetchOwner({ force });
     } catch (error) {
       console.error(error);
     }
     throw new NotFoundError(`The owner of the server <@${guild.id}> does not exist.`);
-  };
+  }
 
-  export const requireGuildMember = async (guild: Guild, userId: string, force = true) => {
+  public static async requireGuildMember(guild: Guild, userId: string, force = true) {
     try {
       return await guild.members.fetch({ user: userId, force });
     } catch (error) {
       console.error(error);
     }
     throw new NotFoundError(`The user <@${userId}> is not a member of the server.`);
-  };
+  }
 
-  export const requireRole = async (guild: Guild, roleId: string, force = true) => {
+  public static async requireRole(guild: Guild, roleId: string, force = true) {
     try {
       const role = await guild.roles.fetch(roleId, { force });
       if (role !== null) return role;
@@ -57,17 +61,15 @@ namespace BotChecker {
       console.error(error);
     }
     throw new NotFoundError(`Failed to retrieve the role <@&${roleId}> from the server.`);
-  };
+  }
 
-  export const requireGuildHasLogChannel = async (
-    guild: Guild,
-    logChannelId: string,
-    force = true,
-  ) => {
-    const { user: botUser } = client;
+  public static async requireGuildHasLogChannel(guild: Guild, logChannelId: string, force = true) {
+    const { user: botUser } = bot.client;
 
     const logChannel = await guild.channels.fetch(logChannelId, { force });
-    if (logChannel === null) {
+    if (botUser === null) {
+      throw new NotFoundError(`The bot is not ready.`);
+    } else if (logChannel === null) {
       throw new NotFoundError(`The log channel <#${logChannelId}> does not exist.`);
     } else if (!(logChannel instanceof TextChannel)) {
       throw new BadRequestError(`The log channel <#${logChannel.id}> must be a text channel.`);
@@ -84,9 +86,9 @@ namespace BotChecker {
     }
 
     return logChannel;
-  };
+  }
 
-  export const requireManageableRole = async (guild: Guild, roleId: string, force = true) => {
+  public static async requireManageableRole(guild: Guild, roleId: string, force = true) {
     const botMember = await guild.members.fetchMe({ force });
     if (roleId === guild.id) {
       // @everyone
@@ -99,7 +101,5 @@ namespace BotChecker {
           `I can only manage a role whose order is lower than that of my highest role highest role <@&${botMember.roles.highest.id}>.`,
       );
     }
-  };
+  }
 }
-
-export default BotChecker;

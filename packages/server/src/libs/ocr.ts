@@ -1,6 +1,7 @@
 import { Worker, createWorker } from 'tesseract.js';
 
-import Env from './env.js';
+import { SupportedOCRLanguage } from '../types/common.js';
+import { Env } from './env.js';
 import Queue from './queue.js';
 
 export const supportedOCRLanguages: SupportedOCRLanguage[] = [

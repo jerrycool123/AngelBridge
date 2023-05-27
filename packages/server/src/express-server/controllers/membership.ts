@@ -3,7 +3,7 @@ import { UsersAPI } from '@discordjs/core';
 import { REST } from '@discordjs/rest';
 import { EmbedBuilder, Guild, TextChannel } from 'discord.js';
 
-import BotChecker from '../../checkers/bot.js';
+import { BotChecker } from '../../checkers/bot.js';
 import { symmetricDecrypt, symmetricEncrypt } from '../../libs/crypto.js';
 import DiscordAPI from '../../libs/discord.js';
 import { BadRequestError, ForbiddenError, InternalServerError } from '../../libs/error.js';

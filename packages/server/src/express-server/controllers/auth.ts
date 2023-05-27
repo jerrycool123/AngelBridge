@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 
 import { symmetricEncrypt } from '../../libs/crypto.js';
 import DiscordAPI from '../../libs/discord.js';
-import Env from '../../libs/env.js';
+import { Env } from '../../libs/env.js';
 import { BadRequestError, InternalServerError } from '../../libs/error.js';
 import GoogleAPI from '../../libs/google.js';
 import UserCollection from '../../models/user.js';
@@ -72,7 +72,7 @@ namespace AuthController {
 
     // Get refresh token from authorization code
     const oauth2Client = GoogleAPI.createOAuth2Client();
-    const result = await GoogleAPI.getTokensFromCode(oauth2Client, code, 'postmessage');
+    const result = await GoogleAPI.requestAccessToken(oauth2Client, code, 'postmessage');
     if (!result.success) {
       throw new BadRequestError(result.error);
     }
