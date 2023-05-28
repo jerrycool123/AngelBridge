@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@angel-bridge/eslint-config-custom": "workspace:^",
+    "@angel-bridge/prettier-config-custom": "workspace:^",
     "@trivago/prettier-plugin-sort-imports": "^4.1.1",
     "@types/jsonwebtoken": "^9.0.1",
     "discord-api-types": "^0.37.41",

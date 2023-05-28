@@ -14,7 +14,8 @@
     "typescript": "^5.0.4"
   },
   "devDependencies": {
-    "@angel-bridge/eslint-config-custom": "workspace:^"
+    "@angel-bridge/eslint-config-custom": "workspace:^",
+    "@angel-bridge/prettier-config-custom": "workspace:^"
   },
   "main": "src/index.ts",
   "packageManager": "pnpm@8.5.1",

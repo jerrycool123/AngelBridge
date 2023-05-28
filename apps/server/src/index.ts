@@ -5,6 +5,7 @@ import app from './express-server/index.js';
 import { Env } from './libs/env.js';
 import ocrWorker from './libs/ocr.js';
 import startCronjobs from './routines/index.js';
+import './types/augmentations/index.js';
 
 const main = async () => {
   // Initialize OCR worker
