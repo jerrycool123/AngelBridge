@@ -1,6 +1,7 @@
 {
   "name": "angel-bridge",
   "version": "0.0.1",
+  "license": "MIT",
   "devDependencies": {
     "husky": "^8.0.0",
     "lint-staged": "^13.2.2",
