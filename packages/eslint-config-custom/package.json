@@ -1,6 +1,5 @@
 {
   "name": "@angel-bridge/eslint-config-custom",
-  "main": "index.cjs",
   "version": "0.0.1",
   "dependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.1.1",
@@ -11,5 +10,6 @@
     "eslint-config-turbo": "^1.9.9",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1"
-  }
+  },
+  "main": "index.cjs"
 }

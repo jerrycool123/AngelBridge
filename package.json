@@ -1,17 +1,39 @@
 {
   "name": "angel-bridge",
   "version": "0.0.1",
-  "private": true,
-  "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "start": "turbo run start",
-    "preinstall": "npx only-allow pnpm",
-    "lint": "turbo run lint",
-    "format": "turbo run format"
+  "devDependencies": {
+    "husky": "^8.0.0",
+    "lint-staged": "^13.2.2",
+    "syncpack": "^9.8.6",
+    "turbo": "^1.9.9"
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx,jsx}": [
+      "eslint"
+    ],
+    "*.{json,md,html,js,jsx,ts,tsx}": [
+      "prettier --write"
+    ]
   },
   "packageManager": "pnpm@8.5.1",
-  "devDependencies": {
-    "turbo": "^1.9.9"
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "format": "turbo run format",
+    "lint": "turbo run lint",
+    "preinstall": "npx only-allow pnpm",
+    "prepare": "husky install",
+    "start": "turbo run start"
+  },
+  "syncpack": {
+    "dependencyTypes": [
+      "dev",
+      "overrides",
+      "peer",
+      "pnpmOverrides",
+      "prod",
+      "resolutions"
+    ]
   }
 }
