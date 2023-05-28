@@ -1,13 +1,13 @@
 {
   "name": "angel-bridge",
   "version": "0.0.1",
-  "license": "MIT",
   "devDependencies": {
     "husky": "^8.0.0",
     "lint-staged": "^13.2.2",
     "syncpack": "^9.8.6",
     "turbo": "^1.9.9"
   },
+  "license": "MIT",
   "lint-staged": {
     "*.{js,ts,tsx,jsx}": [
       "eslint"
