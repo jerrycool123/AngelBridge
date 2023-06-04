@@ -11,7 +11,7 @@ export interface UserAttrs {
 export interface UserDoc extends UserAttrs, Document<string> {
   _id: string;
   lastVerifyingRoleId: string | null;
-  language: SupportedOCRLanguage['language'];
+  language: SupportedOCRLanguage['name'];
   refreshToken: Buffer | null;
   youTube: {
     id: string;

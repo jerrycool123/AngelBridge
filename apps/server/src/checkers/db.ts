@@ -1,8 +1,8 @@
-import { NotFoundError } from '../libs/error.js';
 import GuildCollection, { GuildDoc } from '../models/guild.js';
 import MembershipRoleCollection from '../models/membership-role.js';
 import MembershipCollection, { MembershipDoc } from '../models/membership.js';
 import { YouTubeChannelDoc } from '../models/youtube-channel.js';
+import { NotFoundError } from '../utils/error.js';
 
 namespace DBChecker {
   export const requireGuildWithLogChannel = async (guild: string | GuildDoc) => {
@@ -37,8 +37,11 @@ namespace DBChecker {
     );
   };
 
-  export const requireMembershipRoleWithYouTubeChannel = async (roleId: string) => {
-    return await MembershipRoleCollection.findById(roleId)
+  export const requireMembershipRoleWithYouTubeChannel = async (
+    guildId: string,
+    roleId: string,
+  ) => {
+    return await MembershipRoleCollection.findOne({ _id: roleId, guild: guildId })
       .populate<{ youTubeChannel: YouTubeChannelDoc | null }>('youTubeChannel')
       .orFail(new NotFoundError(`The role <@&${roleId}> is not a membership role in the server.`));
   };

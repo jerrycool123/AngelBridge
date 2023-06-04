@@ -36,7 +36,7 @@ const guildSchema = new Schema<GuildDoc>(
   {
     timestamps: true,
     statics: {
-      async build(attrs: GuildAttrs) {
+      async build(attrs: GuildAttrs): Promise<GuildDoc> {
         return this.create(attrs);
       },
     },

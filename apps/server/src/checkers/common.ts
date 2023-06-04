@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import { BadRequestError } from '../libs/error.js';
+import { BadRequestError } from '../utils/error.js';
 
 namespace CommonChecker {
   export const requireGivenDateNotTooFarInFuture = (

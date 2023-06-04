@@ -43,7 +43,7 @@ const membershipRoleSchema = new Schema<MembershipRoleDoc>(
   {
     timestamps: true,
     statics: {
-      async build(attrs: MembershipRoleAttrs) {
+      async build(attrs: MembershipRoleAttrs): Promise<MembershipRoleDoc> {
         return this.create(attrs);
       },
     },

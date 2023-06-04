@@ -59,8 +59,10 @@ interface MembershipModel extends Model<MembershipDoc> {
   build: (attrs: MembershipAttrs) => Promise<MembershipDoc>;
 }
 
-baseMembershipSchema.statics.build = async function (attrs: MembershipAttrs) {
-  return await MembershipCollection.create(attrs);
+baseMembershipSchema.statics.build = async function (
+  attrs: MembershipAttrs,
+): Promise<MembershipDoc> {
+  return (await MembershipCollection.create(attrs)) as MembershipDoc;
 };
 
 const MembershipCollection = model<MembershipDoc, MembershipModel>(

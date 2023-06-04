@@ -28,7 +28,7 @@ const youTubeChannelSchema = new Schema<YouTubeChannelDoc>(
     },
     description: {
       type: String,
-      required: function allowEmptyString(this: YouTubeChannelDoc) {
+      required: function allowEmptyString(this: YouTubeChannelDoc): boolean {
         return typeof this.description !== 'string';
       },
     },
@@ -48,7 +48,7 @@ const youTubeChannelSchema = new Schema<YouTubeChannelDoc>(
   {
     timestamps: true,
     statics: {
-      async build(attrs: YouTubeChannelAttrs) {
+      async build(attrs: YouTubeChannelAttrs): Promise<YouTubeChannelDoc> {
         return this.create(attrs);
       },
     },
