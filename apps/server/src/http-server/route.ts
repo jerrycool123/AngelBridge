@@ -15,6 +15,7 @@ router.post('/auth/discord', RequestValidator.discordAuth, AuthController.discor
 
 router.post('/auth/google', requireAuth, RequestValidator.googleAuth, AuthController.googleAuth);
 router.get('/users/@me', requireAuth, UserController.readCurrentUser);
+router.delete('/users/@me', requireAuth, UserController.deleteCurrentUser);
 router.post('/users/@me/revoke', requireAuth, UserController.revokeCurrentUserYouTubeRefreshToken);
 router.get('/guilds', requireAuth, GuildController.readGuilds);
 router.post(

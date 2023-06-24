@@ -37,6 +37,11 @@ export interface ReadCurrentUserRequest extends CustomHttpRequest<'res'> {
 }
 
 /**
+ * Route: `DELETE /server/users/@me`
+ */
+export type DeleteCurrentUserRequest = CustomHttpRequest;
+
+/**
  * Route: `POST /server/users/@me/revoke`
  */
 export interface RevokeCurrentUserYouTubeRefreshTokenRequest extends CustomHttpRequest<'res'> {

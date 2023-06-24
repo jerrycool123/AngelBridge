@@ -445,7 +445,9 @@ const AppPage: NextPageWithLayout = () => {
                   window.location.href = url.toString();
                 }}
               >
-                <div className="poppins fs-5">+ Invite Angel Bridge bot to a new server</div>
+                <div className="poppins fs-5 user-select-none">
+                  + Invite Angel Bridge bot to a new server
+                </div>
               </div>
             </div>
           </div>
