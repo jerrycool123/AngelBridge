@@ -135,6 +135,9 @@ const SettingsModal = ({
                           {},
                         );
                         void messageApi.success('Successfully unlinked your YouTube channel');
+                        setTimeout(() => {
+                          window.location.reload();
+                        }, 3000);
                       } catch (error) {
                         console.error(error);
                         if (axios.isAxiosError(error) && error.response !== undefined) {

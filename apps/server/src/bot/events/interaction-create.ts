@@ -9,7 +9,7 @@ export class InteractionCreateEventHandler implements BotEventHandler<'interacti
   public readonly name = 'interactionCreate';
 
   public async execute(
-    bot: Bot,
+    bot: Bot<true>,
     ...[interaction]: ClientEvents['interactionCreate']
   ): Promise<void> {
     if (!interaction.isRepliable()) return;
@@ -92,7 +92,7 @@ export class InteractionCreateEventHandler implements BotEventHandler<'interacti
         errorMessage = error.message;
       }
 
-      await activeInteraction.genericReply({ content: errorMessage, followUp });
+      await activeInteraction.genericReply({ content: errorMessage, followUp, ephemeral: true });
     }
   }
 }

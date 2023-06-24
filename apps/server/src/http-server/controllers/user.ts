@@ -9,7 +9,7 @@ import GuildCollection, { GuildDoc } from '../../models/guild.js';
 import { MembershipRoleDoc } from '../../models/membership-role.js';
 import MembershipCollection, { OAuthMembershipDoc } from '../../models/membership.js';
 import UserCollection from '../../models/user.js';
-import { MembershipService } from '../../services/membership/index.js';
+import { MembershipService } from '../../services/membership/service.js';
 import { CryptoUtils } from '../../utils/crypto.js';
 import DiscordAPI from '../../utils/discord.js';
 import { BadRequestError } from '../../utils/error.js';
@@ -65,12 +65,39 @@ namespace UserController {
     await user.save();
 
     // Get user's OAuth memberships in DB
-    const oauthMembershipDocs = await MembershipCollection.find<OAuthMembershipDoc>({
+    const allOauthMembershipDocs = await MembershipCollection.find<OAuthMembershipDoc>({
       user: user._id,
       type: 'oauth',
     }).populate<{
-      membershipRole: MembershipRoleDoc;
+      membershipRole: MembershipRoleDoc | null;
     }>('membershipRole');
+
+    const oauthMembershipDocs: (Omit<OAuthMembershipDoc, 'membershipRole'> & {
+      membershipRole: MembershipRoleDoc;
+    })[] = [];
+    const invalidOauthMembershipDocs: (Omit<OAuthMembershipDoc, 'membershipRole'> & {
+      membershipRole: null;
+    })[] = [];
+    for (const oauthMembershipDoc of allOauthMembershipDocs) {
+      if (oauthMembershipDoc.membershipRole !== null) {
+        oauthMembershipDocs.push(
+          oauthMembershipDoc as Omit<OAuthMembershipDoc, 'membershipRole'> & {
+            membershipRole: MembershipRoleDoc;
+          },
+        );
+      } else {
+        invalidOauthMembershipDocs.push(
+          oauthMembershipDoc as Omit<OAuthMembershipDoc, 'membershipRole'> & {
+            membershipRole: null;
+          },
+        );
+      }
+    }
+
+    // Remove invalid memberships
+    await MembershipCollection.deleteMany({
+      _id: { $in: invalidOauthMembershipDocs.map((doc) => doc._id) },
+    });
 
     // Group membership docs by guild
     const membershipDocRecord = oauthMembershipDocs.reduce<
@@ -100,10 +127,10 @@ namespace UserController {
     for (const [guildId, membershipDocGroup] of Object.entries(membershipDocRecord)) {
       if (membershipDocGroup.length === 0) continue;
 
-      // Create membership service and initialize event log
-      const guildDoc = guildId in guildDocs ? guildDocRecord[guildId] : null;
+      // Initialize membership service
+      const guildDoc = guildId in guildDocRecord ? guildDocRecord[guildId] : null;
       const membershipService = new MembershipService(bot);
-      await membershipService.initEventLog(guildId, guildDoc?.logChannel ?? null);
+      await membershipService.initEventLog(guildId, null, guildDoc?.logChannel ?? null);
 
       // Remove membership
       membershipDocGroup.map((membershipDoc) =>

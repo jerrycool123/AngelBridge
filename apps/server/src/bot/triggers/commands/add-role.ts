@@ -9,21 +9,21 @@ import {
   GuildChatInputCommandInteraction,
 } from '../../../types/bot.js';
 import { BadRequestError, ConflictError, NotFoundError } from '../../../utils/error.js';
-import { BotConfig } from '../../config.js';
+import { BotConstants } from '../../constants.js';
 import { BotCheckers, BotCommonUtils } from '../../utils/index.js';
 
 export class AddRoleCommandTrigger implements BotCommandTrigger<true> {
   public readonly data = new SlashCommandBuilder()
     .setName('add-role')
     .setDescription('Add a YouTube membership role in this server')
-    .setDefaultMemberPermissions(BotConfig.ModeratorPermissions)
+    .setDefaultMemberPermissions(BotConstants.ModeratorPermissions)
     .addGenericRoleOption('role', 'The YouTube Membership role in this server', true)
     .addGenericStringOption('keyword', "The YouTube channel's ID, name or custom URL", true);
   public readonly guildOnly = true;
   public readonly botHasManageRolePermission = true;
 
   public async execute(
-    bot: Bot,
+    bot: Bot<true>,
     interaction: GuildChatInputCommandInteraction,
     errorConfig: BotErrorConfig,
   ): Promise<void> {
@@ -86,6 +86,7 @@ export class AddRoleCommandTrigger implements BotCommandTrigger<true> {
       },
       errorConfig,
     );
+    errorConfig.activeInteraction = confirmButtonInteraction;
     await confirmButtonInteraction.deferReply({ ephemeral: true });
 
     // Link the role to YouTube membership and save to DB

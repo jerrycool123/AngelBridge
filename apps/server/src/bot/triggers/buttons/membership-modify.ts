@@ -12,19 +12,19 @@ import {
 } from '../../../types/bot.js';
 import { BadRequestError, RequestTimeoutError } from '../../../utils/error.js';
 import { BotEmbeds, BotModals } from '../../components/index.js';
-import { BotConfig } from '../../config.js';
+import { BotConstants } from '../../constants.js';
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 
 export class MembershipModifyButtonTrigger implements BotButtonTrigger<true> {
-  public readonly customId = BotConfig.AdminMembershipVerificationActionId.modify;
+  public readonly customId = BotConstants.AdminMembershipVerificationActionId.modify;
   public readonly guildOnly = true;
   public readonly botHasManageRolePermission = false;
   public readonly userHasManageRolePermission = true;
 
   public async execute(
-    bot: Bot,
+    bot: Bot<true>,
     interaction: GuildButtonInteraction,
     errorConfig: BotErrorConfig,
   ): Promise<void> {

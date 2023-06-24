@@ -5,17 +5,20 @@ import { YouTubeChannelDoc } from '../../../models/youtube-channel.js';
 import { Bot, BotCommandTrigger, GuildChatInputCommandInteraction } from '../../../types/bot.js';
 import { DBUtils } from '../../../utils/db.js';
 import { BotEmbeds } from '../../components/embeds.js';
-import { BotConfig } from '../../config.js';
+import { BotConstants } from '../../constants.js';
 
 export class SettingsCommandTrigger implements BotCommandTrigger<true> {
   public readonly data = new SlashCommandBuilder()
     .setName('settings')
     .setDescription('Display guild settings')
-    .setDefaultMemberPermissions(BotConfig.ModeratorPermissions);
+    .setDefaultMemberPermissions(BotConstants.ModeratorPermissions);
   public readonly guildOnly = true;
   public readonly botHasManageRolePermission = false;
 
-  public async execute(bot: Bot, interaction: GuildChatInputCommandInteraction): Promise<void> {
+  public async execute(
+    bot: Bot<true>,
+    interaction: GuildChatInputCommandInteraction,
+  ): Promise<void> {
     const { guild, user } = interaction;
 
     await interaction.deferReply({ ephemeral: true });

@@ -4,7 +4,7 @@ import DBChecker from '../../../checkers/db.js';
 import MembershipRoleCollection from '../../../models/membership-role.js';
 import MembershipCollection, { MembershipDoc } from '../../../models/membership.js';
 import { YouTubeChannelDoc } from '../../../models/youtube-channel.js';
-import { MembershipService } from '../../../services/membership/index.js';
+import { MembershipService } from '../../../services/membership/service.js';
 import {
   Bot,
   BotCommandTrigger,
@@ -12,20 +12,20 @@ import {
   GuildChatInputCommandInteraction,
 } from '../../../types/bot.js';
 import { NotFoundError } from '../../../utils/error.js';
-import { BotConfig } from '../../config.js';
+import { BotConstants } from '../../constants.js';
 import { BotCheckers, BotCommonUtils } from '../../utils/index.js';
 
 export class DeleteRoleCommandTrigger implements BotCommandTrigger<true> {
   public readonly data = new SlashCommandBuilder()
     .setName('delete-role')
     .setDescription('Delete a YouTube membership role in this server')
-    .setDefaultMemberPermissions(BotConfig.ModeratorPermissions)
+    .setDefaultMemberPermissions(BotConstants.ModeratorPermissions)
     .addGenericRoleOption('role', 'The YouTube Membership role in this server', true);
   public readonly guildOnly = true;
   public readonly botHasManageRolePermission = true;
 
   public async execute(
-    bot: Bot,
+    bot: Bot<true>,
     interaction: GuildChatInputCommandInteraction,
     errorConfig: BotErrorConfig,
   ): Promise<void> {
@@ -74,11 +74,12 @@ export class DeleteRoleCommandTrigger implements BotCommandTrigger<true> {
       },
       errorConfig,
     );
+    errorConfig.activeInteraction = confirmButtonInteraction;
     await confirmButtonInteraction.deferReply({ ephemeral: true });
 
-    // Create membership service
-    const guildOwner = await BotCheckers.fetchGuildOwner(guild, false);
-    const membershipService = new MembershipService(bot, guild, guildOwner, logChannel);
+    // Initialize membership service
+    const membershipService = new MembershipService(bot);
+    await membershipService.initEventLog(guild, null, logChannel);
 
     // Remove membership role from DB
     await membershipService.removeMembershipRole({

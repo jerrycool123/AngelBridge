@@ -5,7 +5,7 @@ import { GuildDoc } from '../../models/guild.js';
 import { MembershipRoleDoc } from '../../models/membership-role.js';
 import { OAuthMembershipDoc, OCRMembershipDoc } from '../../models/membership.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
-import { OCRConfig } from '../../services/ocr/config.js';
+import { OCRConstants } from '../../services/ocr/constants.js';
 import { BotErrorConfig } from '../../types/bot.js';
 import { YouTubeChannelInfo } from '../../types/common.js';
 import { BadRequestError } from '../../utils/error.js';
@@ -13,15 +13,25 @@ import { BotCommonUtils } from '../utils/index.js';
 import { BotActionRows } from './action-rows.js';
 
 export class BotEmbeds {
-  public static createAuthorTemplateEmbed(user: User): EmbedBuilder {
-    const { id, username, avatar } = BotCommonUtils.getUserMeta(user);
-    return new EmbedBuilder()
-      .setAuthor({
-        name: username,
-        iconURL: avatar,
-      })
-      .setTimestamp()
-      .setFooter({ text: `ID: ${id}` });
+  public static createAuthorTemplateEmbed(userData: User | string): EmbedBuilder {
+    if (typeof userData !== 'string') {
+      const { id, username, avatar } = BotCommonUtils.getUserMeta(userData);
+      return new EmbedBuilder()
+        .setAuthor({
+          name: username,
+          iconURL: avatar,
+        })
+        .setTimestamp()
+        .setFooter({ text: `ID: ${id}` });
+    } else {
+      const id = userData;
+      return new EmbedBuilder()
+        .setAuthor({
+          name: `User ID: ${id}`,
+        })
+        .setTimestamp()
+        .setFooter({ text: `ID: ${id}` });
+    }
   }
 
   public static createMembershipVerificationRequestSubmissionEmbed(
@@ -106,7 +116,7 @@ export class BotEmbeds {
         {
           name: 'Language',
           value:
-            OCRConfig.supportedLanguages.find(({ code }) => code === langCode)?.name ?? langCode,
+            OCRConstants.supportedLanguages.find(({ code }) => code === langCode)?.name ?? langCode,
           inline: true,
         },
       ])
@@ -191,12 +201,12 @@ export class BotEmbeds {
   }
 
   public static createManualMembershipRemovalEmbed(
-    user: User,
+    userData: User | string,
     roleId: string,
     moderatorId: string,
   ): EmbedBuilder {
-    return BotEmbeds.createAuthorTemplateEmbed(user)
-      .setTitle('❌ Manual Membership Removal')
+    return BotEmbeds.createAuthorTemplateEmbed(userData)
+      .setTitle(`❌ Manual Membership Removal`)
       .addFields([
         {
           name: 'Membership Role',

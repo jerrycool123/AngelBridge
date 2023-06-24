@@ -6,7 +6,7 @@ import { DBUtils } from '../../utils/db.js';
 export class GuildCreateEventHandler implements BotEventHandler<'guildCreate'> {
   public readonly name = 'guildCreate';
 
-  public async execute(bot: Bot, ...[guild]: ClientEvents['guildCreate']): Promise<void> {
+  public async execute(bot: Bot<true>, ...[guild]: ClientEvents['guildCreate']): Promise<void> {
     console.log(`Joined guild ${guild.name} [ID: ${guild.id}]`);
     await DBUtils.upsertGuild({
       id: guild.id,

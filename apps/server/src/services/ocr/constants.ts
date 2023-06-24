@@ -1,6 +1,6 @@
 import { SupportedOCRLanguage } from '../../types/common.js';
 
-export class OCRConfig {
+export class OCRConstants {
   public static readonly supportedLanguages: SupportedOCRLanguage[] = [
     { name: 'English', code: 'eng' },
     { name: 'Chinese - Traditional', code: 'chi_tra' },

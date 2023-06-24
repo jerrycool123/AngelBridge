@@ -9,7 +9,10 @@ export class TestCommandTrigger implements BotCommandTrigger<true> {
   public readonly guildOnly = true;
   public readonly botHasManageRolePermission = false;
 
-  public async execute(bot: Bot, interaction: GuildChatInputCommandInteraction): Promise<void> {
+  public async execute(
+    bot: Bot<true>,
+    interaction: GuildChatInputCommandInteraction,
+  ): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
 
     await interaction.genericReply({

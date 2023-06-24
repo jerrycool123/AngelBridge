@@ -1,26 +1,26 @@
 import { EmbedBuilder } from 'discord.js';
 
 import CommonChecker from '../../../checkers/common.js';
+import { MembershipService } from '../../../services/membership/service.js';
 import {
   Bot,
   BotButtonTrigger,
   BotErrorConfig,
   GuildButtonInteraction,
 } from '../../../types/bot.js';
-import { DBUtils } from '../../../utils/db.js';
-import { InternalServerError, NotFoundError } from '../../../utils/error.js';
+import { NotFoundError } from '../../../utils/error.js';
 import { BotActionRows, BotEmbeds } from '../../components/index.js';
-import { BotConfig } from '../../config.js';
+import { BotConstants } from '../../constants.js';
 import { BotCheckers } from '../../utils/index.js';
 
 export class MembershipAcceptButtonTrigger implements BotButtonTrigger<true> {
-  public readonly customId = BotConfig.AdminMembershipVerificationActionId.accept;
+  public readonly customId = BotConstants.AdminMembershipVerificationActionId.accept;
   public readonly guildOnly = true;
   public readonly botHasManageRolePermission = true;
   public readonly userHasManageRolePermission = true;
 
   public async execute(
-    bot: Bot,
+    bot: Bot<true>,
     interaction: GuildButtonInteraction,
     errorConfig: BotErrorConfig,
   ): Promise<void> {
@@ -58,32 +58,20 @@ export class MembershipAcceptButtonTrigger implements BotButtonTrigger<true> {
       throw new NotFoundError(`The user <@${userId}> is not a member of the server.`);
     }
 
-    // Update membership in DB
-    await DBUtils.upsertMembership({
-      type: 'ocr',
-      userId: member.id,
-      membershipRoleId: roleId,
-      expireAt,
+    // Initialize membership service
+    const membershipService = new MembershipService(bot);
+    await membershipService.initEventLog(guild, null, null);
+
+    // Add membership to user
+    const { notified } = await membershipService.addMembership({
+      member,
+      membership: {
+        type: 'ocr',
+        expireAt,
+      },
+      guild,
+      membershipRole: role,
     });
-
-    // Add role to member
-    try {
-      await member.roles.add(role);
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerError('Failed to add the role to the member.');
-    }
-
-    // DM the user
-    let notified = false;
-    try {
-      await member.send({
-        content: `You have been granted the membership role **@${role.name}** in the server \`${guild.name}\`.`,
-      });
-      notified = true;
-    } catch (error) {
-      // User does not allow DMs
-    }
 
     // Mark the request as accepted
     const acceptedActionRow = BotActionRows.createDisabledAccepted();

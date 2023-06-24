@@ -9,7 +9,7 @@ import DBChecker from '../../../checkers/db.js';
 import MembershipRoleCollection, { MembershipRoleDoc } from '../../../models/membership-role.js';
 import MembershipCollection from '../../../models/membership.js';
 import { YouTubeChannelDoc } from '../../../models/youtube-channel.js';
-import { OCRConfig, OCRService } from '../../../services/ocr/index.js';
+import { OCRConstants, OCRService } from '../../../services/ocr/index.js';
 import { Bot, BotCommandTrigger, BotErrorConfig } from '../../../types/bot.js';
 import { DBUtils } from '../../../utils/db.js';
 import { MethodNotAllowedError } from '../../../utils/error.js';
@@ -32,7 +32,7 @@ export class VerifyCommandTrigger implements BotCommandTrigger<false> {
   private readonly ocrService = new OCRService();
 
   public async execute(
-    bot: Bot,
+    bot: Bot<true>,
     interaction: ChatInputCommandInteraction,
     errorConfig: BotErrorConfig,
   ): Promise<void> {
@@ -77,7 +77,7 @@ export class VerifyCommandTrigger implements BotCommandTrigger<false> {
     // Initialize action rows, buttons and menus
     let selectedRoleId =
       membershipRoleDocs.find((role) => role._id === userDoc.lastVerifyingRoleId)?._id ?? null;
-    let selectedLanguage = OCRConfig.supportedLanguages.find(
+    let selectedLanguage = OCRConstants.supportedLanguages.find(
       ({ name }) => name === userDoc.language,
     ) ?? { name: 'English', code: 'eng' };
     const roleOptions = membershipRoleDocs
@@ -94,7 +94,7 @@ export class VerifyCommandTrigger implements BotCommandTrigger<false> {
         value: _id,
         default: _id === selectedRoleId,
       }));
-    const languageOptions = OCRConfig.supportedLanguages.map(({ name, code }) => ({
+    const languageOptions = OCRConstants.supportedLanguages.map(({ name, code }) => ({
       label: name,
       value: code,
       default: code === selectedLanguage.code,
@@ -143,7 +143,7 @@ export class VerifyCommandTrigger implements BotCommandTrigger<false> {
           })),
         );
       } else if (customId === 'ocr-languages-menu') {
-        selectedLanguage = OCRConfig.supportedLanguages.find(
+        selectedLanguage = OCRConstants.supportedLanguages.find(
           ({ code }) => code === stringSelectMenuInteraction.values[0],
         ) ?? {
           name: 'English',
@@ -212,6 +212,7 @@ export class VerifyCommandTrigger implements BotCommandTrigger<false> {
         },
         errorConfig,
       );
+      errorConfig.activeInteraction = prevInteraction;
       await prevInteraction.deferReply({ ephemeral: true });
     }
 

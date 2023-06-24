@@ -20,7 +20,7 @@ export interface BotButtonTrigger<GuildOnly extends boolean> {
   userHasManageRolePermission: BooleanOrFalse<GuildOnly>;
 
   execute: (
-    bot: Bot,
+    bot: Bot<true>,
     interaction: GuildOnly extends true ? GuildButtonInteraction : ButtonInteraction,
     errorConfig: BotErrorConfig,
   ) => Promise<void>;
@@ -38,7 +38,7 @@ export interface BotCommandTrigger<GuildOnly extends boolean> {
   botHasManageRolePermission: BooleanOrFalse<GuildOnly>;
 
   execute(
-    bot: Bot,
+    bot: Bot<true>,
     interaction: GuildOnly extends true
       ? GuildChatInputCommandInteraction
       : ChatInputCommandInteraction,
@@ -56,7 +56,7 @@ export interface BotEventHandler<E extends keyof ClientEvents> {
   name: E;
   once?: boolean;
 
-  execute(bot: Bot, ...args: ClientEvents[E]): Promise<void>;
+  execute(bot: Bot<E extends 'ready' ? boolean : true>, ...args: ClientEvents[E]): Promise<void>;
 }
 
 export type Union<T> = T[keyof T];
@@ -78,8 +78,8 @@ export interface BotRoutine {
  * Bot
  */
 
-export interface Bot {
-  client: Client<true> | Client<false>;
+export interface Bot<Ready extends boolean> {
+  client: Client<Ready>;
   commandTriggers: UnionBotCommandTrigger[];
   buttonTriggers: UnionBotButtonTrigger[];
   eventHandlers: UnionBotEventHandler[];

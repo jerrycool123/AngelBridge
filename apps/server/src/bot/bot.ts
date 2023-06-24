@@ -9,8 +9,9 @@ import {
   UnionBotCommandTrigger,
   UnionBotEventHandler,
 } from '../types/bot.js';
+import { Env } from '../utils/env.js';
 
-export class DiscordBot implements Bot {
+export class DiscordBot implements Bot<boolean> {
   private readonly rest = new REST({ version: '10' });
   private readonly cronjobs: CronJob[] = [];
 
@@ -35,6 +36,16 @@ export class DiscordBot implements Bot {
   public async registerCommands(): Promise<void> {
     if (!this.client.isReady()) {
       throw new Error('Client is not ready.');
+    }
+
+    if (Env.NODE_ENV === 'development') {
+      console.log('\n');
+      console.log('#################################################################');
+      console.log('##                                                             ##');
+      console.log('## WARNING: Skipping command registration in development mode. ##');
+      console.log('##                                                             ##');
+      console.log('#################################################################');
+      return;
     }
 
     try {

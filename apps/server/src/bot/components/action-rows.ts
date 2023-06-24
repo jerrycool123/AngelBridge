@@ -1,21 +1,21 @@
 import { SelectMenuComponentOptionData } from 'discord.js';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
 
-import { BotConfig } from '../config.js';
+import { BotConstants } from '../constants.js';
 
 export class BotActionRows {
   public static createAdminVerificationActionRow(): ActionRowBuilder<ButtonBuilder> {
     return new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
-        .setCustomId(BotConfig.AdminMembershipVerificationActionId.accept)
+        .setCustomId(BotConstants.AdminMembershipVerificationActionId.accept)
         .setStyle(ButtonStyle.Success)
         .setLabel('Accept'),
       new ButtonBuilder()
-        .setCustomId(BotConfig.AdminMembershipVerificationActionId.reject)
+        .setCustomId(BotConstants.AdminMembershipVerificationActionId.reject)
         .setStyle(ButtonStyle.Danger)
         .setLabel('Reject'),
       new ButtonBuilder()
-        .setCustomId(BotConfig.AdminMembershipVerificationActionId.modify)
+        .setCustomId(BotConstants.AdminMembershipVerificationActionId.modify)
         .setStyle(ButtonStyle.Primary)
         .setLabel('Modify'),
     );

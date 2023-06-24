@@ -10,7 +10,7 @@ import MembershipCollection, {
 import { Bot, BotCommandTrigger, GuildChatInputCommandInteraction } from '../../../types/bot.js';
 import { BotActionRows } from '../../components/action-rows.js';
 import { BotEmbeds } from '../../components/embeds.js';
-import { BotConfig } from '../../config.js';
+import { BotConstants } from '../../constants.js';
 
 dayjs.extend(utc);
 
@@ -18,12 +18,15 @@ export class ListMembersCommandTrigger implements BotCommandTrigger<true> {
   public readonly data = new SlashCommandBuilder()
     .setName('list-members')
     .setDescription('List all members with a specific membership role in this server')
-    .setDefaultMemberPermissions(BotConfig.ModeratorPermissions)
+    .setDefaultMemberPermissions(BotConstants.ModeratorPermissions)
     .addGenericRoleOption('role', 'The YouTube Membership role in this server', true);
   public readonly guildOnly = true;
   public readonly botHasManageRolePermission = false;
 
-  public async execute(bot: Bot, interaction: GuildChatInputCommandInteraction): Promise<void> {
+  public async execute(
+    bot: Bot<true>,
+    interaction: GuildChatInputCommandInteraction,
+  ): Promise<void> {
     const { guild, user, options } = interaction;
 
     await interaction.deferReply({ ephemeral: true });

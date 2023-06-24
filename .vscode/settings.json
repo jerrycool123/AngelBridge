@@ -1,0 +1,23 @@
+{
+  "typescript.preferences.quoteStyle": "single",
+  "javascript.preferences.quoteStyle": "single",
+  "cSpell.words": [
+    "APIV",
+    "middlewares",
+    "openapi",
+    "postbuild",
+    "Repliable",
+    "virtuals"
+  ],
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/build": true
+  },
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/build": true,
+    "**/.turbo": true,
+    "**/tessdata": true,
+    "**/cache": true
+  }
+}

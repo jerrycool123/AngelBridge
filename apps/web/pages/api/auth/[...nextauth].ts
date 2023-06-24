@@ -43,7 +43,7 @@ export const authOptions: NextAuthOptions = {
       if (account !== null && profile !== undefined) {
         token.user = {
           id: profile.id,
-          username: `${profile.username}#${profile.discriminator}`,
+          username: profile.username,
           avatar: profile.image_url,
         };
       }

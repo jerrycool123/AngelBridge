@@ -1,6 +1,7 @@
 import {
   ButtonInteraction,
   ComponentType,
+  EmbedBuilder,
   InteractionReplyOptions,
   RepliableInteraction,
   User,
@@ -15,24 +16,26 @@ export class BotCommonUtils {
   public static getUserMeta(user: User): UserMeta {
     return {
       id: user.id,
-      username: `${user.username}#${user.discriminator}`,
+      username: user.username,
       avatar: user.displayAvatarURL(),
     };
   }
 
   public static async sendEventLog({
     content,
+    embeds,
     guildOwner,
     logChannel,
   }: {
     content: string;
+    embeds?: EmbedBuilder[];
   } & Pick<EventLogConfig, 'guildOwner' | 'logChannel'>) {
     let logged = false;
 
     // Try to send event log to the log channel
     if (logChannel != null) {
       try {
-        await logChannel.send(content);
+        await logChannel.send({ content, embeds });
         logged = true;
       } catch (error) {
         // We cannot send log to the log channel
@@ -43,11 +46,13 @@ export class BotCommonUtils {
     // If the log is failed to send, try to DM the guild owner about the removal
     if (logged === false && guildOwner != null) {
       try {
-        await guildOwner.send(
-          `> I cannot send event log to the log channel in your server \`${guildOwner.guild.name}\`.\n` +
+        await guildOwner.send({
+          content:
+            `> I cannot send event log to the log channel in your server \`${guildOwner.guild.name}\`.\n` +
             `> Please make sure that the log channel is set with \`/set-log-channel\`, and that I have enough permissions to send messages in it.\n\n` +
             content,
-        );
+          embeds,
+        });
         logged = true;
       } catch (error) {
         // We cannot DM the owner
@@ -65,9 +70,10 @@ export class BotCommonUtils {
     errorConfig: BotErrorConfig,
     timeout = 60 * 1000,
   ): Promise<ButtonInteraction> {
+    const ephemeral = originalInteraction.ephemeral ?? false;
     errorConfig.activeInteraction = originalInteraction;
     if (!originalInteraction.deferred) {
-      await originalInteraction.deferReply({ ephemeral: true });
+      await originalInteraction.deferReply({ ephemeral });
     }
 
     // Ask for confirmation
@@ -82,6 +88,7 @@ export class BotCommonUtils {
     const response = await originalInteraction.genericReply({
       ...payload,
       components: [confirmActionRow],
+      ephemeral,
     });
 
     // Wait for user's confirmation
@@ -98,6 +105,7 @@ export class BotCommonUtils {
       // Timeout
       await originalInteraction.genericReply({
         components: [],
+        ephemeral,
       });
       throw new RequestTimeoutError('Timed out. Please try again.');
     }
@@ -107,6 +115,7 @@ export class BotCommonUtils {
       confirmActionRow.components.forEach((component) => component.setDisabled(true));
       await originalInteraction.genericReply({
         components: [confirmActionRow],
+        ephemeral,
       });
 
       errorConfig.activeInteraction = buttonInteraction;
@@ -118,6 +127,7 @@ export class BotCommonUtils {
       confirmActionRow.components.forEach((component) => component.setDisabled(true));
       await originalInteraction.genericReply({
         components: [confirmActionRow],
+        ephemeral,
       });
       return buttonInteraction;
     }

@@ -1,3 +1,3 @@
 {
-  "extends": ["@angel-bridge/eslint-config-custom"]
+  "extends": ["@angel-bridge/eslint-config-custom", "plugin:import-esm/recommended"]
 }

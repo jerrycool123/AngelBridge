@@ -6,6 +6,7 @@ import { RepliableInteraction, SlashCommandBuilder } from 'discord.js';
 import CommonChecker from '../../../checkers/common.js';
 import DBChecker from '../../../checkers/db.js';
 import MembershipCollection from '../../../models/membership.js';
+import { MembershipService } from '../../../services/membership/service.js';
 import {
   Bot,
   BotCommandTrigger,
@@ -13,9 +14,9 @@ import {
   GuildChatInputCommandInteraction,
 } from '../../../types/bot.js';
 import { DBUtils } from '../../../utils/db.js';
-import { BadRequestError, InternalServerError, NotFoundError } from '../../../utils/error.js';
+import { BadRequestError, NotFoundError } from '../../../utils/error.js';
 import { BotEmbeds } from '../../components/embeds.js';
-import { BotConfig } from '../../config.js';
+import { BotConstants } from '../../constants.js';
 import { BotCheckers, BotCommonUtils } from '../../utils/index.js';
 
 dayjs.extend(utc);
@@ -27,7 +28,7 @@ export class AddMemberCommandTrigger implements BotCommandTrigger<true> {
     .setDescription(
       'Manually assign a YouTube membership role to a member in this server in OCR mode',
     )
-    .setDefaultMemberPermissions(BotConfig.ModeratorPermissions)
+    .setDefaultMemberPermissions(BotConstants.ModeratorPermissions)
     .addGenericUserOption('member', 'The member to assign the role to', true)
     .addGenericRoleOption('role', 'The YouTube Membership role in this server', true)
     .addGenericStringOption(
@@ -38,7 +39,7 @@ export class AddMemberCommandTrigger implements BotCommandTrigger<true> {
   public readonly botHasManageRolePermission = true;
 
   public async execute(
-    bot: Bot,
+    bot: Bot<true>,
     interaction: GuildChatInputCommandInteraction,
     errorConfig: BotErrorConfig,
   ): Promise<void> {
@@ -99,8 +100,8 @@ export class AddMemberCommandTrigger implements BotCommandTrigger<true> {
         },
         errorConfig,
       );
-      await activeInteraction.deferReply({ ephemeral: true });
       errorConfig.activeInteraction = activeInteraction;
+      await activeInteraction.deferReply({ ephemeral: true });
     }
 
     // Ask for confirmation
@@ -114,52 +115,42 @@ export class AddMemberCommandTrigger implements BotCommandTrigger<true> {
       },
       errorConfig,
     );
+    errorConfig.activeInteraction = confirmButtonInteraction;
     await confirmButtonInteraction.deferReply({ ephemeral: true });
 
-    // Add role to member
-    try {
-      await member.roles.add(role.id);
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerError('Failed to add the role to the member.');
-    }
-    await confirmButtonInteraction.genericReply({
-      content: `Successfully assigned the membership role <@&${role.id}> to <@${
-        member.id
-      }>.\nTheir membership will expire on \`${expireAt.format('YYYY/MM/DD')}\`.`,
+    // Initialize membership service
+    const membershipService = new MembershipService(bot);
+    await membershipService.initEventLog(guild, null, logChannel);
+
+    // Add membership to user
+    const { notified } = await membershipService.addMembership({
+      member,
+      membership: {
+        type: 'ocr',
+        expireAt,
+      },
+      guild,
+      membershipRole: role,
     });
 
-    // Create or update membership
-    await DBUtils.upsertMembership({
-      type: 'ocr',
-      userId: member.id,
-      membershipRoleId: role.id,
-      expireAt,
-    });
-
-    // DM the user
-    let notified = false;
-    try {
-      await member.send({
-        content: `You have been manually granted the membership role **@${role.name}** in the server \`${guild.name}\`.`,
-      });
-      notified = true;
-    } catch (error) {
-      // User does not allow DMs
-    }
-
-    // Send log message
-    const manualMembershipAssignment = BotEmbeds.createManualMembershipAssignmentEmbed(
-      user,
+    // Send added log
+    const manualMembershipAssignmentEmbed = BotEmbeds.createManualMembershipAssignmentEmbed(
+      member.user,
       expireAt,
       role.id,
       moderator.id,
     );
-    await logChannel.send({
-      content: notified
+    await membershipService.sendEventLog(
+      notified
         ? ''
         : "**[NOTE]** Due to the user's __Privacy Settings__ of this server, **I cannot send DM to notify them.**\nYou might need to notify them yourself.",
-      embeds: [manualMembershipAssignment],
+      [manualMembershipAssignmentEmbed],
+    );
+
+    await confirmButtonInteraction.genericReply({
+      content: `Successfully assigned the membership role <@&${role.id}> to <@${
+        member.id
+      }>.\nTheir membership will expire on \`${expireAt.format('YYYY/MM/DD')}\`.`,
     });
   }
 }

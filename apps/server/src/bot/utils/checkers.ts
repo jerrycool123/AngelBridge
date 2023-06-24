@@ -21,7 +21,11 @@ export class BotCheckers {
     return channel.permissionsFor(user)?.has(PermissionFlagsBits.ManageRoles) ?? false;
   }
 
-  public static async fetchUser(bot: Bot, userId: string, force = true): Promise<User | null> {
+  public static async fetchUser(
+    bot: Bot<true>,
+    userId: string,
+    force = true,
+  ): Promise<User | null> {
     try {
       return await bot.client.users.fetch(userId, { force });
     } catch (error) {
@@ -30,7 +34,11 @@ export class BotCheckers {
     return null;
   }
 
-  public static async fetchGuild(bot: Bot, guildId: string, force = true): Promise<Guild | null> {
+  public static async fetchGuild(
+    bot: Bot<true>,
+    guildId: string,
+    force = true,
+  ): Promise<Guild | null> {
     try {
       return await bot.client.guilds.fetch({ guild: guildId, force });
     } catch (error) {
@@ -80,7 +88,7 @@ export class BotCheckers {
   }
 
   public static async requireGuildHasLogChannel(
-    bot: Bot,
+    bot: Bot<true>,
     guild: Guild,
     logChannelId: string,
     force = true,

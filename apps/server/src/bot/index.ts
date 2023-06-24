@@ -8,7 +8,7 @@ import {
 } from '../types/bot.js';
 import { Env } from '../utils/env.js';
 import { DiscordBot } from './bot.js';
-import { BotConfig } from './config.js';
+import { BotConstants } from './constants.js';
 import {
   GuildCreateEventHandler,
   GuildUpdateEventHandler,
@@ -36,7 +36,7 @@ import {
 } from './triggers/index.js';
 
 // Client
-const client = new Client<false>({ intents: BotConfig.Intents });
+const client = new Client<false>({ intents: BotConstants.Intents });
 
 // Button Triggers
 const buttonTriggers: UnionBotButtonTrigger[] = [

@@ -3,19 +3,22 @@ import { SlashCommandBuilder } from 'discord.js';
 import { Bot, BotCommandTrigger, GuildChatInputCommandInteraction } from '../../../types/bot.js';
 import { DBUtils } from '../../../utils/db.js';
 import { InternalServerError } from '../../../utils/error.js';
-import { BotConfig } from '../../config.js';
+import { BotConstants } from '../../constants.js';
 import { BotCheckers } from '../../utils/index.js';
 
 export class SetLogChannelCommandTrigger implements BotCommandTrigger<true> {
   public readonly data = new SlashCommandBuilder()
     .setName('set-log-channel')
     .setDescription('Set a log channel where the membership verification requests would be sent.')
-    .setDefaultMemberPermissions(BotConfig.ModeratorPermissions)
+    .setDefaultMemberPermissions(BotConstants.ModeratorPermissions)
     .addGenericChannelOption('channel', 'The log channel in this server', true);
   public readonly guildOnly = true;
   public readonly botHasManageRolePermission = false;
 
-  public async execute(bot: Bot, interaction: GuildChatInputCommandInteraction): Promise<void> {
+  public async execute(
+    bot: Bot<true>,
+    interaction: GuildChatInputCommandInteraction,
+  ): Promise<void> {
     const { guild, options } = interaction;
 
     await interaction.deferReply({ ephemeral: true });

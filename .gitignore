@@ -8,3 +8,4 @@ dist/
 tessdata/
 cache/
 .turbo
+.DS_Store

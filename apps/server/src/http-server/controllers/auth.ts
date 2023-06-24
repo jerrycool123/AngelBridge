@@ -34,10 +34,10 @@ namespace AuthController {
 
     // Get user info
     const discordUsersApi = new UsersAPI(discordRestApi);
-    const { id, username, discriminator, avatar: avatarHash } = await discordUsersApi.getCurrent();
+    const { id, username, avatar: avatarHash } = await discordUsersApi.getCurrent();
     let avatar: string;
     if (avatarHash === null) {
-      const defaultAvatarNumber = parseInt(discriminator) % 5;
+      const defaultAvatarNumber = parseInt(id) % 5;
       avatar = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarNumber}.png`;
     } else {
       const format = avatarHash.startsWith('a_') ? 'gif' : 'png';
@@ -51,7 +51,7 @@ namespace AuthController {
     }
     const userDoc = await DBUtils.upsertUser({
       id,
-      username: `${username}#${discriminator}`,
+      username,
       avatar,
       refreshToken: newEncryptedRefreshToken,
     });

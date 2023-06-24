@@ -9,17 +9,17 @@ import {
 } from '../../../types/bot.js';
 import { NotFoundError, RequestTimeoutError } from '../../../utils/error.js';
 import { BotActionRows, BotEmbeds, BotModals } from '../../components/index.js';
-import { BotConfig } from '../../config.js';
+import { BotConstants } from '../../constants.js';
 import { BotCheckers } from '../../utils/index.js';
 
 export class MembershipRejectButtonTrigger implements BotButtonTrigger<true> {
-  public readonly customId = BotConfig.AdminMembershipVerificationActionId.reject;
+  public readonly customId = BotConstants.AdminMembershipVerificationActionId.reject;
   public readonly guildOnly = true;
   public readonly botHasManageRolePermission = false;
   public readonly userHasManageRolePermission = true;
 
   public async execute(
-    bot: Bot,
+    bot: Bot<true>,
     interaction: GuildButtonInteraction,
     errorConfig: BotErrorConfig,
   ): Promise<void> {

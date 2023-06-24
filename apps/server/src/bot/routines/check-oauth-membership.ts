@@ -3,7 +3,8 @@ import MembershipRoleCollection, { MembershipRoleDoc } from '../../models/member
 import MembershipCollection, { OAuthMembershipDoc } from '../../models/membership.js';
 import UserCollection, { UserDoc } from '../../models/user.js';
 import YouTubeChannelCollection, { YouTubeChannelDoc } from '../../models/youtube-channel.js';
-import { MembershipService } from '../../services/membership/index.js';
+import { MembershipService } from '../../services/membership/service.js';
+import { MembershipUtils } from '../../services/membership/utils.js';
 import { Bot, BotRoutine } from '../../types/bot.js';
 import { CryptoUtils } from '../../utils/crypto.js';
 import DiscordAPI from '../../utils/discord.js';
@@ -13,7 +14,7 @@ export class CheckOAuthMembershipRoutine implements BotRoutine {
   public readonly name = 'Check OAuth Membership';
   public readonly schedule = '0 0 * * *';
 
-  public async execute(bot: Bot): Promise<void> {
+  public async execute(bot: Bot<true>): Promise<void> {
     console.log(
       `[${new Date().toLocaleString('en-US')}] Running OAuth Membership Check routine...`,
     );
@@ -34,7 +35,7 @@ export class CheckOAuthMembershipRoutine implements BotRoutine {
 
     // Group memberships by membership role
     const membershipDocRecord =
-      MembershipService.groupMembershipDocsByMembershipRole(oauthMembershipDocs);
+      MembershipUtils.groupMembershipDocsByMembershipRole(oauthMembershipDocs);
 
     // Check memberships by group
     const promises: Promise<unknown>[] = [];
@@ -43,7 +44,7 @@ export class CheckOAuthMembershipRoutine implements BotRoutine {
 
       console.log(`Checking membership role with ID: ${membershipRoleId}...`);
 
-      // Create membership service without event log
+      // Create membership service
       const membershipService = new MembershipService(bot);
 
       // Get membership role from DB
@@ -68,7 +69,7 @@ export class CheckOAuthMembershipRoutine implements BotRoutine {
       const guildDoc = await GuildCollection.findById(guildId);
 
       // Initialize event log of membership service
-      await membershipService.initEventLog(guildId, guildDoc?.logChannel ?? null);
+      await membershipService.initEventLog(guildId, null, guildDoc?.logChannel ?? null);
 
       // Remove membership role and records if guild does not exist in DB
       if (guildDoc === null) {

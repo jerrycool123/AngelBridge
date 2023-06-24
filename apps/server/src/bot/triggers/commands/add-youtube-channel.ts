@@ -12,20 +12,20 @@ import { DBUtils } from '../../../utils/db.js';
 import { NotFoundError } from '../../../utils/error.js';
 import GoogleAPI from '../../../utils/google.js';
 import { BotEmbeds } from '../../components/embeds.js';
-import { BotConfig } from '../../config.js';
+import { BotConstants } from '../../constants.js';
 import { BotCommonUtils } from '../../utils/index.js';
 
 export class AddYouTubeChannelCommandTrigger implements BotCommandTrigger<true> {
   public readonly data = new SlashCommandBuilder()
     .setName('add-youtube-channel')
     .setDescription("Add a YouTube channel to the bot's supported list.")
-    .setDefaultMemberPermissions(BotConfig.ModeratorPermissions)
+    .setDefaultMemberPermissions(BotConstants.ModeratorPermissions)
     .addGenericStringOption('id', 'YouTube channel ID or video ID', true);
   public readonly guildOnly = true;
   public readonly botHasManageRolePermission = false;
 
   public async execute(
-    bot: Bot,
+    bot: Bot<true>,
     interaction: GuildChatInputCommandInteraction,
     errorConfig: BotErrorConfig,
   ): Promise<void> {
@@ -106,6 +106,7 @@ export class AddYouTubeChannelCommandTrigger implements BotCommandTrigger<true> 
       },
       errorConfig,
     );
+    errorConfig.activeInteraction = confirmButtonInteraction;
     await confirmButtonInteraction.deferReply({ ephemeral: true });
 
     // Fetch member only video IDs
@@ -126,7 +127,6 @@ export class AddYouTubeChannelCommandTrigger implements BotCommandTrigger<true> 
       console.error(error);
     }
     if (memberOnlyVideoIds.length === 0) {
-      errorConfig.activeInteraction = confirmButtonInteraction;
       throw new NotFoundError(
         `Could not find any member only videos for the YouTube channel: \`${channelInfo.title}\`. Please try again.`,
       );

@@ -5,10 +5,10 @@ import { Env } from '../../utils/env.js';
 import { InternalServerError } from '../../utils/error.js';
 import { Queue } from '../../utils/queue.js';
 import { OCRBillingDateParser } from './billing-date-parser.js';
-import { OCRConfig } from './config.js';
+import { OCRConstants } from './constants.js';
 
 export class OCRService {
-  private readonly supportedLangString = OCRConfig.supportedLanguages
+  private readonly supportedLangString = OCRConstants.supportedLanguages
     .map((lang) => lang.code)
     .join('+');
   private readonly queue = new Queue('OCR Worker', { autoStart: true, concurrency: 1 });

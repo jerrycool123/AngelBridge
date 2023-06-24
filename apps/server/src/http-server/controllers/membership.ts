@@ -8,10 +8,11 @@ import { bot } from '../../bot/index.js';
 import { BotCheckers } from '../../bot/utils/index.js';
 import { GuildDoc } from '../../models/guild.js';
 import MembershipRoleCollection from '../../models/membership-role.js';
+import { OAuthMembershipDoc } from '../../models/membership.js';
 import UserCollection from '../../models/user.js';
 import { YouTubeChannelDoc } from '../../models/youtube-channel.js';
+import { MembershipService } from '../../services/membership/service.js';
 import { CryptoUtils } from '../../utils/crypto.js';
-import { DBUtils } from '../../utils/db.js';
 import DiscordAPI from '../../utils/discord.js';
 import {
   BadRequestError,
@@ -161,54 +162,50 @@ namespace MembershipController {
       }
     }
 
-    // Add role to member
+    // Initialize membership service
+    const membershipService = new MembershipService(bot);
+    await membershipService.initEventLog(guild, null, logChannel);
+
+    // Add membership to user
+    let addResult: { notified: boolean; updatedMembership: OAuthMembershipDoc } | null = null;
     try {
-      await member.roles.add(membershipRoleDoc._id);
+      addResult = await membershipService.addMembership({
+        member,
+        membership: {
+          type: 'oauth',
+        },
+        guild,
+        membershipRole,
+      });
     } catch (error) {
       console.error(error);
+    }
+
+    if (addResult === null) {
       throw new BadRequestError(
         'Sorry, an error occurred while assigning the membership role to you.\n' +
           'Please try again later.',
       );
     }
-
-    // Create or update membership
-    const membership = await DBUtils.upsertMembership({
-      type: 'oauth',
-      userId: member.id,
-      membershipRoleId: membershipRoleDoc._id,
-    });
-
-    // DM the user
-    let notified = false;
-    try {
-      await member.send({
-        content: `You have been granted the membership role **@${membershipRoleDoc.name}** in the server \`${guild.name}\`.`,
-      });
-      notified = true;
-    } catch (error) {
-      // User does not allow DMs
-    }
-
-    // Send log message
+    const { notified, updatedMembership } = addResult;
     const oauthMembershipEmbed = BotEmbeds.createOAuthMembershipEmbed(
       member.user,
       membershipRole.id,
     );
-    await logChannel.send({
-      content: notified
+    await membershipService.sendEventLog(
+      notified
         ? ''
         : "**[NOTE]** Due to the user's __Privacy Settings__ of this server, **I cannot send DM to notify them.**\nYou might need to notify them yourself.",
-      embeds: [oauthMembershipEmbed],
-    });
+      [oauthMembershipEmbed],
+    );
 
     return res.status(201).send({
-      id: membership._id.toString(),
-      type: 'oauth',
-      user: membership.user,
-      membershipRole: membership.membershipRole,
-      createdAt: membership.createdAt.toISOString(),
-      updatedAt: membership.updatedAt.toISOString(),
+      id: updatedMembership._id.toString(),
+      type: updatedMembership.type,
+      user: updatedMembership.user,
+      membershipRole: updatedMembership.membershipRole,
+      createdAt: updatedMembership.createdAt.toISOString(),
+      updatedAt: updatedMembership.updatedAt.toISOString(),
     });
   };
 }

@@ -4,7 +4,8 @@ import utc from 'dayjs/plugin/utc.js';
 import GuildCollection from '../../models/guild.js';
 import MembershipRoleCollection, { MembershipRoleDoc } from '../../models/membership-role.js';
 import MembershipCollection, { OCRMembershipDoc } from '../../models/membership.js';
-import { MembershipService } from '../../services/membership/index.js';
+import { MembershipService } from '../../services/membership/service.js';
+import { MembershipUtils } from '../../services/membership/utils.js';
 import { Bot, BotRoutine } from '../../types/bot.js';
 import DiscordAPI from '../../utils/discord.js';
 import { BotCheckers } from '../utils/index.js';
@@ -15,7 +16,7 @@ export class CheckOCRMembershipRoutine implements BotRoutine {
   public readonly name = 'Check OCR Membership';
   public readonly schedule = '0 12 * * *';
 
-  public async execute(bot: Bot): Promise<void> {
+  public async execute(bot: Bot<true>): Promise<void> {
     console.log(`[${dayjs().format()}] Running OCR Membership Check routine...`);
 
     // Get expired OCR memberships from DB
@@ -27,7 +28,7 @@ export class CheckOCRMembershipRoutine implements BotRoutine {
 
     // Group memberships by membership role
     const membershipDocRecord =
-      MembershipService.groupMembershipDocsByMembershipRole(ocrMembershipDocs);
+      MembershipUtils.groupMembershipDocsByMembershipRole(ocrMembershipDocs);
 
     // Check memberships by group
     const promises: Promise<unknown>[] = [];
@@ -36,7 +37,7 @@ export class CheckOCRMembershipRoutine implements BotRoutine {
 
       console.log(`Checking membership role with ID: ${membershipRoleId}...`);
 
-      // Create membership service without event log
+      // Create membership service
       const membershipService = new MembershipService(bot);
 
       // Get membership role from DB
@@ -61,7 +62,7 @@ export class CheckOCRMembershipRoutine implements BotRoutine {
       const guildDoc = await GuildCollection.findById(guildId);
 
       // Initialize event log of membership service
-      await membershipService.initEventLog(guildId, guildDoc?.logChannel ?? null);
+      await membershipService.initEventLog(guildId, null, guildDoc?.logChannel ?? null);
 
       // Remove membership records if guild does not exist
       if (guildDoc === null) {
@@ -110,7 +111,7 @@ export class CheckOCRMembershipRoutine implements BotRoutine {
     currentDate,
     membershipService,
   }: {
-    bot: Bot;
+    bot: Bot<true>;
     guildName: string;
     membershipDoc: OCRMembershipDoc;
     membershipRoleDoc: MembershipRoleDoc;
