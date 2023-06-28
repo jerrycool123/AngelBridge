@@ -9,6 +9,8 @@ import RequestValidator from './validator.js';
 
 const router = express.Router();
 
+router.get('/heartbeat', (_req, res) => res.status(204).end());
+
 router.post('/auth/discord', RequestValidator.discordAuth, AuthController.discordAuth);
 
 // Protected routes
